@@ -1,0 +1,24 @@
+{
+  "name": "stagehand-stephy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Automated StephyTracking (Tecnoship) sign-in with Stagehand (local Chrome + OpenRouter). Shares the 'Mama SAN Amazon' Supabase DB.",
+  "scripts": {
+    "smoke": "tsx src/smoke.ts",
+    "stephy": "tsx src/stephy-login.ts",
+    "inspect": "tsx src/inspect-dom.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "^3",
+    "@openrouter/ai-sdk-provider": "^1",
+    "dotenv": "^17",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
