@@ -580,7 +580,14 @@ async function main() {
     }
   }
 
-  await waitForEnter("\nPresiona Enter para cerrar el navegador… ");
+  // Modo automático (tareas programadas): NO bloquear esperando Enter; cerrar
+  // el navegador y salir para liberar el lock del perfil. Gateado por env para
+  // no afectar el uso manual (que sí deja el navegador abierto para inspección).
+  if (process.env.STEPHY_AUTORUN === "1") {
+    console.log("\nSTEPHY_AUTORUN: cierro el navegador sin esperar Enter.");
+  } else {
+    await waitForEnter("\nPresiona Enter para cerrar el navegador… ");
+  }
   await stagehand.close();
 }
 

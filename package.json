@@ -8,6 +8,7 @@
     "smoke": "tsx src/smoke.ts",
     "stephy": "tsx src/stephy-login.ts",
     "stephy:preview": "cross-env STEPHY_PREVIEW=1 tsx src/stephy-login.ts",
+    "stephy:auto": "cross-env STEPHY_AUTORUN=1 tsx src/stephy-login.ts",
     "inspect": "tsx src/inspect-dom.ts",
     "typecheck": "tsc --noEmit"
   },

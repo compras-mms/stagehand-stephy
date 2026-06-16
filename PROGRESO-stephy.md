@@ -427,3 +427,36 @@ Se corrió `pnpm stephy` **sin PREVIEW** (navegador real) para persistir de verd
 **Conclusión: no quedan pendientes.** El pipeline completo (leer NOPs → "All" → scrapear → cruzar →
 escribir en Supabase) está verificado end-to-end con escritura real. Es operación recurrente: correr
 `pnpm stephy` cuando lleguen recibos nuevos a Miami (idempotente).
+
+---
+
+## 9. Automatización — tareas programadas de Windows (2026-06-16, parte 6)
+
+Stephy **NO es un flujo de compra**; depende de la llegada FÍSICA de paquetes al almacén de Miami
+(horario hábil ET), no del cron de compras. Por eso NO espeja el schedule 4x/día de Amazon/Shein/Ali.
+Cadencia elegida con Jaime: **2x/día lun–vie + 1x/día sáb–dom (a las 6:30 PM)**.
+
+Implementado con **2 tareas del Programador de Windows** (no cloud — necesita el Chrome local + perfil):
+- **`MamaSAN-Stephy-AM`** — Weekly, Mon–Fri, **10:30**.
+- **`MamaSAN-Stephy-PM`** — Daily, **18:30** (única corrida de sáb/dom).
+- Principal: `Interactive` + `RunLevel Limited` → corre **solo cuando el usuario está logueado**
+  (el navegador es visible), **sin contraseña guardada**. `StartWhenAvailable`, límite 1h,
+  `MultipleInstances=IgnoreNew`.
+
+Ambas invocan **`scripts/run-stephy-auto.cmd`**, que:
+1. Fija PATH (node + pnpm), `cd` al proyecto.
+2. **Mata cualquier Chrome del perfil stephy** (evita el lock del perfil, ver §3).
+3. Corre **`pnpm stephy:auto`** y appendea a **`data\auto-runs.log`** (con timestamp + exit code).
+
+Cambios de código que habilitan el modo desatendido:
+- `src/stephy-login.ts`: si `STEPHY_AUTORUN=1`, **NO espera Enter** — cierra el navegador y sale
+  (libera el lock). Sin la env, sigue dejando el navegador abierto para inspección manual.
+- `package.json`: script **`stephy:auto`** = `cross-env STEPHY_AUTORUN=1 tsx src/stephy-login.ts`.
+
+**Operación / mantenimiento:**
+- Ver estado: `Get-ScheduledTask -TaskName "MamaSAN-Stephy-*" | Get-ScheduledTaskInfo`.
+- Disparar a mano: `Start-ScheduledTask -TaskName "MamaSAN-Stephy-PM"`.
+- Log de corridas automáticas: `data\auto-runs.log`.
+- **Requisitos**: la PC encendida y **sesión iniciada** a la hora del trigger (si está apagada,
+  `StartWhenAvailable` la corre al volver). El `.cmd` tiene la ruta del proyecto hardcodeada (esta PC).
+- Quitar/editar: `Unregister-ScheduledTask -TaskName "MamaSAN-Stephy-AM" -Confirm:$false`.
