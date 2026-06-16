@@ -301,16 +301,25 @@ async function main() {
     await sleep(2500);
 
     // 1c. Change role Consignatario → Agente FIRST (drives the URL + re-renders).
+    //     Los 3 act() son LLM-dependientes y a veces fallan en silencio (el rol
+    //     no cambia y la corrida desatendida no llega al dashboard → no-op). Por
+    //     eso reintentamos el bloque hasta confirmar /login/a por URL.
     console.log(`→ Cambiando el rol a "${ROLE}"…`);
-    await stagehand.act(
-      'click the role dropdown that currently shows "Consignatario"',
-    );
-    await sleep(1000);
-    await stagehand.act(`select the "${ROLE}" option in the role dialog`);
-    await sleep(500);
-    await stagehand.act("click the OK button in the dialog");
-    await page.waitForLoadState("networkidle").catch(() => {});
-    await sleep(1500);
+    for (let roleTry = 1; roleTry <= 3; roleTry++) {
+      await stagehand.act(
+        'click the role dropdown that currently shows "Consignatario"',
+      );
+      await sleep(1000);
+      await stagehand.act(`select the "${ROLE}" option in the role dialog`);
+      await sleep(500);
+      await stagehand.act("click the OK button in the dialog");
+      await page.waitForLoadState("networkidle").catch(() => {});
+      await sleep(1500);
+      if (/\/login\/a/i.test(page.url())) break;
+      console.log(
+        `  ↻ Rol aún no confirmado (intento ${roleTry}/3, URL: ${page.url()})…`,
+      );
+    }
 
     if (!/\/login\/a/i.test(page.url())) {
       console.log(`⚠ Rol no confirmado por URL (actual: ${page.url()}).`);
@@ -478,7 +487,28 @@ async function main() {
   //  Orchestration
   // ======================================================================
   if (!(await alreadyLoggedIn())) {
-    await doLogin();
+    // El login depende del LLM (tarjeta de compañía, cambio de rol) y a veces
+    // falla en silencio. En modo desatendido (cron) eso deja la corrida en no-op.
+    // Reintentamos el flujo completo hasta llegar al dashboard. doLogin() re-navega
+    // a la landing en cada intento, así que reintentar es limpio.
+    const MAX_LOGIN_ATTEMPTS = 3;
+    for (
+      let attempt = 1;
+      attempt <= MAX_LOGIN_ATTEMPTS && !isOnDashboard();
+      attempt++
+    ) {
+      if (attempt > 1) {
+        console.log(
+          `\n↻ Login no llegó al dashboard; reintento ${attempt}/${MAX_LOGIN_ATTEMPTS}…`,
+        );
+      }
+      await doLogin();
+    }
+    if (!isOnDashboard()) {
+      console.log(
+        `\n⚠ Login falló tras ${MAX_LOGIN_ATTEMPTS} intento(s) (URL: ${page.url()}).`,
+      );
+    }
   }
 
   if (isOnDashboard()) {
