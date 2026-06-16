@@ -97,8 +97,14 @@ interface MatchResult {
 
 /** Respuesta del webhook `actualizar-receipts` (write-back a Supabase). */
 export interface PersistResponse {
-  detalle_actualizados?: number;
-  grupos_actualizados?: number;
+  // Rama de escritura real:
+  detalle_actualizados?: number | string;
+  grupos_actualizados?: number | string;
+  // Rama preview (dry-run, no escribe): cuántas filas CAMBIARÍAN.
+  preview?: boolean;
+  detalle_a_actualizar?: number | string;
+  grupos_a_actualizar?: number | string;
+  // En ambas ramas: filas afectadas (detalle/grupos), con valores actual vs nuevo en preview.
   detalle?: unknown[];
   grupos?: unknown[];
   [key: string]: unknown;
@@ -399,10 +405,17 @@ export async function searchReceiptsForNops(
  * detalle_producto_venta + shipping_groups y pone estatus 'Con recibo Almacen
  * Miami'. Best-effort: cualquier fallo se loguea y devuelve null sin lanzar.
  * Devuelve la respuesta del webhook (para archivarla en el history).
+ *
+ * Punto D — modo preview (dry-run): con `{ preview: true }` el webhook hace
+ * SELECT en vez de UPDATE y devuelve qué filas CAMBIARÍAN (valor actual vs
+ * nuevo) SIN escribir nada. Útil para auditar antes de persistir.
  */
 export async function persistMatches(
   encontrados: MatchResult[],
+  opts: { preview?: boolean } = {},
 ): Promise<PersistResponse | null> {
+  const preview = !!opts.preview;
+  const tag = preview ? "PREVIEW/dry-run, no escribe" : "escritura";
   const payload = encontrados
     .filter((e) => e.tracking_proveedor?.trim() && e.receipt?.trim())
     .map((e) => ({
@@ -411,34 +424,47 @@ export async function persistMatches(
     }));
 
   console.log(
-    `\n→ [n8n] Persistiendo ${payload.length} match(es) en Supabase (actualizar-receipts)…`,
+    `\n→ [n8n] ${preview ? "Previsualizando" : "Persistiendo"} ${payload.length} ` +
+      `match(es) en Supabase (actualizar-receipts · ${tag})…`,
   );
 
   if (payload.length === 0) {
-    console.log("  ⓘ No hay matches con receipt; nada que persistir.");
-    return { detalle_actualizados: 0, grupos_actualizados: 0, detalle: [], grupos: [] };
+    console.log("  ⓘ No hay matches con receipt; nada que procesar.");
+    return preview
+      ? { preview: true, detalle_a_actualizar: 0, grupos_a_actualizar: 0, detalle: [], grupos: [] }
+      : { detalle_actualizados: 0, grupos_actualizados: 0, detalle: [], grupos: [] };
   }
 
   console.log(`  POST ${ACTUALIZAR_RECEIPTS_WEBHOOK_URL}`);
+  // En preview se envía {matches, preview:true}; sin preview, el array tal cual
+  // (contrato histórico del webhook).
+  const body = preview ? JSON.stringify({ matches: payload, preview: true }) : JSON.stringify(payload);
   try {
     const res = await fetch(ACTUALIZAR_RECEIPTS_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body,
     });
     if (!res.ok) {
       console.log(
-        `⚠ [n8n] actualizar-receipts respondió HTTP ${res.status}. No se persistió.`,
+        `⚠ [n8n] actualizar-receipts respondió HTTP ${res.status}. No se ${preview ? "previsualizó" : "persistió"}.`,
       );
       return null;
     }
     // El "Respond to Webhook" puede devolver el objeto suelto o dentro de un array.
     const raw = (await res.json()) as PersistResponse | PersistResponse[];
     const data = Array.isArray(raw) ? raw[0] ?? {} : raw;
-    console.log(
-      `✓ [n8n] Supabase actualizado: ${data.detalle_actualizados ?? "?"} ` +
-        `producto(s) en detalle_producto_venta, ${data.grupos_actualizados ?? "?"} grupo(s).`,
-    );
+    if (preview) {
+      console.log(
+        `✓ [n8n] PREVIEW (NO se escribió nada): cambiarían ${data.detalle_a_actualizar ?? "?"} ` +
+          `producto(s) en detalle_producto_venta y ${data.grupos_a_actualizar ?? "?"} grupo(s).`,
+      );
+    } else {
+      console.log(
+        `✓ [n8n] Supabase actualizado: ${data.detalle_actualizados ?? "?"} ` +
+          `producto(s) en detalle_producto_venta, ${data.grupos_actualizados ?? "?"} grupo(s).`,
+      );
+    }
     return data;
   } catch (err) {
     console.log(
@@ -479,10 +505,14 @@ export async function finalizeRunHistory(
     "utf8",
   );
   // 4º archivo (solo si hubo intento de write-back): la respuesta del webhook.
+  // En preview se nombra distinto (supabase-PREVIEW.json) para que quede claro
+  // que NO se persistió nada.
+  const isPreview = persistResult?.preview === true;
+  const persistFile = isPreview ? "supabase-PREVIEW.json" : "supabase-actualizado.json";
   if (persistResult !== undefined) {
     await writeFile(
-      join(dir, "supabase-actualizado.json"),
-      JSON.stringify({ generado_en: now, respuesta: persistResult }, null, 2),
+      join(dir, persistFile),
+      JSON.stringify({ generado_en: now, preview: isPreview, respuesta: persistResult }, null, 2),
       "utf8",
     );
   }
@@ -495,9 +525,11 @@ export async function finalizeRunHistory(
   console.log(`   • receipts-encontrados.json    (${encontrados.length})`);
   console.log(`   • receipts-no-encontrados.json (${noEncontrados.length})`);
   if (persistResult !== undefined) {
+    const det = isPreview ? persistResult?.detalle_a_actualizar : persistResult?.detalle_actualizados;
+    const grp = isPreview ? persistResult?.grupos_a_actualizar : persistResult?.grupos_actualizados;
     console.log(
-      `   • supabase-actualizado.json    ` +
-        `(detalle ${persistResult?.detalle_actualizados ?? "?"}, grupos ${persistResult?.grupos_actualizados ?? "?"})`,
+      `   • ${persistFile}    ` +
+        `(detalle ${det ?? "?"}, grupos ${grp ?? "?"}${isPreview ? " — PREVIEW, no escrito" : ""})`,
     );
   }
   console.log(`🧹 Eliminado data/nops-con-tracking.json (archivo de trabajo).`);

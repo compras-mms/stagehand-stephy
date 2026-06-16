@@ -13,7 +13,7 @@ importers:
         version: 3.5.0(zod@3.25.76)
       '@openrouter/ai-sdk-provider':
         specifier: ^1
-        version: 1.5.4(ai@5.0.198(zod@3.25.76))(zod@3.25.76)
+        version: 1.5.4(ai@5.0.197(zod@3.25.76))(zod@3.25.76)
       dotenv:
         specifier: ^17
         version: 17.4.2
@@ -23,7 +23,10 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^24
-        version: 24.13.2
+        version: 24.13.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       tsx:
         specifier: ^4
         version: 4.22.4
@@ -431,8 +434,8 @@ packages:
   '@types/node@18.19.130':
     resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
 
-  '@types/node@24.13.2':
-    resolution: {integrity: sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA==}
+  '@types/node@24.13.1':
+    resolution: {integrity: sha512-RSpUJGmvsJ1ZeBehQZFhIdpsz+bIpES0nIQXko4Ybq+N+kX6XvOq3Jo+iJ82FWLdblFq85AsMikd3m35jgezYg==}
 
   '@types/retry@0.12.0':
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
@@ -457,8 +460,8 @@ packages:
     resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
     engines: {node: '>= 8.0.0'}
 
-  ai@5.0.198:
-    resolution: {integrity: sha512-aKYgLRZpxJOaorTHHSPdlfMc+LRX9n6KVr1MTrEm3rJ7rbymxcYCcoOWs1JRfZvxXgguwIxGREHEXT6ubOEwxw==}
+  ai@5.0.197:
+    resolution: {integrity: sha512-iUzFb2M3ZUL/Bbmfonh75DIZ354svWO5xh8VPC2wYNR6zzEMFghPOlJG5rtEpqRa037lHfdcjt0qmzg3em/WDw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -548,6 +551,11 @@ packages:
   cors@2.8.6:
     resolution: {integrity: sha512-tJtZBBHA6vjIAaF6EnIaq6laBBP9aq/Y3ouVJjEfoHbRBcHBAHYcMh/w8LDrk2PvIMMq8gmopa5D4V8RmbrxGw==}
     engines: {node: '>= 0.10'}
+
+  cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1360,7 +1368,7 @@ snapshots:
       '@browserbasehq/sdk': 2.14.0
       '@google/genai': 1.52.0(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(bufferutil@4.1.0)
       '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
-      ai: 5.0.198(zod@3.25.76)
+      ai: 5.0.197(zod@3.25.76)
       devtools-protocol: 0.0.1464554
       fetch-cookie: 3.2.0
       openai: 4.104.0(ws@8.21.0(bufferutil@4.1.0))(zod@3.25.76)
@@ -1510,10 +1518,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@openrouter/ai-sdk-provider@1.5.4(ai@5.0.198(zod@3.25.76))(zod@3.25.76)':
+  '@openrouter/ai-sdk-provider@1.5.4(ai@5.0.197(zod@3.25.76))(zod@3.25.76)':
     dependencies:
       '@openrouter/sdk': 0.1.27
-      ai: 5.0.198(zod@3.25.76)
+      ai: 5.0.197(zod@3.25.76)
       zod: 3.25.76
 
   '@openrouter/sdk@0.1.27':
@@ -1591,14 +1599,14 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 24.13.2
+      '@types/node': 24.13.1
       form-data: 4.0.5
 
   '@types/node@18.19.130':
     dependencies:
       undici-types: 5.26.5
 
-  '@types/node@24.13.2':
+  '@types/node@24.13.1':
     dependencies:
       undici-types: 7.18.2
 
@@ -1621,7 +1629,7 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  ai@5.0.198(zod@3.25.76):
+  ai@5.0.197(zod@3.25.76):
     dependencies:
       '@ai-sdk/gateway': 2.0.98(zod@3.25.76)
       '@ai-sdk/provider': 2.0.3
@@ -1686,7 +1694,7 @@ snapshots:
 
   chrome-launcher@1.2.1:
     dependencies:
-      '@types/node': 24.13.2
+      '@types/node': 24.13.1
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 2.0.2
@@ -1714,6 +1722,10 @@ snapshots:
     dependencies:
       object-assign: 4.1.1
       vary: 1.1.2
+
+  cross-env@7.0.3:
+    dependencies:
+      cross-spawn: 7.0.6
 
   cross-spawn@7.0.6:
     dependencies:
@@ -2195,7 +2207,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.1
-      '@types/node': 24.13.2
+      '@types/node': 24.13.1
       long: 5.3.2
 
   proxy-addr@2.0.7:

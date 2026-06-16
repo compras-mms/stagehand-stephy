@@ -538,7 +538,15 @@ async function main() {
         );
         // Paso 5 del skill: escribir tracking_courier en Supabase (best-effort,
         // idempotente). persistMatches NO lanza; devuelve null si algo falla.
-        const persistResult = await persistMatches(encontrados);
+        // Punto D: STEPHY_PREVIEW=1 → modo dry-run (el webhook hace SELECT y
+        // reporta qué cambiaría SIN escribir). Por defecto escribe directo.
+        const preview = !!process.env.STEPHY_PREVIEW;
+        if (preview) {
+          console.log(
+            "\n🔎 STEPHY_PREVIEW activo: modo DRY-RUN — NO se escribirá en Supabase.",
+          );
+        }
+        const persistResult = await persistMatches(encontrados, { preview });
         await finalizeRunHistory(
           nopsData,
           encontrados,

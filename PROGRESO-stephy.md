@@ -1,6 +1,6 @@
 # PROGRESO — proyecto `stagehand-stephy` (handoff entre sesiones)
 
-> Estado y contexto para continuar en otra sesión. Última actualización: 2026-06-16 (parte 2).
+> Estado y contexto para continuar en otra sesión. Última actualización: 2026-06-16 (parte 3).
 > Acompaña a [`CONTEXT-stagehand-amazon.md`](CONTEXT-stagehand-amazon.md) (base genérica
 > heredada de stagehand-amazon: stack, factory de Stagehand, estructura de la BD Supabase).
 
@@ -12,8 +12,23 @@
 > Almacen Miami'`. **Paso 1 cerrado. Punto C resuelto** (no había bug de filtros; los
 > no-encontrados son productos que aún no llegan a Miami). Ver **§8.4 / §8.5**.
 >
-> **Lo siguiente (opcional):** Punto D — modo *preview* (mostrar qué se va a escribir sin tocar
-> Supabase) para auditar antes de persistir. Hoy escribe directo (idempotente). Detalle en §8.5.
+> **Lo más reciente (2026-06-16, parte 3): Punto D CERRADO.** El webhook `actualizar-receipts`
+> ahora soporta **modo preview/dry-run** (`{matches, preview:true}` → SELECT, devuelve qué
+> cambiaría SIN escribir) y se le aplicó el **fix de grupos por `id_grupo`** (actualiza
+> `shipping_groups` por el grupo del producto matcheado, no por `tracking_master = tp`). En TS:
+> `STEPHY_PREVIEW=1 pnpm stephy:preview` corre el pipeline sin escribir. Verificado end-to-end por
+> HTTP (preview real no tocó la BD). También se confirmó el supuesto `tracking_master ==
+> tracking_proveedor` (98%, 37 excepciones inocuas). Detalle en **§8.6**.
+>
+> **Estado al cierre (para la próxima sesión):**
+> - **Producción ya actualizada y publicada**: el webhook `actualizar-receipts` tiene preview + fix
+>   de grupos LIVE (probado por HTTP). Esto NO está versionado en git (vive en n8n).
+> - **Cambios locales SIN commitear** (5 archivos): `src/nops-con-tracking.ts`, `src/stephy-login.ts`,
+>   `package.json`, `pnpm-lock.yaml`, `PROGRESO-stephy.md`. Falta hacer el commit.
+> - **Única acción pendiente del Punto D**: correr `pnpm stephy:preview` con el navegador real
+>   (login + receipts) para verlo end-to-end en vivo. La parte server-side ya quedó probada por HTTP.
+> - Recordatorio operativo: si una corrida previa dejó Chrome abierto, matar el proceso del perfil
+>   `stagehand-stephy` antes de reintentar (ver §3, gotcha del lock).
 
 ---
 
@@ -171,8 +186,9 @@ dashboard lo requiera.
       limita a HOY? La última corrida cruzó 318 NOPs y dio **0 matches** → muy probablemente hay
       que abrir Filters → apagar "Dates" → Apply → botón **"All"** antes de scrapear. Sin esto
       no hay nada que persistir.
-- [ ] **(Punto D, pendiente)** Decidir modo **preview** vs. ejecución directa, y si se confirma
-      el supuesto `tracking_master == tracking_proveedor` (hasta ahora se cumple en los datos vistos).
+- [x] **(Punto D, CERRADO)** Modo **preview/dry-run** server-side en el webhook + **fix de grupos
+      por `id_grupo`**. Supuesto `tracking_master == tracking_proveedor` verificado (98%, 37
+      excepciones en etapas tardías → inocuas). Ver **§8.6**.
 - [ ] Considerar rotar `OPENROUTER_API_KEY` (viene del .env de amazon).
 - [ ] (Opcional) Hacer determinista el cambio de rol y el click de la tarjeta para reducir
       dependencia del LLM (`act()`), si se busca más velocidad/robustez.
@@ -290,3 +306,52 @@ tracking_proveedor` se sigue cumpliendo en los datos.
 
 > Nota: los UPDATEs son idempotentes (excluyen filas con courier ya cargado), así que es seguro
 > conectar el TS y reejecutar `pnpm stephy` sin miedo a duplicar o pisar trabajo manual.
+
+---
+
+## 8.6 Sesión 2026-06-16 (parte 3) — Punto D: modo preview + fix de grupos por `id_grupo`
+
+### Verificación previa del supuesto `tracking_master == tracking_proveedor`
+SELECT de auditoría (read-only) cruzando `detalle_producto_venta` ↔ `shipping_groups` por `id_grupo`:
+- 1980 filas con ambos trackings presentes → **1943 iguales (98.1%)**, **37 distintos**, 47 con
+  `tracking_master` NULL.
+- De los 37 distintos, casi todos están en etapas **posteriores** al recibo (`Entregado`, `Recibido
+  almacen Ccs`, `Por Entregar…`) → fuera de la ventana del pipeline. Solo ~2 caen en `Con instruccion
+  Almacen Miami` sin courier. ⇒ El supuesto es seguro en la práctica, pero motivó el **fix de grupos**.
+
+### Cambios en el webhook `actualizar-receipts` (workflow id `rA1HoTmdEQRNaWi8`)
+Editado por SDK (n8n MCP) y **publicado** (`activeVersionId` nuevo). Mismos 4 nodos, misma URL, misma
+credencial Postgres (`wkKZ7GmIBS4c72M5`). Solo cambió el nodo Code "Armar SQL UPDATEs":
+1. **Modo preview**: si el body trae `preview:true` (acepta `{matches:[...], preview:true}` o
+   `dry_run:true`), arma **SELECT** (no UPDATE) con CTEs `cand_detalle` / `cand_groups` y responde
+   `{ preview:true, detalle_a_actualizar, grupos_a_actualizar, detalle:[…actual vs nuevo…], grupos:[…] }`.
+   **No escribe.** Sin `preview` el contrato de respuesta es el de siempre.
+2. **Fix de grupos por `id_grupo`**: ambas ramas derivan los grupos objetivo de un CTE `grupos_obj`
+   = `SELECT DISTINCT ON (d.id_grupo) d.id_grupo, p.receipt FROM detalle_producto_venta d JOIN params
+   p ON d.tracking_proveedor = p.tp`. El UPDATE de `shipping_groups` ahora es por `g.id_grupo =
+   go.id_grupo` (antes era `g.tracking_master = p.tp`). Robusto a los 37 casos; idempotente igual
+   (solo toca grupos con `tracking_master_courier` vacío). Para los 1943 normales el resultado es idéntico.
+
+**Verificación end-to-end (HTTP, sin tocar la BD indebidamente):**
+- `POST {"matches":[],"preview":true}` → `{preview:true, ...:0}`. ✓
+- `POST []` → contrato viejo en ceros. ✓ (no rompí lo existente)
+- `POST {matches:[{tracking_proveedor:"SPXMIA013672605050031120", receipt:"PREVIEWTEST"}], preview:true}`
+  → listó 2 detalles + **2 grupos** (ese tracking está en 2 `id_grupo`), todos `_actual:null` /
+  `_nuevo:"PREVIEWTEST"`. SELECT posterior confirmó **0 filas con PREVIEWTEST** → no escribió. ✓
+
+### Cambios en TS
+- `src/nops-con-tracking.ts`: `persistMatches(encontrados, { preview })` — en preview manda
+  `{matches, preview:true}`, loguea "PREVIEW (NO se escribió nada)" y devuelve el objeto preview.
+  `PersistResponse` admite las claves de ambas ramas. `finalizeRunHistory` guarda el 4º archivo como
+  **`supabase-PREVIEW.json`** (en vez de `supabase-actualizado.json`) cuando `respuesta.preview===true`.
+- `src/stephy-login.ts`: lee `process.env.STEPHY_PREVIEW`; si está, avisa DRY-RUN y pasa `{preview:true}`.
+- `package.json`: nuevo script **`stephy:preview`** = `cross-env STEPHY_PREVIEW=1 tsx src/stephy-login.ts`
+  (se agregó `cross-env` a devDependencies para que la env funcione en Windows). `pnpm typecheck` OK.
+
+### Cómo usarlo
+- **Auditar sin escribir:** `pnpm stephy:preview` (o `$env:STEPHY_PREVIEW=1; pnpm stephy`). Deja
+  `supabase-PREVIEW.json` en el history con lo que CAMBIARÍA.
+- **Escribir de verdad:** `pnpm stephy` (comportamiento por defecto, idempotente).
+
+**Pendiente:** falta una corrida real de `pnpm stephy:preview` con el navegador (login + receipts) para
+verlo en vivo; la parte server-side ya quedó probada por HTTP.
