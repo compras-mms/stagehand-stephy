@@ -1,6 +1,6 @@
 # PROGRESO — proyecto `stagehand-stephy` (handoff entre sesiones)
 
-> Estado y contexto para continuar en otra sesión. Última actualización: 2026-06-16 (parte 3).
+> Estado y contexto para continuar en otra sesión. Última actualización: 2026-06-16 (parte 4).
 > Acompaña a [`CONTEXT-stagehand-amazon.md`](CONTEXT-stagehand-amazon.md) (base genérica
 > heredada de stagehand-amazon: stack, factory de Stagehand, estructura de la BD Supabase).
 
@@ -20,13 +20,20 @@
 > HTTP (preview real no tocó la BD). También se confirmó el supuesto `tracking_master ==
 > tracking_proveedor` (98%, 37 excepciones inocuas). Detalle en **§8.6**.
 >
+> **Lo más reciente (2026-06-16, parte 4): Punto D VERIFICADO EN VIVO.** Se corrió
+> `pnpm stephy:preview` end-to-end con navegador real (sesión activa → menú ☰ → Receipts → "All" →
+> 94 recibos → cruce). Resultado: **5 encontrados / 275 no encontrados** de 280 NOPs; el webhook
+> respondió en **modo preview** ("cambiarían **6 productos + 5 grupos**", rama SELECT, NO escribió);
+> el history guardó **`supabase-PREVIEW.json`** (no `supabase-actualizado.json`). Confirmado el caso
+> del fix de grupos: 6 detalles vs 5 grupos (un match con 2 productos del mismo tracking). Corrida en
+> `data/history/2026-06-16_15-41-27/`. Ver **§8.7**.
+>
 > **Estado al cierre (para la próxima sesión):**
 > - **Producción ya actualizada y publicada**: el webhook `actualizar-receipts` tiene preview + fix
->   de grupos LIVE (probado por HTTP). Esto NO está versionado en git (vive en n8n).
-> - **Cambios locales SIN commitear** (5 archivos): `src/nops-con-tracking.ts`, `src/stephy-login.ts`,
->   `package.json`, `pnpm-lock.yaml`, `PROGRESO-stephy.md`. Falta hacer el commit.
-> - **Única acción pendiente del Punto D**: correr `pnpm stephy:preview` con el navegador real
->   (login + receipts) para verlo end-to-end en vivo. La parte server-side ya quedó probada por HTTP.
+>   de grupos LIVE (probado por HTTP **y por corrida real de Stagehand**). NO versionado en git (vive en n8n).
+> - **Punto D 100% cerrado** (server-side + TS + verificación en vivo). Todo committeado y pusheado.
+> - **Próximo paso real disponible**: correr `pnpm stephy` (sin PREVIEW) cuando se quiera persistir de
+>   verdad los matches del día en Supabase (idempotente). Hoy quedaron 6 detalles + 5 grupos por escribir.
 > - Recordatorio operativo: si una corrida previa dejó Chrome abierto, matar el proceso del perfil
 >   `stagehand-stephy` antes de reintentar (ver §3, gotcha del lock).
 
@@ -353,5 +360,31 @@ credencial Postgres (`wkKZ7GmIBS4c72M5`). Solo cambió el nodo Code "Armar SQL U
   `supabase-PREVIEW.json` en el history con lo que CAMBIARÍA.
 - **Escribir de verdad:** `pnpm stephy` (comportamiento por defecto, idempotente).
 
-**Pendiente:** falta una corrida real de `pnpm stephy:preview` con el navegador (login + receipts) para
-verlo en vivo; la parte server-side ya quedó probada por HTTP.
+**Pendiente:** ~~falta una corrida real de `pnpm stephy:preview` con el navegador~~ ✅ **HECHO** (parte 4, §8.7).
+
+---
+
+## 8.7 Sesión 2026-06-16 (parte 4) — Punto D verificado EN VIVO con navegador real
+
+Se corrió `pnpm stephy:preview` end-to-end (Chrome visible, datos reales). Cierra el único pendiente
+que quedaba del Punto D: confirmar el dry-run con el navegador, no solo por HTTP.
+
+**Flujo observado** (sesión ya activa, se saltó el login):
+- Dashboard activo → abrió menú ☰ (intento 2/6, tras un `ion-alert` que se canceló) → entró a Receipts.
+- Botón **"All"** OK → **94 recibos** consolidados (pág.1: 93, pág.2: 44 con duplicados → 94 únicos).
+- Cruce: **5 encontrados / 275 no encontrados** de 280 NOPs (los no encontrados aún no llegan a Miami).
+
+**Resultado del preview (los 3 criterios de aceptación, OK):**
+1. **No escribió**: log `STEPHY_PREVIEW activo: modo DRY-RUN — NO se escribirá` + respuesta del webhook
+   `PREVIEW (NO se escribió nada): cambiarían 6 producto(s) … y 5 grupo(s)`.
+2. **Rama preview del webhook activa**: devolvió conteos `detalle_a_actualizar`/`grupos_a_actualizar`
+   (SELECT), no el contrato de UPDATE.
+3. **History correcto**: 4º archivo guardado como **`supabase-PREVIEW.json` (detalle 6, grupos 5 —
+   PREVIEW, no escrito)**, no `supabase-actualizado.json`. Corrida en `data/history/2026-06-16_15-41-27/`.
+
+**Validación incidental del fix de grupos por `id_grupo`:** la corrida dio **6 detalles vs 5 grupos** —
+un match expande a 2 productos del mismo tracking, exactamente el caso que el fix maneja (deriva los
+grupos objetivo por `id_grupo` del producto matcheado, no 1:1 con el tracking).
+
+**Conclusión: Punto D 100% cerrado.** Para persistir de verdad los matches del día: `pnpm stephy`
+(sin PREVIEW, idempotente). Hoy quedaron 6 detalles + 5 grupos pendientes de escribir.
