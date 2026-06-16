@@ -1,5 +1,11 @@
 import { createInterface } from "node:readline";
 import { makeStagehand, resolveStagehandEnv } from "./stagehand.js";
+import {
+  runNopsConTracking,
+  searchReceiptsForNops,
+  persistMatches,
+  finalizeRunHistory,
+} from "./nops-con-tracking.js";
 
 /**
  * Drive StephyTracking (https://app.stephytracking.com/) for the Tecnoship
@@ -77,6 +83,13 @@ function waitForEnter(message: string): Promise<void> {
 }
 
 async function main() {
+  // ======================================================================
+  //  Step 0 (pre-navegador) — Disparar el workflow n8n "nops-con-tracking" y
+  //  traer los NOPs con tracking + id_venta (archivo de trabajo en data/).
+  //  Best-effort: si n8n falla, NO bloquea el login.
+  // ======================================================================
+  const nopsData = await runNopsConTracking();
+
   const env = resolveStagehandEnv();
   const stagehand = makeStagehand({ env, headless: false });
   await stagehand.init();
@@ -210,15 +223,46 @@ async function main() {
     console.log(`\n→ Verificando sesión existente (${DASHBOARD_URL})…`);
     await page.goto(DASHBOARD_URL);
     await page.waitForLoadState("networkidle").catch(() => {});
-    await sleep(2000);
-    // A load-time alert could mask the URL check — clear it first.
-    await cancelIfAlert();
-    if (isOnDashboard()) {
-      console.log(`✓ Ya hay sesión activa. Dashboard: ${page.url()}`);
-      return true;
+
+    // The Ionic/Angular app can bounce through "/" while it boots, and the
+    // notifications Alert can mask the real URL. So we POLL for the dashboard
+    // (clearing any Alert each round) instead of deciding on a single snapshot.
+    // RULE (pedido del usuario): si la sesión está viva y llegamos al
+    // dashboard, NO redirigimos a la URL base para loguear. Solo concluimos
+    // "sin sesión" cuando el formulario de empresa/login se hace visible de
+    // verdad, o cuando expira la ventana de gracia.
+    const GRACE = 15;
+    for (let i = 0; i < GRACE; i++) {
+      await cancelIfAlert();
+      if (isOnDashboard()) {
+        console.log(`✓ Ya hay sesión activa. Dashboard: ${page.url()}`);
+        return true;
+      }
+      // Re-empujar al dashboard un par de veces por si un redirect transitorio
+      // (o el refresh del Cancelar) nos botó a "/". Una sesión VIVA se queda.
+      if (!/dashboard/i.test(page.url()) && (i === 4 || i === 9)) {
+        await page.goto(DASHBOARD_URL);
+        await page.waitForLoadState("networkidle").catch(() => {});
+        continue;
+      }
+      // Señal de DESLOGUEADO: el campo de usuario del login o la caja de
+      // búsqueda de compañía están realmente visibles (y NO en el dashboard).
+      if (i >= 3) {
+        const loginField = await firstVisible([
+          'input[name="user"]',
+          ...SEARCH_SELECTORS,
+        ]);
+        if (loginField && !isOnDashboard()) {
+          console.log(
+            `ⓘ Sin sesión activa (URL: ${page.url()}). Procedo con el login…`,
+          );
+          return false;
+        }
+      }
+      await sleep(1000);
     }
     console.log(
-      `ⓘ Sin sesión activa (URL: ${page.url()}). Procedo con el login…`,
+      `ⓘ No se confirmó el dashboard (URL: ${page.url()}). Procedo con el login…`,
     );
     return false;
   }
@@ -443,6 +487,89 @@ async function main() {
     console.log(
       `\n⚠ No estamos en el dashboard (URL: ${page.url()}); no abro el menú.`,
     );
+  }
+
+  // ======================================================================
+  //  (DIAGNÓSTICO, gateado por env STEPHY_DUMP_RECEIPTS=1) — Volcar el DOM de
+  //  los controles de filtro de la página Receipts (Filters / Dates / All),
+  //  para implementar el "Punto C": apagar el filtro de fecha antes de scrapear.
+  // ======================================================================
+  if (process.env.STEPHY_DUMP_RECEIPTS && /receipts/i.test(page.url())) {
+    const DUMP = `(() => {
+      const vis = (el) => { const s=getComputedStyle(el), r=el.getBoundingClientRect();
+        return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0; };
+      const T = (el) => (el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,60);
+      const desc = (el) => ({ tag: el.tagName.toLowerCase(), type: el.getAttribute('type'),
+        name: el.getAttribute('name'), placeholder: el.getAttribute('placeholder'),
+        aria: el.getAttribute('aria-label'), value: el.value ?? null, text: T(el), visible: vis(el) });
+      const q = (sel) => { try { return Array.from(document.querySelectorAll(sel)).filter(vis).map(desc); } catch { return []; } };
+      return JSON.stringify({
+        url: location.href,
+        buttons: q('button, ion-button, [role=button], input[type=submit]'),
+        segments: q('ion-segment, ion-segment-button'),
+        chips: q('ion-chip'),
+        selects: q('ion-select, select, [role=combobox]'),
+        selectOptions: Array.from(document.querySelectorAll('select')).map((s) => ({
+          value: s.value,
+          options: Array.from(s.options).map((o) => ({ value: o.value, text: (o.textContent||'').trim(), selected: o.selected })),
+        })),
+        dateInputs: q('input[type=date], ion-datetime, input[placeholder*=date i], input[name*=date i]'),
+        inputs: q('input'),
+        textHits: Array.from(document.querySelectorAll('button,ion-button,ion-label,ion-item,a,span,div,[role=button]'))
+          .filter(el=>vis(el)&&/\\b(filter|filtro|date|fecha|all|todos|apply|aplicar)\\b/i.test(T(el))&&T(el).length<40)
+          .map(desc),
+      }, null, 2);
+    })()`;
+    console.log("\n===== DOM: controles de filtro en Receipts =====");
+    console.log(await page.evaluate(DUMP));
+    console.log("===== fin dump Receipts =====\n");
+  }
+
+  // ======================================================================
+  //  Step 3 — Cruzar los NOPs con tracking contra la tabla de Receipts
+  //  (paginada) y volcar los 3 JSON a data/history/<fecha_hora>/.
+  // ======================================================================
+  if (nopsData) {
+    try {
+      if (/receipts/i.test(page.url())) {
+        const { encontrados, noEncontrados } = await searchReceiptsForNops(
+          page,
+          nopsData,
+        );
+        // Paso 5 del skill: escribir tracking_courier en Supabase (best-effort,
+        // idempotente). persistMatches NO lanza; devuelve null si algo falla.
+        const persistResult = await persistMatches(encontrados);
+        await finalizeRunHistory(
+          nopsData,
+          encontrados,
+          noEncontrados,
+          persistResult,
+        );
+      } else {
+        console.log(
+          `\n⚠ No se llegó a Receipts (URL: ${page.url()}); archivo los NOPs sin búsqueda de recibos.`,
+        );
+        const noEnc = (nopsData.nops_detalle ?? []).map((d) => ({
+          nop: d.nop,
+          id_venta: d.id_venta,
+          tracking_proveedor: Array.isArray(d.tracking_proveedor)
+            ? String(d.tracking_proveedor[0] ?? "")
+            : String(d.tracking_proveedor ?? ""),
+          motivo: "no se llegó a la página Receipts",
+        }));
+        await finalizeRunHistory(nopsData, [], noEnc);
+      }
+    } catch (err) {
+      console.error(
+        "⚠ Error cruzando NOPs con Receipts:",
+        (err as Error).message,
+      );
+      try {
+        await finalizeRunHistory(nopsData, [], []);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   await waitForEnter("\nPresiona Enter para cerrar el navegador… ");
