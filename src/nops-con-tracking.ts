@@ -3,21 +3,22 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * NOPs con tracking ←→ Receipts (StephyTracking).
+ * NOPs con tracking ←→ Receipts (StephyTracking) — write-back a Supabase.
  *
- * Flujo completo de una corrida de `pnpm stephy`:
- *   1. (pre-navegador) runNopsConTracking(): dispara el workflow n8n
- *      "nops-con-tracking", trae los NOPs con tracking de proveedor (pero sin
- *      tracking de courier) + su id_venta, y los guarda como archivo de TRABAJO
- *      en data/nops-con-tracking.json.
- *   2. (en la página Receipts) searchReceiptsForNops(): la tabla está PAGINADA;
- *      detecta cuántas páginas hay, recorre TODAS, y por cada tracking_proveedor
- *      del JSON busca su fila y toma el número de Receipt asociado.
- *   3. finalizeRunHistory(): escribe 3 archivos en una carpeta history/<fecha_hora>/
- *      (nops-con-tracking.json + receipts-encontrados.json +
- *      receipts-no-encontrados.json) y borra el archivo de trabajo de data/.
+ * Helpers que usa el flujo de `pnpm stephy` (con STEPHY_SEARCH=1):
+ *   1. runNopsConTracking(): dispara el workflow n8n "nops-con-tracking", trae
+ *      los NOPs con tracking de proveedor (sin tracking de courier) + su
+ *      id_venta, y los guarda como archivo de TRABAJO en
+ *      data/nops-con-tracking.json. La BÚSQUEDA de cada tracking se hace en
+ *      src/search-receipts.ts (página /search, tracking-por-tracking).
+ *   2. persistMatches(): POST de los matches {tracking_proveedor, receipt} al
+ *      webhook "actualizar-receipts", que hace los UPDATEs en Supabase
+ *      (detalle_producto_venta + shipping_groups) y pone estatus
+ *      'Con recibo Almacen Miami'.
+ *   3. finalizeRunHistory(): escribe los archivos de la corrida en
+ *      history/<fecha_hora>/ y borra el archivo de trabajo de data/.
  *
- * Todo es best-effort: un fallo de n8n o del scraping NO rompe el login.
+ * Todo es best-effort: un fallo de n8n NO rompe el login.
  */
 
 const WEBHOOK_URL =
@@ -37,8 +38,6 @@ const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = join(PROJECT_ROOT, "data");
 const HISTORY_DIR = join(DATA_DIR, "history");
 const LIVE_JSON = join(DATA_DIR, "nops-con-tracking.json");
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Timestamp local `YYYY-MM-DD_HH-mm-ss` (seguro para nombre de carpeta). */
 function stamp(): string {
@@ -67,22 +66,6 @@ export interface NopsResponse {
   [key: string]: unknown;
 }
 
-interface ReceiptRow {
-  receipt: string;
-  date: string;
-  shipper: string;
-  consignee: string;
-  status: string;
-  trackings: string;
-}
-
-interface Snapshot {
-  ok: boolean;
-  reason?: string;
-  rows?: ReceiptRow[];
-  pager?: { pages: number[]; active: number | null; max: number };
-}
-
 interface MatchResult {
   nop: string;
   id_venta: number | number[] | null;
@@ -109,13 +92,6 @@ export interface PersistResponse {
   grupos?: unknown[];
   [key: string]: unknown;
 }
-
-/** Página mínima (subconjunto de la page de Stagehand) que usamos aquí. */
-type EvalPage = {
-  evaluate: (expr: string) => Promise<unknown>;
-  url: () => string;
-  waitForLoadState: (state: "networkidle") => Promise<unknown>;
-};
 
 // ==========================================================================
 //  1. Disparar n8n y guardar el archivo de trabajo
@@ -161,242 +137,7 @@ export async function runNopsConTracking(): Promise<NopsResponse | null> {
 }
 
 // ==========================================================================
-//  2. Scraping de la tabla de Receipts (paginada) + matching
-// ==========================================================================
-
-// Lee la tabla de Receipts: elige la tabla de datos, mapea columnas por el
-// texto de la cabecera, devuelve filas {receipt,date,shipper,consignee,status,
-// trackings} y la info del paginador (páginas, activa, máx). Se ejecuta en el
-// navegador como string (patrón evaluate del proyecto). Los `\\` escapan las
-// regex para que sobrevivan al string.
-export const SCRAPE_EXPR = `(() => {
-  const T = (e) => ((e && (e.innerText || e.textContent)) || '').replace(/\\s+/g, ' ').trim();
-  const tables = Array.from(document.querySelectorAll('table'));
-  let best = null, bestScore = -1;
-  for (const t of tables) {
-    const h = ((t.querySelector('thead') || t).innerText || '').toLowerCase();
-    let score = 0;
-    if (h.includes('tracking')) score += 3;
-    if (h.includes('receipt')) score += 2;
-    if (h.includes('consignee')) score += 1;
-    score += Math.min(t.querySelectorAll('tr').length, 200) / 1000;
-    if (score > bestScore) { bestScore = score; best = t; }
-  }
-  if (!best) return { ok: false, reason: 'no-table' };
-  const headerRow = best.querySelector('thead tr') || best.querySelector('tr');
-  const headers = Array.from(headerRow ? headerRow.children : []).map((c) => T(c).toLowerCase());
-  const idxOf = (kw) => headers.findIndex((x) => x.includes(kw));
-  const iRec = idxOf('receipt'), iTrk = idxOf('tracking'), iDate = idxOf('date'),
-        iShip = idxOf('shipper'), iCons = idxOf('consignee'), iStat = idxOf('status');
-  const bodyRows = best.querySelector('tbody')
-    ? Array.from(best.querySelectorAll('tbody tr'))
-    : Array.from(best.querySelectorAll('tr')).slice(1);
-  const cell = (cells, i) => (i >= 0 && cells[i] ? T(cells[i]) : '');
-  const rows = [];
-  for (const r of bodyRows) {
-    const cells = Array.from(r.children);
-    if (!cells.length) continue;
-    const recTxt = cell(cells, iRec);
-    const recNum = (recTxt.match(/\\d{3,}/) || [''])[0];
-    const trk = cell(cells, iTrk);
-    if (!recNum && !trk) continue;
-    rows.push({
-      receipt: recNum || recTxt,
-      date: cell(cells, iDate),
-      shipper: cell(cells, iShip),
-      consignee: cell(cells, iCons),
-      status: cell(cells, iStat),
-      trackings: trk,
-    });
-  }
-  const clickable = Array.from(document.querySelectorAll('a,button,li,span,div,ion-button'));
-  const isPrev = (e) => /previous/i.test(T(e)) && T(e).length < 20;
-  const isNext = (e) => /^next(\\s*»)?$/i.test(T(e)) || T(e).toLowerCase() === 'next';
-  const prevEl = clickable.find(isPrev);
-  let container = null, n = prevEl;
-  for (let k = 0; k < 6 && n; k++) { n = n.parentElement; if (n && /next/i.test(n.innerText || '')) { container = n; break; } }
-  if (!container) { const nx = clickable.find(isNext); container = (nx && nx.parentElement) || document.body; }
-  const links = Array.from(container.querySelectorAll('a,button,li,span'));
-  const nums = [];
-  let active = null;
-  for (const e of links) {
-    const t = T(e);
-    if (/^\\d{1,3}$/.test(t)) {
-      const v = Number(t);
-      if (!nums.includes(v)) nums.push(v);
-      const cl = (e.className || '') + ' ' + ((e.closest('li') || {}).className || '');
-      if (/active|selected|current/i.test(cl)) active = v;
-    }
-  }
-  nums.sort((a, b) => a - b);
-  return { ok: true, rows, pager: { pages: nums, active, max: nums.length ? nums[nums.length - 1] : 1 } };
-})()`;
-
-// Click en el link de página `n` dentro del cluster del paginador.
-export const clickPageExpr = (npage: number) => `(() => {
-  const T = (e) => ((e && (e.innerText || e.textContent)) || '').replace(/\\s+/g, ' ').trim();
-  const clickable = Array.from(document.querySelectorAll('a,button,li,span,div,ion-button'));
-  const isPrev = (e) => /previous/i.test(T(e)) && T(e).length < 20;
-  const isNext = (e) => /^next(\\s*»)?$/i.test(T(e)) || T(e).toLowerCase() === 'next';
-  const prevEl = clickable.find(isPrev);
-  let container = null, n = prevEl;
-  for (let k = 0; k < 6 && n; k++) { n = n.parentElement; if (n && /next/i.test(n.innerText || '')) { container = n; break; } }
-  if (!container) { const nx = clickable.find(isNext); container = (nx && nx.parentElement) || document.body; }
-  const want = ${JSON.stringify(String(npage))};
-  const links = Array.from(container.querySelectorAll('a,button,li,span'));
-  const target = links.find((e) => T(e) === want && e.offsetParent !== null);
-  if (!target) return 'no-target';
-  target.click();
-  return 'ok';
-})()`;
-
-const settle = async (page: EvalPage) => {
-  await page.waitForLoadState("networkidle").catch(() => {});
-  await sleep(1200);
-};
-
-// Click el elemento VISIBLE cuyo texto recortado es EXACTAMENTE `label`
-// (preferimos el más específico/hoja). Se usa para el botón "All" de Receipts,
-// que muestra TODOS los recibos (Punto C) en vez del subconjunto por defecto.
-export const clickExactTextExpr = (label: string) => `(() => {
-  const T = (e) => ((e && (e.innerText || e.textContent)) || '').replace(/\\s+/g, ' ').trim();
-  const want = ${JSON.stringify(label)};
-  const els = Array.from(document.querySelectorAll('button, ion-button, [role=button], a, span, li'));
-  const vis = els.filter((e) => {
-    const s = getComputedStyle(e), r = e.getBoundingClientRect();
-    return T(e) === want && s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
-  });
-  if (!vis.length) return 'no-target';
-  vis.sort((a, b) => (a.textContent || '').length - (b.textContent || '').length);
-  vis[0].click();
-  return 'ok';
-})()`;
-
-/**
- * Punto C: antes de scrapear, intenta mostrar TODOS los recibos clickeando el
- * botón "All" de la página Receipts (por defecto la tabla viene filtrada/paginada
- * a un subconjunto). Best-effort: si no halla el botón, sigue igual.
- */
-async function showAllReceipts(page: EvalPage): Promise<void> {
-  const res = (await page.evaluate(clickExactTextExpr("All"))) as string;
-  console.log(`  ⓘ Botón "All" (mostrar todos los recibos): ${res}.`);
-  if (res === "ok") {
-    await page.waitForLoadState("networkidle").catch(() => {});
-    await sleep(1800);
-  }
-}
-
-/** Tokeniza la celda de Trackings (puede traer varios). */
-function splitTokens(s: string | undefined): string[] {
-  return String(s ?? "")
-    .split(/[\s,;]+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-
-/** Recorre TODAS las páginas de la tabla de Receipts y acumula las filas. */
-async function scrapeAllPages(page: EvalPage): Promise<ReceiptRow[]> {
-  const init = (await page.evaluate(SCRAPE_EXPR)) as Snapshot;
-  if (!init || !init.ok) {
-    console.log("  ⚠ No se halló la tabla de recibos; devuelvo vacío.");
-    return [];
-  }
-  const max = Math.max(1, init.pager?.max ?? 1);
-  console.log(`  ⓘ Páginas detectadas: ${max}.`);
-
-  const seen = new Set<string>();
-  const all: ReceiptRow[] = [];
-  const pushRows = (rows: ReceiptRow[] | undefined) => {
-    for (const r of rows ?? []) {
-      const k = `${r.receipt}|${r.trackings}`;
-      if (!seen.has(k)) {
-        seen.add(k);
-        all.push(r);
-      }
-    }
-  };
-
-  for (let p = 1; p <= max; p++) {
-    let snap = (await page.evaluate(SCRAPE_EXPR)) as Snapshot;
-    const active = snap?.pager?.active ?? null;
-    if (active !== p) {
-      const res = (await page.evaluate(clickPageExpr(p))) as string;
-      if (res !== "ok") console.log(`  ⚠ No pude navegar a la página ${p} (${res}).`);
-      await settle(page);
-      snap = (await page.evaluate(SCRAPE_EXPR)) as Snapshot;
-    }
-    if (snap?.ok) {
-      pushRows(snap.rows);
-      console.log(`  · Página ${p}: ${(snap.rows ?? []).length} filas (acum. ${all.length}).`);
-    }
-  }
-  return all;
-}
-
-/**
- * En la página Receipts: scrapea todas las páginas y cruza cada
- * tracking_proveedor del JSON de NOPs contra la columna Trackings.
- * Devuelve listas de encontrados (con su Receipt) y no encontrados.
- */
-export async function searchReceiptsForNops(
-  page: EvalPage,
-  nopsData: NopsResponse,
-): Promise<{ encontrados: MatchResult[]; noEncontrados: MatchResult[]; totalRecibos: number }> {
-  console.log("\n→ [receipts] Buscando los trackings en Receipts (tabla paginada)…");
-  await showAllReceipts(page);
-  const receipts = await scrapeAllPages(page);
-  console.log(`  ✓ Recibos recolectados (todas las páginas): ${receipts.length}.`);
-
-  // Índice tracking-token → fila de recibo.
-  const byToken = new Map<string, ReceiptRow>();
-  for (const r of receipts) {
-    for (const tok of splitTokens(r.trackings)) {
-      const key = tok.toUpperCase();
-      if (!byToken.has(key)) byToken.set(key, r);
-    }
-  }
-
-  const detalle = Array.isArray(nopsData.nops_detalle) ? nopsData.nops_detalle : [];
-  const encontrados: MatchResult[] = [];
-  const noEncontrados: MatchResult[] = [];
-
-  for (const d of detalle) {
-    const track = Array.isArray(d.tracking_proveedor)
-      ? String(d.tracking_proveedor[0] ?? "")
-      : String(d.tracking_proveedor ?? "");
-    const trimmed = track.trim();
-    if (!trimmed) {
-      noEncontrados.push({ nop: d.nop, id_venta: d.id_venta, tracking_proveedor: trimmed, motivo: "sin tracking_proveedor" });
-      continue;
-    }
-    const key = trimmed.toUpperCase();
-    let row = byToken.get(key);
-    if (!row) {
-      // Fallback por "contiene" (por si la celda agrupa varios o difiere el formato).
-      row = receipts.find((rr) => (rr.trackings || "").toUpperCase().includes(key));
-    }
-    if (row) {
-      encontrados.push({
-        nop: d.nop,
-        id_venta: d.id_venta,
-        tracking_proveedor: trimmed,
-        receipt: row.receipt,
-        fecha: row.date,
-        shipper: row.shipper,
-        consignee: row.consignee,
-        status: row.status,
-      });
-    } else {
-      noEncontrados.push({ nop: d.nop, id_venta: d.id_venta, tracking_proveedor: trimmed, motivo: "no está en Receipts" });
-    }
-  }
-
-  console.log(`  ✓ Encontrados: ${encontrados.length} · No encontrados: ${noEncontrados.length}`);
-  return { encontrados, noEncontrados, totalRecibos: receipts.length };
-}
-
-// ==========================================================================
-//  2.5. Write-back a Supabase (paso 5 del skill) vía webhook actualizar-receipts
+//  2. Write-back a Supabase (paso 5 del skill) vía webhook actualizar-receipts
 // ==========================================================================
 
 /**

@@ -7,8 +7,8 @@ import {
 import { gotoSearchViaMenu, searchAllTrackings } from "./search-receipts.js";
 
 /**
- * StephyTracking (https://app.stephytracking.com/) — flujo MÍNIMO, reconstruido
- * desde cero para ser confiable. Hace SOLO dos cosas y termina:
+ * StephyTracking (https://app.stephytracking.com/) — flujo reconstruido desde
+ * cero para ser confiable:
  *
  *   1. LOGIN SIEMPRE (limpio): borra cookies + storage y hace el login completo
  *      (compañía "tecnoship" → rol "Agente" → usuario/clave → ENTRAR → dashboard).
@@ -16,14 +16,21 @@ import { gotoSearchViaMenu, searchAllTrackings } from "./search-receipts.js";
  *      el token esté vencido, así que arrancamos siempre logueando de verdad.
  *
  *   2. ABRIR EL MENÚ ☰ en la esquina SUPERIOR IZQUIERDA. Si salta el Alert de
- *      notificaciones, se cancela (refresca la página) y se reabre. Cuando el
- *      menú abre sin alertas, TERMINA.
+ *      notificaciones, se cancela (refresca la página) y se reabre.
+ *
+ *   3. (OPCIONAL, con STEPHY_SEARCH=1) RECEIPTS: entra a Search por el menú,
+ *      dispara n8n (NOPs con tracking), busca cada tracking_proveedor uno por
+ *      uno en /search y persiste los receipts en Supabase (write-back vía
+ *      webhook actualizar-receipts → estatus 'Con recibo Almacen Miami').
+ *      Sin el flag, el flujo termina tras abrir el menú.
  *
  * Las credenciales se escriben directo en el DOM con el setter nativo, así que
  * el usuario/clave reales NUNCA se mandan al LLM. El agente (act) se usa solo
  * como fallback para componentes custom (tarjeta de compañía, cambio de rol).
  *
- *   pnpm stephy
+ *   pnpm stephy           → login + menú
+ *   pnpm stephy:auto      → + receipts y write-back real (lo que corre el cron)
+ *   pnpm stephy:preview   → + receipts en dry-run (no escribe en Supabase)
  */
 
 const STEPHY_URL = process.env.STEPHY_URL ?? "https://app.stephytracking.com/";
