@@ -1,0 +1,109 @@
+{
+  "generado_en": "2026-06-16T22:32:13.845Z",
+  "total": 10,
+  "encontrados": [
+    {
+      "nop": "113-6106743-0419464",
+      "id_venta": 25329,
+      "tracking_proveedor": "TBA331929919952",
+      "receipt": "446758",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "DOMY DALLMEIER [160181]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F0022RD",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244241383642",
+      "receipt": "446819",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F0022SN",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244052833954",
+      "receipt": "446803",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001CP7",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055796257217",
+      "receipt": "446807",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "MIREYA PINAS [160108]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001CP9",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055794179329",
+      "receipt": "446816",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "MIREYA PINAS [160108]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001CPY",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055805255876",
+      "receipt": "446801",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "MIREYA PINAS [160108]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-13843307254390462",
+      "id_venta": [
+        20887,
+        19664
+      ],
+      "tracking_proveedor": "GFUS01055167025152",
+      "receipt": "446800",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-05596887340150462",
+      "id_venta": 20834,
+      "tracking_proveedor": "GFUS01056004485312",
+      "receipt": "446811",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002MDJ",
+      "id_venta": 19348,
+      "tracking_proveedor": "GFUS01055651746881",
+      "receipt": "446806",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "MARISELA GOMEZ [160054]",
+      "status": ""
+    },
+    {
+      "nop": "113-9770109-7737020",
+      "id_venta": 18882,
+      "tracking_proveedor": "TBA331923801601",
+      "receipt": "446748",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "JESUS RAMOS [160143]",
+      "status": ""
+    }
+  ]
+}

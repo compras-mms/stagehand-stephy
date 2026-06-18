@@ -1,0 +1,24 @@
+{
+  "generado_en": "2026-06-18T00:46:18.364Z",
+  "total": 3,
+  "no_encontrados": [
+    {
+      "nop": "113-7993988-0045000",
+      "id_venta": 26834,
+      "tracking_proveedor": "TBA332014488093",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1301769-0069009",
+      "id_venta": 26559,
+      "tracking_proveedor": "TBA332005968779",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3413547-4773844",
+      "id_venta": 25289,
+      "tracking_proveedor": "TBA331998068664",
+      "motivo": "no está en Search"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "generado_en": "2026-06-17T23:35:59.983Z",
+  "total": 20,
+  "encontrados": [
+    {
+      "nop": "200014870686061",
+      "id_venta": 22893,
+      "tracking_proveedor": "1LSCXLNA050860247",
+      "receipt": "446788",
+      "fecha": "Jun 16, 2026",
+      "shipper": "WALMART [319]",
+      "consignee": "MICHELL ORTIZ [160174]",
+      "status": ""
+    },
+    {
+      "nop": "200014813251710",
+      "id_venta": 21518,
+      "tracking_proveedor": "528045082789",
+      "receipt": "446772",
+      "fecha": "Jun 16, 2026",
+      "shipper": "WALMART.COM [5469]",
+      "consignee": "ENNA MOGOLLON [160130]",
+      "status": ""
+    },
+    {
+      "nop": "200014911746432",
+      "id_venta": 21291,
+      "tracking_proveedor": "1LSCXLNA050200442",
+      "receipt": "446754",
+      "fecha": "Jun 16, 2026",
+      "shipper": "WALMART [319]",
+      "consignee": "JULY CAMACHO [160109]",
+      "status": ""
+    },
+    {
+      "nop": "200015074523544",
+      "id_venta": 20284,
+      "tracking_proveedor": "1LSCXLNA049537675",
+      "receipt": "446233",
+      "fecha": "Jun 10, 2026",
+      "shipper": "WALMART SUPERCENTER [1738]",
+      "consignee": "IRENE ISTURIZ [160028]",
+      "status": ""
+    },
+    {
+      "nop": "200014797712699",
+      "id_venta": 20135,
+      "tracking_proveedor": "9300110990513426736526",
+      "receipt": "446574",
+      "fecha": "Jun 15, 2026",
+      "shipper": "SHIPPING DEPARMENT [10084]",
+      "consignee": "VIRGINIA ISTURIZ [160030]",
+      "status": ""
+    },
+    {
+      "nop": "200014720633429",
+      "id_venta": 19878,
+      "tracking_proveedor": "1LSCXLNA049488922",
+      "receipt": "445988",
+      "fecha": "Jun 08, 2026",
+      "shipper": "WALMART SUPERCENTER [1738]",
+      "consignee": "NESTOR PERDOMO [160031]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001QCG",
+      "id_venta": 19301,
+      "tracking_proveedor": "SPXMIA013672606100004596",
+      "receipt": "447030",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NATHALY GRUBER [160125]",
+      "status": ""
+    },
+    {
+      "nop": "113-7222416-2488217",
+      "id_venta": 19004,
+      "tracking_proveedor": "TBA331951798872",
+      "receipt": "447008",
+      "fecha": "Jun 17, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "SAMUEL CHOCRON FERNA [160187]",
+      "status": ""
+    },
+    {
+      "nop": "113-2881454-4057057",
+      "id_venta": 18299,
+      "tracking_proveedor": "TBA331924044794",
+      "receipt": "446738",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "JAVIER JOSE FRANCO D [159892]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17722C001XX2",
+      "id_venta": 16448,
+      "tracking_proveedor": "SPXMIA013672606110014540",
+      "receipt": "447031",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "ANYI ZAMBRANO [160135]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17722C001XXU",
+      "id_venta": 16448,
+      "tracking_proveedor": "SPXMIA013672606110014540",
+      "receipt": "447031",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "ANYI ZAMBRANO [160135]",
+      "status": ""
+    },
+    {
+      "nop": "200014786947114",
+      "id_venta": 14435,
+      "tracking_proveedor": "1LSCXLNA049293885",
+      "receipt": "445856",
+      "fecha": "Jun 08, 2026",
+      "shipper": "WALMART SUPERCENTER [1738]",
+      "consignee": "ZULY QUINTERO [159784]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023A5",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "receipt": "447029",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023A6",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "receipt": "447029",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023AT",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "receipt": "447029",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023AX",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "receipt": "447029",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023AY",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "receipt": "447029",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "200014704969030",
+      "id_venta": 10083,
+      "tracking_proveedor": "1LSCXLNA049612372",
+      "receipt": "446221",
+      "fecha": "Jun 10, 2026",
+      "shipper": "WALMART SUPERCENTER [1738]",
+      "consignee": "LUIS ALFONSO PARRA L [159750]",
+      "status": ""
+    },
+    {
+      "nop": "113-5294339-2031432",
+      "id_venta": 7582,
+      "tracking_proveedor": "TBA331944861055",
+      "receipt": "447009",
+      "fecha": "Jun 17, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "GABRIEL RENDON [160164]",
+      "status": ""
+    },
+    {
+      "nop": "113-4420353-7465860",
+      "id_venta": 3961,
+      "tracking_proveedor": "TBA331896649585",
+      "receipt": "447005",
+      "fecha": "Jun 17, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "WILSOM DAVID CHAVARR [160142]",
+      "status": ""
+    }
+  ]
+}

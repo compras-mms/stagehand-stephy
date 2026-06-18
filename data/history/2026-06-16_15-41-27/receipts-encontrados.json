@@ -1,0 +1,56 @@
+{
+  "generado_en": "2026-06-16T19:41:27.981Z",
+  "total": 5,
+  "encontrados": [
+    {
+      "nop": "113-6106743-0419464",
+      "id_venta": 25329,
+      "tracking_proveedor": "TBA331922751946",
+      "receipt": "446740",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "DOMY DALLMEIER [160181]",
+      "status": ""
+    },
+    {
+      "nop": "113-3382125-9321013",
+      "id_venta": 22400,
+      "tracking_proveedor": "TBA331884430141",
+      "receipt": "446744",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "ANIBAL MISEL [160152]",
+      "status": ""
+    },
+    {
+      "nop": "113-0134968-3749032",
+      "id_venta": 21944,
+      "tracking_proveedor": "TBA331855914613",
+      "receipt": "446747",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "HERNAN DELPINO [160151]",
+      "status": ""
+    },
+    {
+      "nop": "113-2881454-4057057",
+      "id_venta": 18299,
+      "tracking_proveedor": "TBA331924044794",
+      "receipt": "446738",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "JAVIER JOSE FRANCO D [159892]",
+      "status": ""
+    },
+    {
+      "nop": "113-8900424-7833807",
+      "id_venta": 15066,
+      "tracking_proveedor": "9300110990513434906041",
+      "receipt": "446751",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "VERONIKA CASTRO [159809]",
+      "status": ""
+    }
+  ]
+}

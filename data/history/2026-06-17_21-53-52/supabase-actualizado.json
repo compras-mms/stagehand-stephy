@@ -1,0 +1,844 @@
+{
+  "generado_en": "2026-06-18T01:53:52.058Z",
+  "preview": false,
+  "respuesta": {
+    "detalle_actualizados": "66",
+    "grupos_actualizados": "38",
+    "detalle": [
+      {
+        "id_venta": 12128,
+        "cod_articulo": 74470,
+        "id_grupo": "10e6eb5c-8168-4f78-93dc-61ce67924edb",
+        "tracking_proveedor": "SPXMIA013672605050031120",
+        "tracking_courier": "443683",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12128,
+        "cod_articulo": 74657,
+        "id_grupo": "cebf9766-7c61-4208-8f18-a56339707c70",
+        "tracking_proveedor": "SPXMIA013672605050031120",
+        "tracking_courier": "443683",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 6067,
+        "cod_articulo": 85181,
+        "id_grupo": "939c958b-e6c6-4890-8e6f-5fc11d319b8c",
+        "tracking_proveedor": "SPXMIA013672605060028782",
+        "tracking_courier": "443800",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72165,
+        "id_grupo": "da6c2a30-41fa-468c-b26e-bf3262038450",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72168,
+        "id_grupo": "78daee3f-5ed7-40be-9fb1-0b8a73dec224",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72157,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72166,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72169,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72171,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72164,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 10491,
+        "cod_articulo": 68589,
+        "id_grupo": "7f27bab9-a6c9-4264-b14a-e8fd55435b71",
+        "tracking_proveedor": "TBA330385421303",
+        "tracking_courier": "442141",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 9991,
+        "cod_articulo": 56244,
+        "id_grupo": "d8a4276a-628f-4b9e-8454-ef8a3e06c874",
+        "tracking_proveedor": "TBA330233686984",
+        "tracking_courier": "441822",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12332,
+        "cod_articulo": 73941,
+        "id_grupo": "09792f6c-00e6-493f-add5-5c7cd683302f",
+        "tracking_proveedor": "GFUS01047357220160",
+        "tracking_courier": "442670",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72170,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 8039,
+        "cod_articulo": 59435,
+        "id_grupo": "79450ab3-0f8f-4fe4-a6cc-8cf8e4ab614f",
+        "tracking_proveedor": "SPXMIA013672604170024587",
+        "tracking_courier": "442420",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12975,
+        "cod_articulo": 80748,
+        "id_grupo": "d4f7d506-0c02-43ae-8210-19d9275b4530",
+        "tracking_proveedor": "GFUS01048653430016",
+        "tracking_courier": "443170",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12975,
+        "cod_articulo": 81907,
+        "id_grupo": "02207180-4896-472e-8b25-79a07750dfba",
+        "tracking_proveedor": "GFUS01048653430016",
+        "tracking_courier": "443170",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12552,
+        "cod_articulo": 75738,
+        "id_grupo": "c39d305e-0c52-42d9-8725-e7aaabcf9e71",
+        "tracking_proveedor": "TBA330924478674",
+        "tracking_courier": "443659",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13593,
+        "cod_articulo": 86157,
+        "id_grupo": "0468225e-1627-4bc4-9e3f-0196c5ec89c1",
+        "tracking_proveedor": "61290328714973082887",
+        "tracking_courier": "443381",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72161,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72162,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72167,
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72155,
+        "id_grupo": "d6486640-09a8-47da-beba-30827af9e874",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 8039,
+        "cod_articulo": 59436,
+        "id_grupo": "79450ab3-0f8f-4fe4-a6cc-8cf8e4ab614f",
+        "tracking_proveedor": "SPXMIA013672604170024587",
+        "tracking_courier": "442420",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72156,
+        "id_grupo": "6de9e617-b85c-48b6-a496-101b709311c4",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11194,
+        "cod_articulo": 64251,
+        "id_grupo": "645762ed-ab9c-4049-9e47-23bc521d0c22",
+        "tracking_proveedor": "GFUS01046638822464",
+        "tracking_courier": "442127",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11107,
+        "cod_articulo": 63762,
+        "id_grupo": "39bac989-144b-4083-a64c-6271ca42a168",
+        "tracking_proveedor": "TBA330302431538",
+        "tracking_courier": "442052",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12157,
+        "cod_articulo": 78425,
+        "id_grupo": "fdbbf3e7-88b6-4002-a9aa-5616de65a7a3",
+        "tracking_proveedor": "TBA330854029175",
+        "tracking_courier": "443868",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 7676,
+        "cod_articulo": 59763,
+        "id_grupo": "210810f6-847b-4b77-8024-811a02ed8d9a",
+        "tracking_proveedor": "TBA330330545249",
+        "tracking_courier": "442003",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12462,
+        "cod_articulo": 75628,
+        "id_grupo": "0cda0477-6d4b-452f-a394-96e9dfec6e2e",
+        "tracking_proveedor": "SPXMIA013672605070013828",
+        "tracking_courier": "443681",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13450,
+        "cod_articulo": 84395,
+        "id_grupo": "d2552411-feda-4834-821f-263c5d1823d1",
+        "tracking_proveedor": "SPXMIA013672605060029347",
+        "tracking_courier": "443798",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12462,
+        "cod_articulo": 76189,
+        "id_grupo": "cdf065a6-fb48-4d70-9c5d-62290ea62cdc",
+        "tracking_proveedor": "SPXMIA013672605060029347",
+        "tracking_courier": "443798",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11194,
+        "cod_articulo": 67011,
+        "id_grupo": "a0bcddd1-f840-48b4-929c-62508fefbb2c",
+        "tracking_proveedor": "GFUS01046638822464",
+        "tracking_courier": "442127",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12149,
+        "cod_articulo": 72159,
+        "id_grupo": "1259dff0-111e-4898-8c57-52729c748ff5",
+        "tracking_proveedor": "SPXMIA013672604230035867",
+        "tracking_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11685,
+        "cod_articulo": 67720,
+        "id_grupo": "f354f539-d6bf-4d89-a6c9-eabfd16802ad",
+        "tracking_proveedor": "TBA330431353369",
+        "tracking_courier": "442423",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13552,
+        "cod_articulo": 85618,
+        "id_grupo": "22c686dd-b7bd-4eec-8e4b-873e7a7babca",
+        "tracking_proveedor": "TBA330996883019",
+        "tracking_courier": "443937",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 9532,
+        "cod_articulo": 70647,
+        "id_grupo": "c89cac3f-ede5-4586-a123-e206b7a43aa2",
+        "tracking_proveedor": "1Z035CX1YN06407934",
+        "tracking_courier": "442954",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11423,
+        "cod_articulo": 71947,
+        "id_grupo": "5fab751a-c56c-4d9b-9984-5fdffe464654",
+        "tracking_proveedor": "GFUS01047170968705",
+        "tracking_courier": "442679",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 10656,
+        "cod_articulo": 61415,
+        "id_grupo": "c8b3074d-f78c-48c2-80e6-9419f153b96a",
+        "tracking_proveedor": "TBA331005644727",
+        "tracking_courier": "443893",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11423,
+        "cod_articulo": 71698,
+        "id_grupo": "c428dabb-3173-43bb-8843-600f98ebcf5c",
+        "tracking_proveedor": "GFUS01047167858496",
+        "tracking_courier": "442675",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12905,
+        "cod_articulo": 78681,
+        "id_grupo": "02a48f7f-9ca6-4acc-b6e2-dcf72f7ea033",
+        "tracking_proveedor": "CNUSUP00037293539",
+        "tracking_courier": "443876",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 10222,
+        "cod_articulo": 56574,
+        "id_grupo": "a971acb2-05e0-40a3-a4af-de8f81112c4e",
+        "tracking_proveedor": "CNUSUP00036742507",
+        "tracking_courier": "442457",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13508,
+        "cod_articulo": 86796,
+        "id_grupo": "392082d4-fd4f-4da6-9767-1a999f164417",
+        "tracking_proveedor": "GFUS01049611893824",
+        "tracking_courier": "443781",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11026,
+        "cod_articulo": 63380,
+        "id_grupo": "10bc3a51-6618-49a8-b374-09c00be7e748",
+        "tracking_proveedor": "TBA330924478674",
+        "tracking_courier": "443659",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13885,
+        "cod_articulo": 89496,
+        "id_grupo": "c784004d-0020-4a34-99b9-d618ec29b15f",
+        "tracking_proveedor": "TBA330971965817",
+        "tracking_courier": "443890",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 20135,
+        "cod_articulo": 136213,
+        "id_grupo": "940be5a7-8a34-4d74-93c6-9e0510bd1f45",
+        "tracking_proveedor": "1LSCXLNA049492693",
+        "tracking_courier": "445876",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 7915,
+        "cod_articulo": 85008,
+        "id_grupo": "58522ef2-091e-4bf1-bb67-927535fba924",
+        "tracking_proveedor": "1LSCXLNA045985672",
+        "tracking_courier": "443754",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 7915,
+        "cod_articulo": 85007,
+        "id_grupo": "58522ef2-091e-4bf1-bb67-927535fba924",
+        "tracking_proveedor": "1LSCXLNA045985672",
+        "tracking_courier": "443754",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11423,
+        "cod_articulo": 71701,
+        "id_grupo": "556119ba-cfd2-476b-bf2c-17bda6d77e17",
+        "tracking_proveedor": "517965540362",
+        "tracking_courier": "442395",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 20284,
+        "cod_articulo": 137532,
+        "id_grupo": "e7eb0800-53e0-4d5f-b44e-4c2259d9f17d",
+        "tracking_proveedor": "1LSCXLNA049494772",
+        "tracking_courier": "445982",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12282,
+        "cod_articulo": 73949,
+        "id_grupo": "b34713f7-a743-47aa-9989-96b4268e0db9",
+        "tracking_proveedor": "GFUS01049992234625",
+        "tracking_courier": "443784",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13355,
+        "cod_articulo": 96518,
+        "id_grupo": "4a915f41-8a2b-403f-a951-c59aad28b92e",
+        "tracking_proveedor": "TBA331189262031",
+        "tracking_courier": "444346",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13355,
+        "cod_articulo": 83143,
+        "id_grupo": "4a915f41-8a2b-403f-a951-c59aad28b92e",
+        "tracking_proveedor": "TBA331189262031",
+        "tracking_courier": "444346",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 13355,
+        "cod_articulo": 96519,
+        "id_grupo": "b2a6acf2-0abd-4cfb-b3be-6025a98db4d3",
+        "tracking_proveedor": "TBA331189491771",
+        "tracking_courier": "444420",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12366,
+        "cod_articulo": 74275,
+        "id_grupo": "6f03a50b-ccf4-4593-8a24-53fac27118ee",
+        "tracking_proveedor": "420331269261290349243386378339",
+        "tracking_courier": "443884",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 10728,
+        "cod_articulo": 61394,
+        "id_grupo": "55a94099-0eb5-40a0-8770-f8dadc39782f",
+        "tracking_proveedor": "381011346363",
+        "tracking_courier": "443457",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 10222,
+        "cod_articulo": 56576,
+        "id_grupo": "165a2362-ec19-4a54-9ac9-b18bcabf8f62",
+        "tracking_proveedor": "CNUSUP00036742507",
+        "tracking_courier": "442457",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 12462,
+        "cod_articulo": 75347,
+        "id_grupo": "208454c8-efad-43fb-a602-d6d8fe2afa46",
+        "tracking_proveedor": "UUS6573820071441753",
+        "tracking_courier": "443611",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 20170,
+        "cod_articulo": 136565,
+        "id_grupo": "05c34e06-02bd-4859-8078-9523e7146cb5",
+        "tracking_proveedor": "TBA331578922653",
+        "tracking_courier": "445506",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 20135,
+        "cod_articulo": 136218,
+        "id_grupo": "940be5a7-8a34-4d74-93c6-9e0510bd1f45",
+        "tracking_proveedor": "1LSCXLNA049492693",
+        "tracking_courier": "445876",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 11238,
+        "cod_articulo": 64618,
+        "id_grupo": "fe481842-b82f-4dbd-84f4-3c0c5878e486",
+        "tracking_proveedor": "1LSCXLNA043951905",
+        "tracking_courier": "442450",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 20834,
+        "cod_articulo": 154003,
+        "id_grupo": "41db65b7-20fa-4d63-a209-236a5a50e189",
+        "tracking_proveedor": "SPXMIA013672606100004069",
+        "tracking_courier": "447045",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 19703,
+        "cod_articulo": 162785,
+        "id_grupo": "03b9f545-f568-41c3-b6e5-c93f0339afe9",
+        "tracking_proveedor": "GFUS01055975529728",
+        "tracking_courier": "447071",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 17004,
+        "cod_articulo": 124361,
+        "id_grupo": "047c2ed0-b54e-40c6-9af0-274e72794f25",
+        "tracking_proveedor": "UUS6691970777881935",
+        "tracking_courier": "447051",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 19698,
+        "cod_articulo": 133162,
+        "id_grupo": "84891beb-66d0-4412-b771-70e68d663963",
+        "tracking_proveedor": "GFUS01055847830592",
+        "tracking_courier": "447067",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 19703,
+        "cod_articulo": 162761,
+        "id_grupo": "8b794d77-8184-412d-b701-f651c57720e6",
+        "tracking_proveedor": "GFUS01056044142983",
+        "tracking_courier": "447070",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ],
+    "grupos": [
+      {
+        "id_grupo": "02207180-4896-472e-8b25-79a07750dfba",
+        "id_venta": 12975,
+        "nombre_grupo": "GSU1YW22C000G5W",
+        "tracking_master": "GFUS01048653430016",
+        "tracking_master_courier": "443170",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "02a48f7f-9ca6-4acc-b6e2-dcf72f7ea033",
+        "id_venta": 12905,
+        "nombre_grupo": "8210777158420465",
+        "tracking_master": "CNUSUP00037293539",
+        "tracking_master_courier": "443876",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "03b9f545-f568-41c3-b6e5-c93f0339afe9",
+        "id_venta": 19703,
+        "nombre_grupo": "PO-211-05597039383670462",
+        "tracking_master": "GFUS01055975529728",
+        "tracking_master_courier": "447071",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "0468225e-1627-4bc4-9e3f-0196c5ec89c1",
+        "id_venta": 13593,
+        "nombre_grupo": "200014640154590",
+        "tracking_master": "61290328714973082887",
+        "tracking_master_courier": "443381",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "047c2ed0-b54e-40c6-9af0-274e72794f25",
+        "id_venta": 17004,
+        "nombre_grupo": "GSU17Y22200MACS",
+        "tracking_master": "UUS6691970777881935",
+        "tracking_master_courier": "447051",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "05c34e06-02bd-4859-8078-9523e7146cb5",
+        "id_venta": 20170,
+        "nombre_grupo": "113-7114330-6565810",
+        "tracking_master": "TBA331578922653",
+        "tracking_master_courier": "445506",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "09792f6c-00e6-493f-add5-5c7cd683302f",
+        "id_venta": 12332,
+        "nombre_grupo": "GSU1Y022Q000JLH",
+        "tracking_master": "GFUS01047357220160",
+        "tracking_master_courier": "442670",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "0cda0477-6d4b-452f-a394-96e9dfec6e2e",
+        "id_venta": 12462,
+        "nombre_grupo": "GSU1YX22N00MTDH",
+        "tracking_master": "SPXMIA013672605070013828",
+        "tracking_master_courier": "443681",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "10e6eb5c-8168-4f78-93dc-61ce67924edb",
+        "id_venta": 12128,
+        "nombre_grupo": "GSU1Y522300MCHA",
+        "tracking_master": "SPXMIA013672605050031120",
+        "tracking_master_courier": "443683",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "1259dff0-111e-4898-8c57-52729c748ff5",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020S0",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "1fe37393-54ee-4935-a800-a825729c6f07",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020S1",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "208454c8-efad-43fb-a602-d6d8fe2afa46",
+        "id_venta": 12462,
+        "nombre_grupo": "GSU1YX22N00MTDK",
+        "tracking_master": "UUS6573820071441753",
+        "tracking_master_courier": "443611",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "22c686dd-b7bd-4eec-8e4b-873e7a7babca",
+        "id_venta": 13552,
+        "nombre_grupo": "114-8261760-5751459",
+        "tracking_master": "TBA330996883019",
+        "tracking_master_courier": "443937",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "41db65b7-20fa-4d63-a209-236a5a50e189",
+        "id_venta": 20834,
+        "nombre_grupo": "GSU17Y22000MK7U",
+        "tracking_master": "SPXMIA013672606100004069",
+        "tracking_master_courier": "447045",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "556119ba-cfd2-476b-bf2c-17bda6d77e17",
+        "id_venta": 11423,
+        "nombre_grupo": "200014707423645",
+        "tracking_master": "517965540362",
+        "tracking_master_courier": "442395",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "58522ef2-091e-4bf1-bb67-927535fba924",
+        "id_venta": 7915,
+        "nombre_grupo": "200014859353386",
+        "tracking_master": "1LSCXLNA045985672",
+        "tracking_master_courier": "443754",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "5fab751a-c56c-4d9b-9984-5fdffe464654",
+        "id_venta": 11423,
+        "nombre_grupo": "GSU1XP22T00NGUG",
+        "tracking_master": "GFUS01047170968705",
+        "tracking_master_courier": "442679",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "645762ed-ab9c-4049-9e47-23bc521d0c22",
+        "id_venta": 11194,
+        "nombre_grupo": "GSU1XV22M0008HF",
+        "tracking_master": "GFUS01046638822464",
+        "tracking_master_courier": "442127",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "6de9e617-b85c-48b6-a496-101b709311c4",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020SU",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "6f03a50b-ccf4-4593-8a24-53fac27118ee",
+        "id_venta": 12366,
+        "nombre_grupo": "Envio2",
+        "tracking_master": "420331269261290349243386378339",
+        "tracking_master_courier": "443884",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "78daee3f-5ed7-40be-9fb1-0b8a73dec224",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020SN",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "84891beb-66d0-4412-b771-70e68d663963",
+        "id_venta": 19698,
+        "nombre_grupo": "GSU17Y22200M9QX",
+        "tracking_master": "GFUS01055847830592",
+        "tracking_master_courier": "447067",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "8b794d77-8184-412d-b701-f651c57720e6",
+        "id_venta": 19703,
+        "nombre_grupo": "PO-211-05597013169270462",
+        "tracking_master": "GFUS01056044142983",
+        "tracking_master_courier": "447070",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "939c958b-e6c6-4890-8e6f-5fc11d319b8c",
+        "id_venta": 6067,
+        "nombre_grupo": "GSU1Y622U002N76",
+        "tracking_master": "SPXMIA013672605060028782",
+        "tracking_master_courier": "443800",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "940be5a7-8a34-4d74-93c6-9e0510bd1f45",
+        "id_venta": 20135,
+        "nombre_grupo": "200014797712699-SHIP -2",
+        "tracking_master": "1LSCXLNA049492693",
+        "tracking_master_courier": "445876",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "a0bcddd1-f840-48b4-929c-62508fefbb2c",
+        "id_venta": 11194,
+        "nombre_grupo": "GSU1XV22M0008HK",
+        "tracking_master": "GFUS01046638822464",
+        "tracking_master_courier": "442127",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "b34713f7-a743-47aa-9989-96b4268e0db9",
+        "id_venta": 12282,
+        "nombre_grupo": "GSU1YY22W0003UJ",
+        "tracking_master": "GFUS01049992234625",
+        "tracking_master_courier": "443784",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "c39d305e-0c52-42d9-8725-e7aaabcf9e71",
+        "id_venta": 12552,
+        "nombre_grupo": "113-3218637-4413858/ship2",
+        "tracking_master": "TBA330924478674",
+        "tracking_master_courier": "443659",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "c428dabb-3173-43bb-8843-600f98ebcf5c",
+        "id_venta": 11423,
+        "nombre_grupo": "GSU1XP22T00NGUJ",
+        "tracking_master": "GFUS01047167858496",
+        "tracking_master_courier": "442675",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "c784004d-0020-4a34-99b9-d618ec29b15f",
+        "id_venta": 13885,
+        "nombre_grupo": "114-4055412-5093016",
+        "tracking_master": "TBA330971965817",
+        "tracking_master_courier": "443890",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "c8b3074d-f78c-48c2-80e6-9419f153b96a",
+        "id_venta": 10656,
+        "nombre_grupo": "114-3016621-8520248/ship1",
+        "tracking_master": "TBA331005644727",
+        "tracking_master_courier": "443893",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "cdf065a6-fb48-4d70-9c5d-62290ea62cdc",
+        "id_venta": 12462,
+        "nombre_grupo": "GSU1YX22N00MTDL",
+        "tracking_master": "SPXMIA013672605060029347",
+        "tracking_master_courier": "443798",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "cebf9766-7c61-4208-8f18-a56339707c70",
+        "id_venta": 12128,
+        "nombre_grupo": "GSU1Y522300MCH7",
+        "tracking_master": "SPXMIA013672605050031120",
+        "tracking_master_courier": "443683",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "d2552411-feda-4834-821f-263c5d1823d1",
+        "id_venta": 13450,
+        "nombre_grupo": "GSU1Y622C001EEQ",
+        "tracking_master": "SPXMIA013672605060029347",
+        "tracking_master_courier": "443798",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "d4f7d506-0c02-43ae-8210-19d9275b4530",
+        "id_venta": 12975,
+        "nombre_grupo": "GSU1YW22C000G5T",
+        "tracking_master": "GFUS01048653430016",
+        "tracking_master_courier": "443170",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "d6486640-09a8-47da-beba-30827af9e874",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020SM",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "da6c2a30-41fa-468c-b26e-bf3262038450",
+        "id_venta": 12149,
+        "nombre_grupo": "GSU1Y022Q0020SC",
+        "tracking_master": "SPXMIA013672604230035867",
+        "tracking_master_courier": "442563",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "e7eb0800-53e0-4d5f-b44e-4c2259d9f17d",
+        "id_venta": 20284,
+        "nombre_grupo": "200015074523544-SHIP -4",
+        "tracking_master": "1LSCXLNA049494772",
+        "tracking_master_courier": "445982",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ]
+  }
+}

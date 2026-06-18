@@ -1,0 +1,96 @@
+{
+  "generado_en": "2026-06-16T21:36:58.335Z",
+  "total": 9,
+  "encontrados": [
+    {
+      "nop": "113-6106743-0419464",
+      "id_venta": 25329,
+      "tracking_proveedor": "TBA331923862064",
+      "receipt": "446745",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "DOMY DALLMEIER [160181]",
+      "status": ""
+    },
+    {
+      "nop": "113-3382125-9321013",
+      "id_venta": 22400,
+      "tracking_proveedor": "TBA331884430141",
+      "receipt": "446744",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "ANIBAL MISEL [160152]",
+      "status": ""
+    },
+    {
+      "nop": "113-0134968-3749032",
+      "id_venta": 21944,
+      "tracking_proveedor": "TBA331855914613",
+      "receipt": "446747",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "HERNAN DELPINO [160151]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y22200M9Q5",
+      "id_venta": 19698,
+      "tracking_proveedor": "GFUS01055794848194",
+      "receipt": "446786",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "MADHAVI AREVALO [160123]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17822400NX21",
+      "id_venta": 17954,
+      "tracking_proveedor": "GFUS01056186276993",
+      "receipt": "446783",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "ARACELIS GONZALEZ [160149]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17822400NX2M",
+      "id_venta": 17954,
+      "tracking_proveedor": "GFUS01056205631945",
+      "receipt": "446768",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "ARACELIS GONZALEZ [160149]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17722C001XX1",
+      "id_venta": 16448,
+      "tracking_proveedor": "GFUS01055981262081",
+      "receipt": "446782",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "ANYI ZAMBRANO [160135]",
+      "status": ""
+    },
+    {
+      "nop": "113-8900424-7833807",
+      "id_venta": 15066,
+      "tracking_proveedor": "9300110990513434906041",
+      "receipt": "446751",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "VERONIKA CASTRO [159809]",
+      "status": ""
+    },
+    {
+      "nop": "113-0549209-1955403",
+      "id_venta": 14807,
+      "tracking_proveedor": "381955120236",
+      "receipt": "446784",
+      "fecha": "Jun 16, 2026",
+      "shipper": "ORIGIN ID [17660]",
+      "consignee": "ANDRES EDUARDO CREIX [159821]",
+      "status": ""
+    }
+  ]
+}

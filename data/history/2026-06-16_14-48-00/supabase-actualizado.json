@@ -1,0 +1,26 @@
+{
+  "generado_en": "2026-06-16T18:48:00.801Z",
+  "respuesta": {
+    "detalle_actualizados": "1",
+    "grupos_actualizados": "1",
+    "detalle": [
+      {
+        "id_venta": 25329,
+        "cod_articulo": 174871,
+        "tracking_proveedor": "TBA331926475014",
+        "tracking_courier": "446736",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ],
+    "grupos": [
+      {
+        "id_grupo": "fae76a24-a968-414e-9a51-5ef5c92f9066",
+        "id_venta": 25329,
+        "nombre_grupo": "113-6106743-0419464-SHIP -1",
+        "tracking_master": "TBA331926475014",
+        "tracking_master_courier": "446736",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ]
+  }
+}

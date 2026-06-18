@@ -1,0 +1,112 @@
+{
+  "generado_en": "2026-06-16T19:41:27.981Z",
+  "preview": true,
+  "respuesta": {
+    "preview": true,
+    "detalle_a_actualizar": "6",
+    "grupos_a_actualizar": "5",
+    "detalle": [
+      {
+        "id_venta": 18299,
+        "cod_articulo": 122140,
+        "id_grupo": "75d7d621-315b-4f79-aed8-ed96246ad876",
+        "tracking_proveedor": "TBA331924044794",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446738",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_venta": 15066,
+        "cod_articulo": 112836,
+        "id_grupo": "276faff6-279c-4ccf-be3e-b7fc4985cd72",
+        "tracking_proveedor": "9300110990513434906041",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446751",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_venta": 22400,
+        "cod_articulo": 158937,
+        "id_grupo": "b66ab2bb-3ea6-4ea2-9a56-3b7d931dadcc",
+        "tracking_proveedor": "TBA331884430141",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446744",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_venta": 25329,
+        "cod_articulo": 174865,
+        "id_grupo": "e4ce5c04-2a51-46a0-be31-41cc9f77e7aa",
+        "tracking_proveedor": "TBA331922751946",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446740",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_venta": 21944,
+        "cod_articulo": 148788,
+        "id_grupo": "727132df-8a49-4629-8352-23eb6dcf64bb",
+        "tracking_proveedor": "TBA331855914613",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446747",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_venta": 21944,
+        "cod_articulo": 148783,
+        "id_grupo": "727132df-8a49-4629-8352-23eb6dcf64bb",
+        "tracking_proveedor": "TBA331855914613",
+        "tracking_courier_actual": null,
+        "tracking_courier_nuevo": "446747",
+        "estatus_actual": "Enviado Proveedor"
+      }
+    ],
+    "grupos": [
+      {
+        "id_grupo": "276faff6-279c-4ccf-be3e-b7fc4985cd72",
+        "id_venta": 15066,
+        "nombre_grupo": "113-8900424-7833807",
+        "tracking_master": "9300110990513434906041",
+        "tracking_master_courier_actual": null,
+        "tracking_master_courier_nuevo": "446751",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_grupo": "727132df-8a49-4629-8352-23eb6dcf64bb",
+        "id_venta": 21944,
+        "nombre_grupo": "113-0134968-3749032",
+        "tracking_master": "TBA331855914613",
+        "tracking_master_courier_actual": null,
+        "tracking_master_courier_nuevo": "446747",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_grupo": "75d7d621-315b-4f79-aed8-ed96246ad876",
+        "id_venta": 18299,
+        "nombre_grupo": "113-2881454-4057057-SHIP -1",
+        "tracking_master": "TBA331924044794",
+        "tracking_master_courier_actual": null,
+        "tracking_master_courier_nuevo": "446738",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_grupo": "b66ab2bb-3ea6-4ea2-9a56-3b7d931dadcc",
+        "id_venta": 22400,
+        "nombre_grupo": "113-3382125-9321013",
+        "tracking_master": "TBA331884430141",
+        "tracking_master_courier_actual": null,
+        "tracking_master_courier_nuevo": "446744",
+        "estatus_actual": "Enviado Proveedor"
+      },
+      {
+        "id_grupo": "e4ce5c04-2a51-46a0-be31-41cc9f77e7aa",
+        "id_venta": 25329,
+        "nombre_grupo": "113-6106743-0419464-SHIP -3",
+        "tracking_master": "TBA331922751946",
+        "tracking_master_courier_actual": null,
+        "tracking_master_courier_nuevo": "446740",
+        "estatus_actual": "Enviado Proveedor"
+      }
+    ]
+  }
+}

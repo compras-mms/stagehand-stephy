@@ -1,0 +1,1719 @@
+{
+  "generado_en": "2026-06-16T21:28:50.329Z",
+  "total": 281,
+  "no_encontrados": [
+    {
+      "nop": "113-6106743-0419464",
+      "id_venta": 25329,
+      "tracking_proveedor": "TBA331923862064",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T00ME10",
+      "id_venta": 25115,
+      "tracking_proveedor": "SPXMIA013672606140017932",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T00MENP",
+      "id_venta": 25115,
+      "tracking_proveedor": "GFUS01056592895296",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T000H3S",
+      "id_venta": 25090,
+      "tracking_proveedor": "SPXMIA013672606140019369",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1792240018K7",
+      "id_venta": 24461,
+      "tracking_proveedor": "SPXMIA013672606150009425",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1792240018KY",
+      "id_venta": 24461,
+      "tracking_proveedor": "YT2616601002433289",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3982274-6682669",
+      "id_venta": 23938,
+      "tracking_proveedor": "9361289677065052359984",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05596995628150462",
+      "id_venta": 23833,
+      "tracking_proveedor": "GFUS01055924006016",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05597037571190462",
+      "id_venta": [
+        23833,
+        21551,
+        20706,
+        19664,
+        14148,
+        13715,
+        12865
+      ],
+      "tracking_proveedor": "GFUS01056153261312",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-7533688-3413006",
+      "id_venta": 23801,
+      "tracking_proveedor": "JCZ0614023131DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17X22F002QG9",
+      "id_venta": 23649,
+      "tracking_proveedor": "GFUS01055834318852",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400M3PY",
+      "id_venta": 23311,
+      "tracking_proveedor": "SPXMIA013672606130001533",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-4913409-6785009",
+      "id_venta": 23267,
+      "tracking_proveedor": "9341989677006791620077",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9993394-8830641",
+      "id_venta": 23184,
+      "tracking_proveedor": "9361289677064846034830",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T0022B8",
+      "id_venta": 23171,
+      "tracking_proveedor": "SPXMIA013672606140012888",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8211676720720465",
+      "id_venta": 23122,
+      "tracking_proveedor": "CNUSUP00038531133",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622Q000FJK",
+      "id_venta": 23039,
+      "tracking_proveedor": "SPXMIA013672606090004889",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8212580478110465",
+      "id_venta": 22868,
+      "tracking_proveedor": "AP00822265892844",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6945204-5123426",
+      "id_venta": 22542,
+      "tracking_proveedor": "TBA331863663444",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0350475-1773066",
+      "id_venta": 22526,
+      "tracking_proveedor": "TBA331853327378",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3382125-9321013",
+      "id_venta": 22400,
+      "tracking_proveedor": "TBA331884430141",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8096889-0858600",
+      "id_venta": 22379,
+      "tracking_proveedor": "TBA331860826325",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T000GKC",
+      "id_venta": 22369,
+      "tracking_proveedor": "SPXMIA013672606150001011",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022RD",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244241383642",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022RE",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022RJ",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022S0",
+      "id_venta": 22149,
+      "tracking_proveedor": "LV066814399US",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022SM",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F0022SN",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244052833954",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00M5R3",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244051594566",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00M5RU",
+      "id_venta": 22149,
+      "tracking_proveedor": "872850741875",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00M5RW",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-2162124-6021051",
+      "id_venta": 22070,
+      "tracking_proveedor": "9361289677065053883259",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22T00MA4X",
+      "id_venta": 22043,
+      "tracking_proveedor": "SPXMIA013672606150000112",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0134968-3749032",
+      "id_venta": 21944,
+      "tracking_proveedor": "TBA331855914613",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22500N7HT",
+      "id_venta": 21871,
+      "tracking_proveedor": "SPXMIA013672606140012289",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622Q00MMCH",
+      "id_venta": 21608,
+      "tracking_proveedor": "SPXMIA013672606080014492",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622Q00MMCJ",
+      "id_venta": 21608,
+      "tracking_proveedor": "SPXMIA013672606080014492",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00N2F7",
+      "id_venta": 21571,
+      "tracking_proveedor": "SPXMIA013672606080010644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00N2F8",
+      "id_venta": 21571,
+      "tracking_proveedor": "SPXMIA013672606080010644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00N2FR",
+      "id_venta": 21571,
+      "tracking_proveedor": "SPXMIA013672606080010644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5620650-5884239",
+      "id_venta": 21567,
+      "tracking_proveedor": "TBA331835771702",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-4479145-9717828",
+      "id_venta": 21526,
+      "tracking_proveedor": "9361289677064848716086",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C001BTH",
+      "id_venta": 21289,
+      "tracking_proveedor": "SPXMIA013672606110010414",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CP7",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055796257217",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CP8",
+      "id_venta": 21289,
+      "tracking_proveedor": "UUS66A3820597648103",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CP9",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055794179329",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CPR",
+      "id_venta": 21289,
+      "tracking_proveedor": "SPXMIA013672606100011134",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CPS",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055914335552",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001CPY",
+      "id_venta": 21289,
+      "tracking_proveedor": "GFUS01055805255876",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y2220013DD",
+      "id_venta": 21053,
+      "tracking_proveedor": "UUS66A3820195866987",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C0016B0",
+      "id_venta": 20966,
+      "tracking_proveedor": "SPXMIA013672606120001961",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C0016BM",
+      "id_venta": 20966,
+      "tracking_proveedor": "872954039315",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C0016BN",
+      "id_venta": 20966,
+      "tracking_proveedor": "GFUS01055965286592",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1732220005H7",
+      "id_venta": 20929,
+      "tracking_proveedor": "YT2615401001156077",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8157875-1449045",
+      "id_venta": 20919,
+      "tracking_proveedor": "9214490411372857902451",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-13843223368310462",
+      "id_venta": 20887,
+      "tracking_proveedor": "GFUS01055291286857",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-13843307254390462",
+      "id_venta": [
+        20887,
+        19664
+      ],
+      "tracking_proveedor": "GFUS01055167025152",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22000MK7U",
+      "id_venta": 20834,
+      "tracking_proveedor": "SPXMIA013672606100004069",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05596887340150462",
+      "id_venta": 20834,
+      "tracking_proveedor": "GFUS01056004485312",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05596955497590462",
+      "id_venta": [
+        20834,
+        19703,
+        19664
+      ],
+      "tracking_proveedor": "GFUS01056153261312",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-1182371-2203456",
+      "id_venta": 20802,
+      "tracking_proveedor": "TBA331978413735",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622Q00NKN4",
+      "id_venta": 20795,
+      "tracking_proveedor": "SPXMIA013672606080006970",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622Q00NKNQ",
+      "id_venta": 20795,
+      "tracking_proveedor": "YWMIA010077332585",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0257702-0138662",
+      "id_venta": 20790,
+      "tracking_proveedor": "9361289677065043336758",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17322W00MU9E",
+      "id_venta": 20747,
+      "tracking_proveedor": "YT2615401000932072",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3869205-9213846",
+      "id_venta": 20732,
+      "tracking_proveedor": "9361289677064946721395",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05596953685110462",
+      "id_venta": 20706,
+      "tracking_proveedor": "GFUS01055924008256",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17W22200NURL",
+      "id_venta": 20695,
+      "tracking_proveedor": "SPXMIA013672606020005364",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9212503-5585868",
+      "id_venta": 20641,
+      "tracking_proveedor": "9361289677065046969021",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-19340785137270462",
+      "id_venta": [
+        20488,
+        8169
+      ],
+      "tracking_proveedor": "SPXMIA005682606080020526",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6438907-3322638",
+      "id_venta": 20271,
+      "tracking_proveedor": "9361289677064848714907",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8212579914570465",
+      "id_venta": 20231,
+      "tracking_proveedor": "CNUSUP00038371500",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-7114330-6565810",
+      "id_venta": [
+        20170,
+        17028
+      ],
+      "tracking_proveedor": "TBA331578922653",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3467541-2861819",
+      "id_venta": 20019,
+      "tracking_proveedor": "4PX0324864440120CN",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17A22T003D9H",
+      "id_venta": 20007,
+      "tracking_proveedor": "GFUS01056946459776",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9042064-0977807",
+      "id_venta": 19904,
+      "tracking_proveedor": "872867373474",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F002N4B",
+      "id_venta": 19765,
+      "tracking_proveedor": "SPXMIA013662606080005061",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F002N4F",
+      "id_venta": 19765,
+      "tracking_proveedor": "LV066814601US",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05596971226230462",
+      "id_venta": 19703,
+      "tracking_proveedor": "YWMIA010078052932",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05597013169270462",
+      "id_venta": 19703,
+      "tracking_proveedor": "GFUS01056044142983",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-05597039383670462",
+      "id_venta": 19703,
+      "tracking_proveedor": "GFUS01055975529728",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22200M9Q5",
+      "id_venta": 19698,
+      "tracking_proveedor": "GFUS01055794848194",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22200M9Q6",
+      "id_venta": 19698,
+      "tracking_proveedor": "SPXMIA013672606100007961",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22200M9QX",
+      "id_venta": 19698,
+      "tracking_proveedor": "GFUS01055847830592",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-04222644306550462",
+      "id_venta": [
+        19391,
+        16949
+      ],
+      "tracking_proveedor": "GFUS01056273576129",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002MDH",
+      "id_venta": 19348,
+      "tracking_proveedor": "GFUS01055655896128",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002MDJ",
+      "id_venta": 19348,
+      "tracking_proveedor": "GFUS01055651746881",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17522F00NBHP",
+      "id_venta": 19339,
+      "tracking_proveedor": "SPXMIA013672606080005593",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001QCG",
+      "id_venta": 19301,
+      "tracking_proveedor": "SPXMIA013672606100004596",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y222001QCH",
+      "id_venta": 19301,
+      "tracking_proveedor": "GFUS01055860954241",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q224001BY0",
+      "id_venta": 19210,
+      "tracking_proveedor": "SPXMIA005672606150016001",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q224001BYM",
+      "id_venta": 19210,
+      "tracking_proveedor": "SPXMIA005672606150016001",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-7222416-2488217",
+      "id_venta": 19004,
+      "tracking_proveedor": "TBA331951798872",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9770109-7737020",
+      "id_venta": 18882,
+      "tracking_proveedor": "TBA331877852008",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0170493-2187444",
+      "id_venta": 18762,
+      "tracking_proveedor": "6100090609709116",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6744857-2984228",
+      "id_venta": 18559,
+      "tracking_proveedor": "381628949783",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22Q000GMV",
+      "id_venta": 18512,
+      "tracking_proveedor": "SPXMIA013672606140021634",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8518098-1447457",
+      "id_venta": 18458,
+      "tracking_proveedor": "TBA331837970436",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-2881454-4057057",
+      "id_venta": 18299,
+      "tracking_proveedor": "1ZA8G7760350164414",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5024456-2461037",
+      "id_venta": 17980,
+      "tracking_proveedor": "381954417665",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400NX21",
+      "id_venta": 17954,
+      "tracking_proveedor": "GFUS01056186276993",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400NX22",
+      "id_venta": 17954,
+      "tracking_proveedor": "YT2616401000263840",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400NX2C",
+      "id_venta": 17954,
+      "tracking_proveedor": "SPXMIA013672606130003644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400NX2M",
+      "id_venta": 17954,
+      "tracking_proveedor": "GFUS01056205631945",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17822400NX2N",
+      "id_venta": 17954,
+      "tracking_proveedor": "GFUS01056182512960",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17X22F002TB3",
+      "id_venta": 17904,
+      "tracking_proveedor": "SPXMIA013672606100007155",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C000EQK",
+      "id_venta": 17892,
+      "tracking_proveedor": "SPXMIA013672606060018248",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C000VQ4",
+      "id_venta": 17751,
+      "tracking_proveedor": "YT2615701001596861",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C000VQQ",
+      "id_venta": 17751,
+      "tracking_proveedor": "SPXMIA013662606060006638",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014694950102",
+      "id_venta": 17646,
+      "tracking_proveedor": "SF6047580493000",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0032535-0335415",
+      "id_venta": 17553,
+      "tracking_proveedor": "SF6047578747041",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-7413670-3193064",
+      "id_venta": 17553,
+      "tracking_proveedor": "YT2615001000742594",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17222C00MXEC",
+      "id_venta": 17548,
+      "tracking_proveedor": "YT2615001001837278",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17222C00MXEW",
+      "id_venta": 17548,
+      "tracking_proveedor": "872732891767",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014529609765",
+      "id_venta": 17546,
+      "tracking_proveedor": "UL204636742YP",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8393285-1510647",
+      "id_venta": 17462,
+      "tracking_proveedor": "9400151903773006026416",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3342066-4781807/ship2",
+      "id_venta": 17344,
+      "tracking_proveedor": "1ZW909V11314926779",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22Q00MDR5",
+      "id_venta": 17072,
+      "tracking_proveedor": "1Z5R68990337532404",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17S22Q00MDR6",
+      "id_venta": 17072,
+      "tracking_proveedor": "SPXMIA013672606140013081",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU171223001HU7",
+      "id_venta": 17070,
+      "tracking_proveedor": "SPXMIA013672605290014733",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU171223001HU8",
+      "id_venta": 17070,
+      "tracking_proveedor": "GFUS01053696733378",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22200MACR",
+      "id_venta": 17004,
+      "tracking_proveedor": "SPXMIA013672606100008501",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22200MACS",
+      "id_venta": 17004,
+      "tracking_proveedor": "UUS6691970777881935",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9918985-6465820",
+      "id_venta": 16914,
+      "tracking_proveedor": "TBA331953949486",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "111-4349311-8531417",
+      "id_venta": 16720,
+      "tracking_proveedor": "381729706935",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C001XX1",
+      "id_venta": 16448,
+      "tracking_proveedor": "GFUS01055981262081",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C001XX2",
+      "id_venta": 16448,
+      "tracking_proveedor": "SPXMIA013672606110014540",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17722C001XXU",
+      "id_venta": 16448,
+      "tracking_proveedor": "SPXMIA013672606110014540",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-13585629394550462",
+      "id_venta": 16309,
+      "tracking_proveedor": "GFUS01055849900034",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-19083122488950462",
+      "id_venta": [
+        16309,
+        15554
+      ],
+      "tracking_proveedor": "GFUS01055226900866",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17N224001CRB",
+      "id_venta": 16286,
+      "tracking_proveedor": "YT2614801002001456",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-6390672-3631408",
+      "id_venta": 15666,
+      "tracking_proveedor": "9339589677064239881388",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17022200MJGC",
+      "id_venta": 15655,
+      "tracking_proveedor": "YT2614601001994317",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17422N001UJH",
+      "id_venta": 15617,
+      "tracking_proveedor": "9200190355087624915978",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU179224001S3Y",
+      "id_venta": 15124,
+      "tracking_proveedor": "SPXMIA013672606160001974",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-9158148-7892261",
+      "id_venta": 15116,
+      "tracking_proveedor": "9361289677065046756393",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8900424-7833807",
+      "id_venta": 15066,
+      "tracking_proveedor": "9300110990513434906041",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17N22Q00QV41",
+      "id_venta": 14971,
+      "tracking_proveedor": "YT2614801002001456",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YJ22B000K7L",
+      "id_venta": 14897,
+      "tracking_proveedor": "YT2614201000352441",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0326756-9441042",
+      "id_venta": 14807,
+      "tracking_proveedor": "UL238103305YP",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0549209-1955403",
+      "id_venta": 14807,
+      "tracking_proveedor": "381955120236",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MU5E",
+      "id_venta": 14646,
+      "tracking_proveedor": "61290349243146139552",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MU5J",
+      "id_venta": 14646,
+      "tracking_proveedor": "61290349244242802609",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MU5V",
+      "id_venta": 14646,
+      "tracking_proveedor": "YT2615601002009916",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014708250770",
+      "id_venta": 14520,
+      "tracking_proveedor": "JCZ0518043712DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014916670727/ship2",
+      "id_venta": 14520,
+      "tracking_proveedor": "JCZ0517005858DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17222C001K46",
+      "id_venta": 14393,
+      "tracking_proveedor": "YT2615101000284306",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17X22F001GHL",
+      "id_venta": 14337,
+      "tracking_proveedor": "GFUS01055745027397",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014783696520",
+      "id_venta": 14093,
+      "tracking_proveedor": "9239599996343601196148",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-17708706849910462",
+      "id_venta": 14057,
+      "tracking_proveedor": "SWX079950000076521586",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014438698273",
+      "id_venta": 13967,
+      "tracking_proveedor": "1LSCXLNA047489251",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023A5",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023A6",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023A7",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060015261",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023AT",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023AX",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17T22C0023AY",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060016205",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-4055412-5093016",
+      "id_venta": 13885,
+      "tracking_proveedor": "TBA330971965817",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-06713666151030462",
+      "id_venta": 13840,
+      "tracking_proveedor": "TBA331386184066",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y7220001CM1",
+      "id_venta": 13803,
+      "tracking_proveedor": "YT2613001000453731",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002110",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B0021ND",
+      "id_venta": 13715,
+      "tracking_proveedor": "YT2616001000879759",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B0021NE",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B0021NJ",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B0021NP",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B0021NV",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NS3",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NS4",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NSC",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NSQ",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NSU",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17622B002NSW",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014640154590",
+      "id_venta": 13593,
+      "tracking_proveedor": "61290328714973082887",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-2511144-1543416",
+      "id_venta": 13553,
+      "tracking_proveedor": "TBA330798797370",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-8261760-5751459",
+      "id_venta": 13552,
+      "tracking_proveedor": "TBA330996883019",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-9107833-2049031",
+      "id_venta": 13508,
+      "tracking_proveedor": "GFUS01049611893824",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YB22T00ND4A",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YB22T00ND4F",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YB22T00ND4K",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y622C001EEQ",
+      "id_venta": 13450,
+      "tracking_proveedor": "SPXMIA013672605060029347",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-2208536-1294632",
+      "id_venta": 13355,
+      "tracking_proveedor": "TBA331189491771",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8906098-0673066",
+      "id_venta": 13355,
+      "tracking_proveedor": "TBA331189262031",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YG220001PPL",
+      "id_venta": 13235,
+      "tracking_proveedor": "YT2613901000951529",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014984241758",
+      "id_venta": 13043,
+      "tracking_proveedor": "UL201840470YP",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17122Q00NQSJ",
+      "id_venta": 13043,
+      "tracking_proveedor": "YT2615001000358789",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8210562328130465",
+      "id_venta": 13037,
+      "tracking_proveedor": "1ST06012159295",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YW22C000G5T",
+      "id_venta": 12975,
+      "tracking_proveedor": "GFUS01048653430016",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YW22C000G5W",
+      "id_venta": 12975,
+      "tracking_proveedor": "GFUS01048653430016",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8210777158420465",
+      "id_venta": 12905,
+      "tracking_proveedor": "CNUSUP00037293539",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU176220001LL5",
+      "id_venta": 12865,
+      "tracking_proveedor": "GFUS01055850986816",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU176220001LL6",
+      "id_venta": 12865,
+      "tracking_proveedor": "SPXMIA013672606130002099",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU176220001LL8",
+      "id_venta": 12865,
+      "tracking_proveedor": "YT2615901000242570",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU176220001LLY",
+      "id_venta": 12865,
+      "tracking_proveedor": "GFUS01055494705604",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8211331901200465",
+      "id_venta": 12811,
+      "tracking_proveedor": "AFTN2390650301",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3218637-4413858/ship2",
+      "id_venta": 12552,
+      "tracking_proveedor": "TBA330924478674",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YX22N00MTDH",
+      "id_venta": 12462,
+      "tracking_proveedor": "SPXMIA013672605070013828",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YX22N00MTDK",
+      "id_venta": 12462,
+      "tracking_proveedor": "UUS6573820071441753",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YX22N00MTDL",
+      "id_venta": 12462,
+      "tracking_proveedor": "SPXMIA013672605060029347",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y622200M0G2",
+      "id_venta": 12374,
+      "tracking_proveedor": "YT2612601001666842",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y0224003BC2",
+      "id_venta": 12366,
+      "tracking_proveedor": "420331269261290349243386378339",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q000JLH",
+      "id_venta": 12332,
+      "tracking_proveedor": "GFUS01047357220160",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q002TRQ",
+      "id_venta": 12332,
+      "tracking_proveedor": "SPXMIA013672604230026156",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YY22W0003UJ",
+      "id_venta": 12282,
+      "tracking_proveedor": "GFUS01049992234625",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0016746-4813011",
+      "id_venta": 12267,
+      "tracking_proveedor": "TBA330547887907",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-7955707-9513805",
+      "id_venta": 12157,
+      "tracking_proveedor": "TBA330854029175",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020S0",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020S1",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020S2",
+      "id_venta": 12149,
+      "tracking_proveedor": "9202045174662425005363",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020SC",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020SM",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020SN",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q0020SU",
+      "id_venta": 12149,
+      "tracking_proveedor": "SPXMIA013672604230035867",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y522300MCH7",
+      "id_venta": 12128,
+      "tracking_proveedor": "SPXMIA013672605050031120",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y522300MCHA",
+      "id_venta": 12128,
+      "tracking_proveedor": "SPXMIA013672605050031120",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q002674",
+      "id_venta": 11734,
+      "tracking_proveedor": "SPXMIA013672604230032151",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00267Q",
+      "id_venta": 11734,
+      "tracking_proveedor": "YT2611401000192044",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6128833-9830661",
+      "id_venta": 11685,
+      "tracking_proveedor": "TBA330431353369",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00MMSM",
+      "id_venta": 11682,
+      "tracking_proveedor": "SPXMIA013672604230032151",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MYG3",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MYG4",
+      "id_venta": 11572,
+      "tracking_proveedor": "DTP260606CIEC1001624",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MYGC",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q22400MYGW",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y0224002258",
+      "id_venta": 11566,
+      "tracking_proveedor": "YT2611301001304434",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00WHN9",
+      "id_venta": 11564,
+      "tracking_proveedor": "380751091618",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00WHNA",
+      "id_venta": 11564,
+      "tracking_proveedor": "SPXMIA013672604230035496",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNG",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNH",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNJ",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014707423645",
+      "id_venta": 11423,
+      "tracking_proveedor": "517965540362",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XP22T00NGUG",
+      "id_venta": 11423,
+      "tracking_proveedor": "GFUS01047170968705",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XP22T00NGUJ",
+      "id_venta": 11423,
+      "tracking_proveedor": "GFUS01047167858496",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5780499-6345816",
+      "id_venta": 11385,
+      "tracking_proveedor": "VR896182233YP",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22000MK4R",
+      "id_venta": 11301,
+      "tracking_proveedor": "SPXMIA013672606100003982",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Y22000MK4S",
+      "id_venta": 11301,
+      "tracking_proveedor": "YT2616101000819191",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q224001C10",
+      "id_venta": 11276,
+      "tracking_proveedor": "LV066147369US",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17Q224001CNE",
+      "id_venta": 11276,
+      "tracking_proveedor": "LV066038182US",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XJ224001TYD",
+      "id_venta": 11272,
+      "tracking_proveedor": "JCZ0418130412DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014630057262",
+      "id_venta": 11238,
+      "tracking_proveedor": "1LSCXLNA043951905",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17C22400WM6T",
+      "id_venta": 11204,
+      "tracking_proveedor": "9200190418551300003207",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XV22M0008HF",
+      "id_venta": 11194,
+      "tracking_proveedor": "GFUS01046638822464",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XV22M0008HK",
+      "id_venta": 11194,
+      "tracking_proveedor": "GFUS01046638822464",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-3866851-8383434",
+      "id_venta": 11107,
+      "tracking_proveedor": "TBA330302431538",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6463398-7562660",
+      "id_venta": 11026,
+      "tracking_proveedor": "TBA330924478674",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-1365166-4029863",
+      "id_venta": 10801,
+      "tracking_proveedor": "9361289677065087083069",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-6241666-4279453",
+      "id_venta": 10795,
+      "tracking_proveedor": "TBA330418338017",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YH22W00MX0W",
+      "id_venta": 10739,
+      "tracking_proveedor": "YT2614001001254624",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014852144334",
+      "id_venta": 10728,
+      "tracking_proveedor": "381011346363",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-3016621-8520248/ship1",
+      "id_venta": 10656,
+      "tracking_proveedor": "TBA331005644727",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-4648521-7653064",
+      "id_venta": 10491,
+      "tracking_proveedor": "TBA330385421303",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YE22M00ML2G",
+      "id_venta": 10482,
+      "tracking_proveedor": "YT2614401000498091",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "8210212407010465",
+      "id_venta": 10222,
+      "tracking_proveedor": "CNUSUP00036742507",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-0517373-0938616",
+      "id_venta": 10189,
+      "tracking_proveedor": "9361289677064945371270",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "114-0921486-3323440",
+      "id_venta": 9991,
+      "tracking_proveedor": "TBA330233686984",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-1541894-4102644",
+      "id_venta": 9547,
+      "tracking_proveedor": "9361289677065080327580",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5563546-4913847",
+      "id_venta": 9547,
+      "tracking_proveedor": "9361289677065080327580",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-2527913-5101062",
+      "id_venta": 9532,
+      "tracking_proveedor": "1Z035CX1YN06407934",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5307236-7696257",
+      "id_venta": 9120,
+      "tracking_proveedor": "JCZ0423046210DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17922400NAC8",
+      "id_venta": 8359,
+      "tracking_proveedor": "GFUS01056797977920",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17922400NACF",
+      "id_venta": 8359,
+      "tracking_proveedor": "YT2616701000555685",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XK22M00NREA",
+      "id_venta": 8350,
+      "tracking_proveedor": "JCZ0414147858DH",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XK22M00NREF",
+      "id_venta": 8350,
+      "tracking_proveedor": "1Z81W5A80305931373",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XK22M00NREK",
+      "id_venta": 8350,
+      "tracking_proveedor": "YT2610401001408887",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "PO-211-08088010437750462",
+      "id_venta": 8169,
+      "tracking_proveedor": "SWX143210000080308290",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XH22100NMW3",
+      "id_venta": 8039,
+      "tracking_proveedor": "SPXMIA013672604170024587",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014859353386",
+      "id_venta": 7915,
+      "tracking_proveedor": "1LSCXLNA045985672",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8490370-5619469",
+      "id_venta": 7676,
+      "tracking_proveedor": "TBA330330545249",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-8892902-9765843",
+      "id_venta": 7637,
+      "tracking_proveedor": "TBA331648148696, TBA331645208316",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-5294339-2031432",
+      "id_venta": 7582,
+      "tracking_proveedor": "TBA331944861055",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y522C00NVUP",
+      "id_venta": 6917,
+      "tracking_proveedor": "YT2612601001666842",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17M224000TPR",
+      "id_venta": 6915,
+      "tracking_proveedor": "YT2614801002001456",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU17C22400WNXA",
+      "id_venta": 6724,
+      "tracking_proveedor": "SPXMIA013672606020002218",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014834897634",
+      "id_venta": 6430,
+      "tracking_proveedor": "UL193083507YP",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1Y622U002N76",
+      "id_venta": 6067,
+      "tracking_proveedor": "SPXMIA013672605060028782",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YT22T0004ED",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YT22T0004EJ",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1YT22T0004P0",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "200014868923464",
+      "id_venta": 4502,
+      "tracking_proveedor": "SF6047559400965",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "113-4420353-7465860",
+      "id_venta": 3961,
+      "tracking_proveedor": "TBA331896649585",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XH2210022B9",
+      "id_venta": 3499,
+      "tracking_proveedor": "YT2610801001888675",
+      "motivo": "no se llegó a la página Receipts"
+    },
+    {
+      "nop": "GSU1XH2210022BR",
+      "id_venta": 3499,
+      "tracking_proveedor": "YT2610801001888675",
+      "motivo": "no se llegó a la página Receipts"
+    }
+  ]
+}

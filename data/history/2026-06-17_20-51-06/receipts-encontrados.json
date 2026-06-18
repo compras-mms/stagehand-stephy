@@ -1,0 +1,42 @@
+{
+  "generado_en": "2026-06-18T00:51:06.959Z",
+  "total": 6,
+  "encontrados": [
+    {
+      "nop": "GFUS01055924006016",
+      "id_venta": null,
+      "tracking_proveedor": "GFUS01055924006016",
+      "receipt": "446835"
+    },
+    {
+      "nop": "9361289677064846034830",
+      "id_venta": null,
+      "tracking_proveedor": "9361289677064846034830",
+      "receipt": "446909"
+    },
+    {
+      "nop": "SPXMIA013672606090004889",
+      "id_venta": null,
+      "tracking_proveedor": "SPXMIA013672606090004889",
+      "receipt": "446932"
+    },
+    {
+      "nop": "TBA331863663444",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331863663444",
+      "receipt": "446836"
+    },
+    {
+      "nop": "TBA331853327378",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331853327378",
+      "receipt": "446832"
+    },
+    {
+      "nop": "TBA331860826325",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331860826325",
+      "receipt": "446840"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "total_nops": 6,
+  "nops_detalle": [
+    {
+      "nop": "GFUS01055924006016",
+      "id_venta": null,
+      "tracking_proveedor": "GFUS01055924006016"
+    },
+    {
+      "nop": "9361289677064846034830",
+      "id_venta": null,
+      "tracking_proveedor": "9361289677064846034830"
+    },
+    {
+      "nop": "SPXMIA013672606090004889",
+      "id_venta": null,
+      "tracking_proveedor": "SPXMIA013672606090004889"
+    },
+    {
+      "nop": "TBA331863663444",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331863663444"
+    },
+    {
+      "nop": "TBA331853327378",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331853327378"
+    },
+    {
+      "nop": "TBA331860826325",
+      "id_venta": null,
+      "tracking_proveedor": "TBA331860826325"
+    }
+  ]
+}

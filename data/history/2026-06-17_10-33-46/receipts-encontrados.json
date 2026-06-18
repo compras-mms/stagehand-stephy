@@ -1,0 +1,569 @@
+{
+  "generado_en": "2026-06-17T14:33:46.691Z",
+  "total": 56,
+  "encontrados": [
+    {
+      "nop": "PO-211-05596995628150462",
+      "id_venta": 23833,
+      "tracking_proveedor": "GFUS01055924006016",
+      "receipt": "446835",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "113-9993394-8830641",
+      "id_venta": 23184,
+      "tracking_proveedor": "9361289677064846034830",
+      "receipt": "446909",
+      "fecha": "Jun 16, 2026",
+      "shipper": "PARCEL SELECT [14824]",
+      "consignee": "DEONEY HERRERA [160092]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622Q000FJK",
+      "id_venta": 23039,
+      "tracking_proveedor": "SPXMIA013672606090004889",
+      "receipt": "446932",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MAYDA INCIARTE [160093]",
+      "status": ""
+    },
+    {
+      "nop": "113-6945204-5123426",
+      "id_venta": 22542,
+      "tracking_proveedor": "TBA331863663444",
+      "receipt": "446836",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "ERNESTO AMPARAN [160154]",
+      "status": ""
+    },
+    {
+      "nop": "113-0350475-1773066",
+      "id_venta": 22526,
+      "tracking_proveedor": "TBA331853327378",
+      "receipt": "446832",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "MAIKEL GARCIA [160153]",
+      "status": ""
+    },
+    {
+      "nop": "113-8096889-0858600",
+      "id_venta": 22379,
+      "tracking_proveedor": "TBA331860826325",
+      "receipt": "446840",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "ZAYDA SOTO [160159]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F0022RE",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "receipt": "446930",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F0022RJ",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "receipt": "446930",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F0022SM",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "receipt": "446930",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F00M5R3",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349244051594566",
+      "receipt": "446851",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F00M5RW",
+      "id_venta": 22149,
+      "tracking_proveedor": "SPXMIA013672606080009849",
+      "receipt": "446930",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NEXIS CEDENO [160070]",
+      "status": ""
+    },
+    {
+      "nop": "113-2162124-6021051",
+      "id_venta": 22070,
+      "tracking_proveedor": "9361289677065053883259",
+      "receipt": "446902",
+      "fecha": "Jun 16, 2026",
+      "shipper": "PARCEL SELECT [14824]",
+      "consignee": "JESUS CEREZO [160145]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622Q00MMCH",
+      "id_venta": 21608,
+      "tracking_proveedor": "SPXMIA013672606080014492",
+      "receipt": "446942",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MILDRED DE GARCIA [160095]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622Q00MMCJ",
+      "id_venta": 21608,
+      "tracking_proveedor": "SPXMIA013672606080014492",
+      "receipt": "446942",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MILDRED DE GARCIA [160095]",
+      "status": ""
+    },
+    {
+      "nop": "113-5620650-5884239",
+      "id_venta": 21567,
+      "tracking_proveedor": "TBA331837136387",
+      "receipt": "446861",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "WILLIAN SANCHEZ [159654]",
+      "status": ""
+    },
+    {
+      "nop": "113-4479145-9717828",
+      "id_venta": 21526,
+      "tracking_proveedor": "9361289677064848716086",
+      "receipt": "446894",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "GREIDALI DE JESUS JA [160090]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001CP8",
+      "id_venta": 21289,
+      "tracking_proveedor": "UUS66A3820597648103",
+      "receipt": "446889",
+      "fecha": "Jun 16, 2026",
+      "shipper": "SHIPPING DEPARMENT [10084]",
+      "consignee": "MIREYA PINAS [160108]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001CPR",
+      "id_venta": 21289,
+      "tracking_proveedor": "SPXMIA013672606100011134",
+      "receipt": "446934",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MIREYA PINAS [160108]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17722C0016BN",
+      "id_venta": 20966,
+      "tracking_proveedor": "GFUS01055965286592",
+      "receipt": "446860",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "GILBETH MOYA [160131]",
+      "status": ""
+    },
+    {
+      "nop": "113-8157875-1449045",
+      "id_venta": 20919,
+      "tracking_proveedor": "9214490411372857902451",
+      "receipt": "446880",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "AROLDO GALDOS RIVERA [159498]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-13843223368310462",
+      "id_venta": 20887,
+      "tracking_proveedor": "GFUS01055291286857",
+      "receipt": "446866",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622Q00NKN4",
+      "id_venta": 20795,
+      "tracking_proveedor": "SPXMIA013672606080006970",
+      "receipt": "446931",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JOSSEIPHXA RODRIGUEZ [160099]",
+      "status": ""
+    },
+    {
+      "nop": "113-0257702-0138662",
+      "id_venta": 20790,
+      "tracking_proveedor": "9361289677065043336758",
+      "receipt": "446844",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "MARLON MEDINA [159470]",
+      "status": ""
+    },
+    {
+      "nop": "113-3869205-9213846",
+      "id_venta": 20732,
+      "tracking_proveedor": "9361289677064946721395",
+      "receipt": "446846",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "MAIKEL MARCANO [160140]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-05596953685110462",
+      "id_venta": 20706,
+      "tracking_proveedor": "GFUS01055924008256",
+      "receipt": "446847",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "113-9212503-5585868",
+      "id_venta": 20641,
+      "tracking_proveedor": "9361289677065046969021",
+      "receipt": "446892",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "FRANCO FAVIA [160040]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-19340785137270462",
+      "id_venta": [
+        20488,
+        8169
+      ],
+      "tracking_proveedor": "SPXMIA005682606080020526",
+      "receipt": "446910",
+      "fecha": "Jun 16, 2026",
+      "shipper": "SHIPPING DEPARMENT [10084]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "113-6438907-3322638",
+      "id_venta": 20271,
+      "tracking_proveedor": "9361289677064848714907",
+      "receipt": "446870",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "GREIDALI DE JESUS JA [160090]",
+      "status": ""
+    },
+    {
+      "nop": "113-9042064-0977807",
+      "id_venta": 19904,
+      "tracking_proveedor": "872867373474",
+      "receipt": "446830",
+      "fecha": "Jun 16, 2026",
+      "shipper": "SHIPPING DEPARMENT [10084]",
+      "consignee": "ELSY RODRIGUEZ [160098]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y22200M9Q6",
+      "id_venta": 19698,
+      "tracking_proveedor": "SPXMIA013672606100007961",
+      "receipt": "446927",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MADHAVI AREVALO [160123]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17522F00NBHP",
+      "id_venta": 19339,
+      "tracking_proveedor": "SPXMIA013672606080005593",
+      "receipt": "446939",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MARIA ALEJANDRA MONA [160086]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y222001QCH",
+      "id_venta": 19301,
+      "tracking_proveedor": "GFUS01055860954241",
+      "receipt": "446869",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "NATHALY GRUBER [160125]",
+      "status": ""
+    },
+    {
+      "nop": "113-8518098-1447457",
+      "id_venta": 18458,
+      "tracking_proveedor": "TBA331837970436",
+      "receipt": "446855",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "ALBERT TORRES [160139]",
+      "status": ""
+    },
+    {
+      "nop": "113-5024456-2461037",
+      "id_venta": 17980,
+      "tracking_proveedor": "381954417665",
+      "receipt": "446849",
+      "fecha": "Jun 16, 2026",
+      "shipper": "SHIPPING DEPARMENT [10084]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17X22F002TB3",
+      "id_venta": 17904,
+      "tracking_proveedor": "SPXMIA013672606100007155",
+      "receipt": "446906",
+      "fecha": "Jun 16, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "LUZ PEREZ [160112]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C000EQK",
+      "id_venta": 17892,
+      "tracking_proveedor": "SPXMIA013672606060018248",
+      "receipt": "446937",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "MARIADELLA CAZORLA [159952]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C000VQQ",
+      "id_venta": 17751,
+      "tracking_proveedor": "SPXMIA013662606060006638",
+      "receipt": "446935",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "KISBETH GIL [159865]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17Y22200MACR",
+      "id_venta": 17004,
+      "tracking_proveedor": "SPXMIA013672606100008501",
+      "receipt": "446936",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "NIURKA CROCE [160127]",
+      "status": ""
+    },
+    {
+      "nop": "PO-211-13585629394550462",
+      "id_venta": 16309,
+      "tracking_proveedor": "GFUS01055849900034",
+      "receipt": "446943",
+      "fecha": "Jun 17, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "JAIME MOLINA [758]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17422N001UJH",
+      "id_venta": 15617,
+      "tracking_proveedor": "9200190355087624915978",
+      "receipt": "446884",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "ELIKA DE ANDRADE [159941]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17T22C0023A7",
+      "id_venta": 13889,
+      "tracking_proveedor": "SPXMIA013672606060015261",
+      "receipt": "446933",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "GINETH MADERA [159518]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002110",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B0021NE",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B0021NJ",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B0021NP",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B0021NV",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NS3",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NS4",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NSC",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NSQ",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NSU",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17622B002NSW",
+      "id_venta": 13715,
+      "tracking_proveedor": "SPXMIA013672606090009836",
+      "receipt": "446941",
+      "fecha": "Jun 17, 2026",
+      "shipper": "SHEIN FULFILMENT [18070]",
+      "consignee": "JHONNY CHAVEZ [159678]",
+      "status": ""
+    },
+    {
+      "nop": "GSU176220001LL5",
+      "id_venta": 12865,
+      "tracking_proveedor": "GFUS01055850986816",
+      "receipt": "446827",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "LISSETTE JIMENEZ [160087]",
+      "status": ""
+    },
+    {
+      "nop": "GSU176220001LLY",
+      "id_venta": 12865,
+      "tracking_proveedor": "GFUS01055494705604",
+      "receipt": "446877",
+      "fecha": "Jun 16, 2026",
+      "shipper": "GOFO [20645]",
+      "consignee": "LISSETTE JIMENEZ [160087]",
+      "status": ""
+    },
+    {
+      "nop": "GSU17C22400WM6T",
+      "id_venta": 11204,
+      "tracking_proveedor": "9200190418551300003207",
+      "receipt": "446875",
+      "fecha": "Jun 16, 2026",
+      "shipper": "US POSTAGE PAID [17708]",
+      "consignee": "MIRIANGELIS BEJARANO [160010]",
+      "status": ""
+    },
+    {
+      "nop": "113-0517373-0938616",
+      "id_venta": 10189,
+      "tracking_proveedor": "9361289677064945371270",
+      "receipt": "446868",
+      "fecha": "Jun 16, 2026",
+      "shipper": "AMAZON FULLFILLMENT [100]",
+      "consignee": "JOSE MONTES [159490]",
+      "status": ""
+    }
+  ]
+}
