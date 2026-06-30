@@ -1,0 +1,1174 @@
+{
+  "generado_en": "2026-06-24T21:07:44.151Z",
+  "total": 193,
+  "no_encontrados": [
+    {
+      "nop": "113-1907550-4316247",
+      "id_venta": 29430,
+      "tracking_proveedor": "TBA332205107205",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3541577-4244235",
+      "id_venta": 29290,
+      "tracking_proveedor": "TBA332208759312",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0266132-0075457",
+      "id_venta": 28757,
+      "tracking_proveedor": "TBA332197222707",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6572109-8889039",
+      "id_venta": 28739,
+      "tracking_proveedor": "9361289677065388958851",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1947906-2148216",
+      "id_venta": 28020,
+      "tracking_proveedor": "1Z077V0E0381331229",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3089507-3978605",
+      "id_venta": 27855,
+      "tracking_proveedor": "TBA332176555697",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-09032926761590462",
+      "id_venta": 27794,
+      "tracking_proveedor": "GFUS01058153124294",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9873569-5115467",
+      "id_venta": 27434,
+      "tracking_proveedor": "9361289677065355345806",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C00MTW8",
+      "id_venta": 27392,
+      "tracking_proveedor": "9200190352018907291482",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C00MTWY",
+      "id_venta": 27392,
+      "tracking_proveedor": "SPXMIA013672606230006360",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001VUA",
+      "id_venta": 27369,
+      "tracking_proveedor": "SPXMIA013672606230011307",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2161552-9387457",
+      "id_venta": 27266,
+      "tracking_proveedor": "TBA332094198490",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0664690-0422650",
+      "id_venta": 27177,
+      "tracking_proveedor": "TBA332190877809",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-4438654-9322662",
+      "id_venta": 27057,
+      "tracking_proveedor": "TBA332186115498",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C00MR0H",
+      "id_venta": 26991,
+      "tracking_proveedor": "SPXMIA013672606230011979",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C00MR0J",
+      "id_venta": 26991,
+      "tracking_proveedor": "GFUS01058127291715",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5006255-9661054",
+      "id_venta": 26852,
+      "tracking_proveedor": "TBA332178442172",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-4494461-7732213",
+      "id_venta": 26768,
+      "tracking_proveedor": "TBA332184371668",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1280878-7825002",
+      "id_venta": 26676,
+      "tracking_proveedor": "TBA332178072847",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1370236-2869026",
+      "id_venta": 26641,
+      "tracking_proveedor": "TBA332174901010",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22400W3HD",
+      "id_venta": 26610,
+      "tracking_proveedor": "YT2617401001825430",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22400W3HE",
+      "id_venta": 26610,
+      "tracking_proveedor": "SPXMIA013672606230007997",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22400W3J1",
+      "id_venta": 26610,
+      "tracking_proveedor": "GFUS01058115378434",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22400W3JM",
+      "id_venta": 26610,
+      "tracking_proveedor": "61290349243279498748",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9146459-0956256",
+      "id_venta": 26516,
+      "tracking_proveedor": "TBA332120535797",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2918631-5723431",
+      "id_venta": 26403,
+      "tracking_proveedor": "1Z1E64V40396949438",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9167824-0650619",
+      "id_venta": 26403,
+      "tracking_proveedor": "TBA332185390254",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F00NH00",
+      "id_venta": 26399,
+      "tracking_proveedor": "YT2617201001173967",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F00NH0M",
+      "id_venta": 26399,
+      "tracking_proveedor": "SPXMIA013672606200013121",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2718147-9366648",
+      "id_venta": 26387,
+      "tracking_proveedor": "TBA332176366978",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9907589-1535412",
+      "id_venta": 26164,
+      "tracking_proveedor": "TBA332173197775",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0002740-7533072",
+      "id_venta": 26150,
+      "tracking_proveedor": "YT2617500701173361",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6241943-2353831",
+      "id_venta": 26150,
+      "tracking_proveedor": "TBA332226123937",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9564617-9211400",
+      "id_venta": 26150,
+      "tracking_proveedor": "9300110990513456656795",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0232496-7305020",
+      "id_venta": 26086,
+      "tracking_proveedor": "TBA332174883011",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6307348-7746649",
+      "id_venta": 26086,
+      "tracking_proveedor": "TBA332176496458",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0591473-2378616",
+      "id_venta": 26046,
+      "tracking_proveedor": "9361289677065261804930",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5953266-7794604",
+      "id_venta": 25950,
+      "tracking_proveedor": "YT2639921437360833",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17V22100MPL7",
+      "id_venta": 25905,
+      "tracking_proveedor": "YT2617501001459393",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5567123-3337811",
+      "id_venta": 25864,
+      "tracking_proveedor": "9300110990513456822312",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2221054-9953008",
+      "id_venta": 25787,
+      "tracking_proveedor": "TBA332168287333",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F0015Y3",
+      "id_venta": 25703,
+      "tracking_proveedor": "SPXMIA013632606200004534",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F0015YW",
+      "id_venta": 25703,
+      "tracking_proveedor": "SPXMIA013672606200015569",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0516126-5834655",
+      "id_venta": 25534,
+      "tracking_proveedor": "1ZA8G7760350393060",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F00169Q",
+      "id_venta": 25519,
+      "tracking_proveedor": "SPXMIA013672606210000145",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22N00N1BY",
+      "id_venta": 25429,
+      "tracking_proveedor": "SPXMIA013672606180005590",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-06971388047990462",
+      "id_venta": [
+        25429,
+        25106,
+        24640
+      ],
+      "tracking_proveedor": "GFUS01057423432964",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17B22C001K56",
+      "id_venta": 25315,
+      "tracking_proveedor": "SPXMIA013672606170014620",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3413547-4773844",
+      "id_venta": 25289,
+      "tracking_proveedor": "TBA331998068664",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22N00N1PE",
+      "id_venta": 25210,
+      "tracking_proveedor": "SPXMIA013672606180009692",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J224002U2Y",
+      "id_venta": 25112,
+      "tracking_proveedor": "SPXMIA013662606230012526",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6057424-9070610",
+      "id_venta": 25082,
+      "tracking_proveedor": "TBA332126549886",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J224004LBB",
+      "id_venta": 25033,
+      "tracking_proveedor": "SPXMIA013672606230007519",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17A225001VHV",
+      "id_venta": 24992,
+      "tracking_proveedor": "SPXMIA013672606170004321",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17B22C001KFD",
+      "id_venta": 24835,
+      "tracking_proveedor": "SPXMIA013672606170010463",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22U00N6Q7",
+      "id_venta": 24833,
+      "tracking_proveedor": "SPXMIA013662606180016886",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22U00N6QY",
+      "id_venta": 24833,
+      "tracking_proveedor": "UUS66J0841231660748",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22U00194N",
+      "id_venta": 24735,
+      "tracking_proveedor": "873276218325",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22U00MASM",
+      "id_venta": 24735,
+      "tracking_proveedor": "SPXMIA013672606180013413",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F0023TT",
+      "id_venta": 24696,
+      "tracking_proveedor": "SPXMIA013632606200005133",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22Q00WM15",
+      "id_venta": 24648,
+      "tracking_proveedor": "61290349244055234239",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22T000J68",
+      "id_venta": 24648,
+      "tracking_proveedor": "9400136208423332308302",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22T000J6Y",
+      "id_venta": 24648,
+      "tracking_proveedor": "SPXMIA005672606190005062",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22C001ASX",
+      "id_venta": 24629,
+      "tracking_proveedor": "SPXMIA013672606200004085",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-9797201-3305849",
+      "id_venta": 24585,
+      "tracking_proveedor": "1Z244RX30351912109",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014754245166",
+      "id_venta": 24575,
+      "tracking_proveedor": "UL257825005YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1792240018KY",
+      "id_venta": 24461,
+      "tracking_proveedor": "YT2616601002433289",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6345440-3233840",
+      "id_venta": 24435,
+      "tracking_proveedor": "TBA332190196783",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5206435-9948202",
+      "id_venta": 24293,
+      "tracking_proveedor": "TBA332172123118",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HHT",
+      "id_venta": 24160,
+      "tracking_proveedor": "SPXMIA013672606230007650",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HQ4",
+      "id_venta": 24000,
+      "tracking_proveedor": "SPXMIA013672606230014446",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HQ5",
+      "id_venta": 24000,
+      "tracking_proveedor": "873440101777",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HQQ",
+      "id_venta": 24000,
+      "tracking_proveedor": "GFUS01058107720832",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HQT",
+      "id_venta": 24000,
+      "tracking_proveedor": "YT2617401002111418",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22C001HQW",
+      "id_venta": 24000,
+      "tracking_proveedor": "GFUS01058107082946",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2165386-3867409",
+      "id_venta": 23979,
+      "tracking_proveedor": "TBA332180780303",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-7947136-7575425",
+      "id_venta": 23979,
+      "tracking_proveedor": "TBA332173887377",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17A225001D77",
+      "id_venta": 23822,
+      "tracking_proveedor": "SPXMIA005672606170019630",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-7533688-3413006",
+      "id_venta": 23801,
+      "tracking_proveedor": "JCZ0614023131DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-06971360056950462",
+      "id_venta": 23799,
+      "tracking_proveedor": "GFUS01057819652290",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1474252-4249849",
+      "id_venta": 23489,
+      "tracking_proveedor": "TBA332177838234",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014986469373",
+      "id_venta": 23428,
+      "tracking_proveedor": "UL236399090YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-06971436421750462",
+      "id_venta": 23060,
+      "tracking_proveedor": "GFUS01057428548032",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-01473826468470462",
+      "id_venta": [
+        23025,
+        22614
+      ],
+      "tracking_proveedor": "SPXMIA005682606180003001",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014870686061",
+      "id_venta": 22893,
+      "tracking_proveedor": "9400111206241481069023",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "8212580478110465",
+      "id_venta": 22868,
+      "tracking_proveedor": "AP00822265892844",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6355548-3887419",
+      "id_venta": 22354,
+      "tracking_proveedor": "TBA332125667761",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17522F0022RP",
+      "id_venta": 22149,
+      "tracking_proveedor": "61290349243282649076",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17522F00M5RU",
+      "id_venta": 22149,
+      "tracking_proveedor": "872850741875",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17B22C001KDW",
+      "id_venta": 22036,
+      "tracking_proveedor": "61290349244254056601",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014813251710",
+      "id_venta": 21518,
+      "tracking_proveedor": "UL240837150YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17B22C00M3A1",
+      "id_venta": 21361,
+      "tracking_proveedor": "SPXMIA013662606170006754",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17B22C00MQHJ",
+      "id_venta": 20897,
+      "tracking_proveedor": "SPXMIA013672606170010541",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17W22200NURL",
+      "id_venta": 20695,
+      "tracking_proveedor": "SPXMIA013672606020005364",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6660703-9672221",
+      "id_venta": 20498,
+      "tracking_proveedor": "TBA332202391275",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F00NHH1",
+      "id_venta": 20314,
+      "tracking_proveedor": "SPXMIA013672606210000886",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014973580586",
+      "id_venta": 20251,
+      "tracking_proveedor": "1Z0V148YYW11312323",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3892582-6989823",
+      "id_venta": 20093,
+      "tracking_proveedor": "TBA332189241099",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17J22B001P91",
+      "id_venta": 20084,
+      "tracking_proveedor": "YT2617501000265536",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3467541-2861819",
+      "id_venta": 20019,
+      "tracking_proveedor": "4PX0324864440120CN",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0142477-6919425",
+      "id_venta": 19676,
+      "tracking_proveedor": "9361289677065229458335",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-01473769001590462",
+      "id_venta": [
+        18935,
+        11017
+      ],
+      "tracking_proveedor": "GFUS01057215016067",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6744857-2984228",
+      "id_venta": 18559,
+      "tracking_proveedor": "381628949783",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17A2250011F5",
+      "id_venta": 18392,
+      "tracking_proveedor": "SPXMIA013672606170004988",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17A2250011FT",
+      "id_venta": 18392,
+      "tracking_proveedor": "SPXMIA013672606170004988",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17822400NX22",
+      "id_venta": 17954,
+      "tracking_proveedor": "YT2616401000263840",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17F22C001B59",
+      "id_venta": 17953,
+      "tracking_proveedor": "SPXMIA013672606180012268",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014694950102",
+      "id_venta": 17646,
+      "tracking_proveedor": "SF6047580493000",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0032535-0335415",
+      "id_venta": 17553,
+      "tracking_proveedor": "SF6047578747041",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17222C00MXEW",
+      "id_venta": 17548,
+      "tracking_proveedor": "872732891767",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014529609765",
+      "id_venta": 17546,
+      "tracking_proveedor": "UL204636742YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-7773856-1338618",
+      "id_venta": 17472,
+      "tracking_proveedor": "TBA332178610802",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-8393285-1510647",
+      "id_venta": 17462,
+      "tracking_proveedor": "9400151903773006026416",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3342066-4781807/ship2",
+      "id_venta": 17344,
+      "tracking_proveedor": "1ZW909V11314926779",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU171223001HU7",
+      "id_venta": 17070,
+      "tracking_proveedor": "SPXMIA013672605290014733",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU171223001HU8",
+      "id_venta": 17070,
+      "tracking_proveedor": "GFUS01053696733378",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "111-4349311-8531417",
+      "id_venta": 16720,
+      "tracking_proveedor": "381729706935",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17N224001CRB",
+      "id_venta": 16286,
+      "tracking_proveedor": "YT2614801002001456",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014483638721",
+      "id_venta": 16176,
+      "tracking_proveedor": "1LSCXLNA051705179",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0382163-0016265",
+      "id_venta": 15887,
+      "tracking_proveedor": "TBA332175045925",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "114-6390672-3631408",
+      "id_venta": 15666,
+      "tracking_proveedor": "9339589677064239881388",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0034615-4901865",
+      "id_venta": 15438,
+      "tracking_proveedor": "TBA332191463615",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-7251613-8786666",
+      "id_venta": 15438,
+      "tracking_proveedor": "TVL2DZ3I18",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-3333346-0064208",
+      "id_venta": 14950,
+      "tracking_proveedor": "1Z035CX1YN38393998",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014698296648",
+      "id_venta": 14950,
+      "tracking_proveedor": "YT2640821437683595",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YJ22B000K7L",
+      "id_venta": 14897,
+      "tracking_proveedor": "YT2614201000352441",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0326756-9441042",
+      "id_venta": 14807,
+      "tracking_proveedor": "UL238103305YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17Q22400MU5E",
+      "id_venta": 14646,
+      "tracking_proveedor": "61290349243146139552",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17Q22400MU5J",
+      "id_venta": 14646,
+      "tracking_proveedor": "61290349244242802609",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014708250770",
+      "id_venta": 14520,
+      "tracking_proveedor": "JCZ0518043712DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014916670727/ship2",
+      "id_venta": 14520,
+      "tracking_proveedor": "JCZ0517005858DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F002WLM",
+      "id_venta": 14280,
+      "tracking_proveedor": "GFUS01057706196994",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014783696520",
+      "id_venta": 14093,
+      "tracking_proveedor": "9239599996343601196148",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-17708706849910462",
+      "id_venta": 14057,
+      "tracking_proveedor": "SWX079950000076521586",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014438698273",
+      "id_venta": 13967,
+      "tracking_proveedor": "1LSCXLNA047489251",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "PO-211-06713666151030462",
+      "id_venta": 13840,
+      "tracking_proveedor": "TBA331386184066",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y7220001CM1",
+      "id_venta": 13803,
+      "tracking_proveedor": "YT2613001000453731",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17622B0021ND",
+      "id_venta": 13715,
+      "tracking_proveedor": "YT2616001000879759",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-2511144-1543416",
+      "id_venta": 13553,
+      "tracking_proveedor": "TBA330798797370",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17V22100NCC6",
+      "id_venta": 13487,
+      "tracking_proveedor": "GFUS01058263080007",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0147293-8918633",
+      "id_venta": 13481,
+      "tracking_proveedor": "TBA332177278879",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YB22T00ND4A",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YB22T00ND4F",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YB22T00ND4K",
+      "id_venta": 13478,
+      "tracking_proveedor": "YT2613601000117309",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17L22F0009XD",
+      "id_venta": 13436,
+      "tracking_proveedor": "SPXMIA013672606210004281",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YG220001PPL",
+      "id_venta": 13235,
+      "tracking_proveedor": "YT2613901000951529",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-7424296-8918661",
+      "id_venta": 13220,
+      "tracking_proveedor": "TBA332174968598",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014984241758",
+      "id_venta": 13043,
+      "tracking_proveedor": "UL201840470YP",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "8210562328130465",
+      "id_venta": 13037,
+      "tracking_proveedor": "1ST06012159295",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU176220001LL8",
+      "id_venta": 12865,
+      "tracking_proveedor": "YT2615901000242570",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "8211331901200465",
+      "id_venta": 12811,
+      "tracking_proveedor": "AFTN2390650301",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y622200M0G2",
+      "id_venta": 12374,
+      "tracking_proveedor": "YT2612601001666842",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q002TRQ",
+      "id_venta": 12332,
+      "tracking_proveedor": "SPXMIA013672604230026156",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-4041585-7763416",
+      "id_venta": 12267,
+      "tracking_proveedor": "TBA332170682786",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q0020S2",
+      "id_venta": 12149,
+      "tracking_proveedor": "9202045174662425005363",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5126146-0225810",
+      "id_venta": 11936,
+      "tracking_proveedor": "TBA332175346165",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q002674",
+      "id_venta": 11734,
+      "tracking_proveedor": "SPXMIA013672604230032151",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00267Q",
+      "id_venta": 11734,
+      "tracking_proveedor": "YT2611401000192044",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00MMSM",
+      "id_venta": 11682,
+      "tracking_proveedor": "SPXMIA013672604230032151",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y0224002258",
+      "id_venta": 11566,
+      "tracking_proveedor": "YT2611301001304434",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00WHN9",
+      "id_venta": 11564,
+      "tracking_proveedor": "380751091618",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00WHNA",
+      "id_venta": 11564,
+      "tracking_proveedor": "SPXMIA013672604230035496",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0170955-8748214",
+      "id_venta": 11549,
+      "tracking_proveedor": "TBA332104333740",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNG",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNH",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y022Q00MBNJ",
+      "id_venta": 11548,
+      "tracking_proveedor": "SPXMIA013672604230018644",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17Y22000MK4S",
+      "id_venta": 11301,
+      "tracking_proveedor": "YT2616101000819191",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XJ224001TYD",
+      "id_venta": 11272,
+      "tracking_proveedor": "JCZ0418130412DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-6241666-4279453",
+      "id_venta": 10795,
+      "tracking_proveedor": "TBA330418338017",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YH22W00MX0W",
+      "id_venta": 10739,
+      "tracking_proveedor": "YT2614001001254624",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YE22M00ML2G",
+      "id_venta": 10482,
+      "tracking_proveedor": "YT2614401000498091",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-1466351-5070618",
+      "id_venta": 10446,
+      "tracking_proveedor": "TBA332123808276",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200015004542921",
+      "id_venta": 9208,
+      "tracking_proveedor": "9434650898524007278830",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-5307236-7696257",
+      "id_venta": 9120,
+      "tracking_proveedor": "JCZ0423046210DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17922400NACF",
+      "id_venta": 8359,
+      "tracking_proveedor": "YT2616701000555685",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17922400NACG",
+      "id_venta": 8359,
+      "tracking_proveedor": "SPXMIA005672606160033594",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17922400NACK",
+      "id_venta": 8359,
+      "tracking_proveedor": "YT2616701000555685",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XK22M00NREA",
+      "id_venta": 8350,
+      "tracking_proveedor": "JCZ0414147858DH",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XK22M00NREF",
+      "id_venta": 8350,
+      "tracking_proveedor": "1Z81W5A80305931373",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XK22M00NREK",
+      "id_venta": 8350,
+      "tracking_proveedor": "YT2610401001408887",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1Y522C00NVUP",
+      "id_venta": 6917,
+      "tracking_proveedor": "YT2612601001666842",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17M224000TPR",
+      "id_venta": 6915,
+      "tracking_proveedor": "YT2614801002001456",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "112-9227036-0996211",
+      "id_venta": 6836,
+      "tracking_proveedor": "873482357500",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "113-0151334-0507438",
+      "id_venta": 6477,
+      "tracking_proveedor": "9434650206217239787205",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014755233502",
+      "id_venta": 6142,
+      "tracking_proveedor": "1LSCXLNA051669252",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17V221001LK2",
+      "id_venta": 5654,
+      "tracking_proveedor": "YT2617501001323714",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU17V221001LKU",
+      "id_venta": 5654,
+      "tracking_proveedor": "9200190352018907671949",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YT22T0004ED",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YT22T0004EJ",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1YT22T0004P0",
+      "id_venta": 4917,
+      "tracking_proveedor": "YT2612501002098666",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "200014868923464",
+      "id_venta": 4502,
+      "tracking_proveedor": "SF6047559400965",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XH2210022B9",
+      "id_venta": 3499,
+      "tracking_proveedor": "YT2610801001888675",
+      "motivo": "no está en Search"
+    },
+    {
+      "nop": "GSU1XH2210022BR",
+      "id_venta": 3499,
+      "tracking_proveedor": "YT2610801001888675",
+      "motivo": "no está en Search"
+    }
+  ]
+}

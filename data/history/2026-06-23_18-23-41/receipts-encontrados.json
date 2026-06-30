@@ -1,0 +1,30 @@
+{
+  "generado_en": "2026-06-23T22:23:41.120Z",
+  "total": 4,
+  "encontrados": [
+    {
+      "nop": "113-8622780-6584203",
+      "id_venta": 27856,
+      "tracking_proveedor": "TBA332137681790",
+      "receipt": "447564"
+    },
+    {
+      "nop": "113-8271502-4045832",
+      "id_venta": 27043,
+      "tracking_proveedor": "TBA332134893865",
+      "receipt": "447552"
+    },
+    {
+      "nop": "113-5563100-9354664",
+      "id_venta": 26271,
+      "tracking_proveedor": "TBA332126977070",
+      "receipt": "447554"
+    },
+    {
+      "nop": "113-2405459-9287457",
+      "id_venta": 24175,
+      "tracking_proveedor": "9361289677065149304484",
+      "receipt": "447498"
+    }
+  ]
+}

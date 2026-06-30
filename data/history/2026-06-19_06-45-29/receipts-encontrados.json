@@ -1,0 +1,18 @@
+{
+  "generado_en": "2026-06-19T10:45:29.692Z",
+  "total": 2,
+  "encontrados": [
+    {
+      "nop": "113-7993988-0045000",
+      "id_venta": 26834,
+      "tracking_proveedor": "TBA332014488093",
+      "receipt": "447263"
+    },
+    {
+      "nop": "200014949688690",
+      "id_venta": 17994,
+      "tracking_proveedor": "528057707580",
+      "receipt": "447203"
+    }
+  ]
+}

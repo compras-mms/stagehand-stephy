@@ -1,0 +1,81 @@
+{
+  "generado_en": "2026-06-19T17:00:42.905Z",
+  "total": 12,
+  "encontrados": [
+    {
+      "nop": "113-1301769-0069009",
+      "id_venta": 26559,
+      "tracking_proveedor": "TBA332005968779",
+      "receipt": "447316"
+    },
+    {
+      "nop": "GSU17S22T000H3S",
+      "id_venta": 25090,
+      "tracking_proveedor": "SPXMIA013672606140019369",
+      "receipt": "447332"
+    },
+    {
+      "nop": "200014874827275",
+      "id_venta": 23653,
+      "tracking_proveedor": "1LSCXLNA051061024",
+      "receipt": "447305"
+    },
+    {
+      "nop": "113-0624595-9602648",
+      "id_venta": 21298,
+      "tracking_proveedor": "TBA332004690620",
+      "receipt": "447320"
+    },
+    {
+      "nop": "113-0491763-3317811",
+      "id_venta": 20713,
+      "tracking_proveedor": "TBA332013324234",
+      "receipt": "447321"
+    },
+    {
+      "nop": "GSU17822400NX2C",
+      "id_venta": 17954,
+      "tracking_proveedor": "SPXMIA013672606130003644",
+      "receipt": "447334"
+    },
+    {
+      "nop": "GSU17S22Q00MDR6",
+      "id_venta": 17072,
+      "tracking_proveedor": "SPXMIA013672606140013081",
+      "receipt": "447331"
+    },
+    {
+      "nop": "PO-211-19083122488950462",
+      "id_venta": [
+        16309,
+        15554
+      ],
+      "tracking_proveedor": "GFUS01055226900866",
+      "receipt": "447329"
+    },
+    {
+      "nop": "GSU17Q22400MYG3",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "receipt": "447335"
+    },
+    {
+      "nop": "GSU17Q22400MYGC",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "receipt": "447335"
+    },
+    {
+      "nop": "GSU17Q22400MYGW",
+      "id_venta": 11572,
+      "tracking_proveedor": "SPXMIA005672606140036408",
+      "receipt": "447335"
+    },
+    {
+      "nop": "GSU17922400NAC8",
+      "id_venta": 8359,
+      "tracking_proveedor": "GFUS01056797977920",
+      "receipt": "447336"
+    }
+  ]
+}

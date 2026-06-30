@@ -1,0 +1,30 @@
+{
+  "generado_en": "2026-06-29T19:07:56.678Z",
+  "total": 4,
+  "encontrados": [
+    {
+      "nop": "113-1947906-2148216",
+      "id_venta": 28020,
+      "tracking_proveedor": "1Z077V0E0381331229",
+      "receipt": "448132"
+    },
+    {
+      "nop": "GSU17P22F00MYS5",
+      "id_venta": 27280,
+      "tracking_proveedor": "SPXMIA013",
+      "receipt": "443194"
+    },
+    {
+      "nop": "113-4494461-7732213",
+      "id_venta": 26768,
+      "tracking_proveedor": "TBA332184371668",
+      "receipt": "448141"
+    },
+    {
+      "nop": "113-9167824-0650619",
+      "id_venta": 26403,
+      "tracking_proveedor": "TBA332185390254",
+      "receipt": "448123"
+    }
+  ]
+}

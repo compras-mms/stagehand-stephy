@@ -1,3 +1,6 @@
-2026/06/18-15:00:04.058 ef8 Reusing MANIFEST C:\Users\MMS Server\Desktop\MamaSAN\Stagehand\stagehand-stephy\chrome-user-data\Default\Session Storage/MANIFEST-000001
-2026/06/18-15:00:04.059 ef8 Recovering log #4
-2026/06/18-15:00:04.064 ef8 Reusing old log C:\Users\MMS Server\Desktop\MamaSAN\Stagehand\stagehand-stephy\chrome-user-data\Default\Session Storage/000004.log 
+2026/06/30-10:26:42.373 768 Reusing MANIFEST C:\Users\MMS Server\Desktop\MamaSAN\Stagehand\stagehand-stephy\chrome-user-data\Default\Session Storage/MANIFEST-000001
+2026/06/30-10:26:42.373 768 Recovering log #13
+2026/06/30-10:26:42.375 768 Reusing old log C:\Users\MMS Server\Desktop\MamaSAN\Stagehand\stagehand-stephy\chrome-user-data\Default\Session Storage/000013.log 
+2026/06/30-10:29:07.352 15e0 Level-0 table #17: started
+2026/06/30-10:29:07.370 15e0 Level-0 table #17: 41251 bytes OK
+2026/06/30-10:29:07.375 15e0 Delete type=0 #13

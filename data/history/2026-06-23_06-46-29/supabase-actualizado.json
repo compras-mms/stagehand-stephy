@@ -1,0 +1,68 @@
+{
+  "generado_en": "2026-06-23T10:46:29.097Z",
+  "preview": false,
+  "respuesta": {
+    "detalle_actualizados": "4",
+    "grupos_actualizados": "3",
+    "detalle": [
+      {
+        "id_venta": 28393,
+        "cod_articulo": 199226,
+        "id_grupo": "0970060f-5df6-4936-b605-5029aefc27eb",
+        "tracking_proveedor": "9361289677065297710618",
+        "tracking_courier": "447476",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 28393,
+        "cod_articulo": 199240,
+        "id_grupo": "0970060f-5df6-4936-b605-5029aefc27eb",
+        "tracking_proveedor": "9361289677065297710618",
+        "tracking_courier": "447476",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 24365,
+        "cod_articulo": 167745,
+        "id_grupo": "171960a2-db4a-4762-b827-d60a6eb27565",
+        "tracking_proveedor": "9361289677065287924230",
+        "tracking_courier": "447479",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_venta": 23837,
+        "cod_articulo": 163425,
+        "id_grupo": "d91bf0fc-90a6-4da7-b599-7f11eb9ace3e",
+        "tracking_proveedor": "9361289677065299858455",
+        "tracking_courier": "447478",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ],
+    "grupos": [
+      {
+        "id_grupo": "0970060f-5df6-4936-b605-5029aefc27eb",
+        "id_venta": 28393,
+        "nombre_grupo": "113-9959049-2049047",
+        "tracking_master": "9361289677065297710618",
+        "tracking_master_courier": "447476",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "171960a2-db4a-4762-b827-d60a6eb27565",
+        "id_venta": 24365,
+        "nombre_grupo": "113-2814426-2252260",
+        "tracking_master": "9361289677065287924230",
+        "tracking_master_courier": "447479",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      },
+      {
+        "id_grupo": "d91bf0fc-90a6-4da7-b599-7f11eb9ace3e",
+        "id_venta": 23837,
+        "nombre_grupo": "113-5559967-3627403",
+        "tracking_master": "9361289677065299858455",
+        "tracking_master_courier": "447478",
+        "estatus_shipping": "Con recibo Almacen Miami"
+      }
+    ]
+  }
+}

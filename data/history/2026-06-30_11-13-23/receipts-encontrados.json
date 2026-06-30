@@ -1,0 +1,36 @@
+{
+  "generado_en": "2026-06-30T15:13:23.001Z",
+  "total": 5,
+  "encontrados": [
+    {
+      "nop": "113-3942611-4702610",
+      "id_venta": 29814,
+      "tracking_proveedor": "TBA332336284765",
+      "receipt": "448255"
+    },
+    {
+      "nop": "GSU17J22C001VU9",
+      "id_venta": 27369,
+      "tracking_proveedor": "SPXMIA013672606230011307",
+      "receipt": "448243"
+    },
+    {
+      "nop": "GSU17J22C001VUA",
+      "id_venta": 27369,
+      "tracking_proveedor": "SPXMIA013672606230011307",
+      "receipt": "448243"
+    },
+    {
+      "nop": "113-5953266-7794604",
+      "id_venta": 25950,
+      "tracking_proveedor": "YT2639921437360833",
+      "receipt": "448242"
+    },
+    {
+      "nop": "GSU17J224002U2Y",
+      "id_venta": 25112,
+      "tracking_proveedor": "SPXMIA013662606230012526",
+      "receipt": "448244"
+    }
+  ]
+}

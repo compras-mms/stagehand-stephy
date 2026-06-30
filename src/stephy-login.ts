@@ -5,6 +5,44 @@ import {
   finalizeRunHistory,
 } from "./nops-con-tracking.js";
 import { gotoSearchViaMenu, searchAllTrackings } from "./search-receipts.js";
+import { installLogCapture, getCapturedLog, sendRunLog } from "./email-log.js";
+
+// Capturar TODO el log de la corrida desde el primer instante (incluso los logs
+// internos de Stagehand), para mandarlo por correo al final.
+installLogCapture();
+
+/**
+ * Estadísticas de la corrida, para armar el resumen del correo. Es un objeto
+ * mutable a nivel de módulo para que tanto la rama de éxito como la de error
+ * (que viven fuera de main()) puedan leerlo sin importar por dónde terminó.
+ */
+interface RunStats {
+  inicio: Date;
+  loginOk: boolean;
+  menuOpen: boolean;
+  searchRan: boolean;
+  preview: boolean;
+  encontrados: number;
+  noEncontrados: number;
+  sessionExpired: number;
+  detalleActualizados: number | string | null;
+  gruposActualizados: number | string | null;
+  error: string | null;
+}
+
+const runStats: RunStats = {
+  inicio: new Date(),
+  loginOk: false,
+  menuOpen: false,
+  searchRan: false,
+  preview: false,
+  encontrados: 0,
+  noEncontrados: 0,
+  sessionExpired: 0,
+  detalleActualizados: null,
+  gruposActualizados: null,
+  error: null,
+};
 
 /**
  * StephyTracking (https://app.stephytracking.com/) — flujo reconstruido desde
@@ -404,6 +442,8 @@ async function main() {
     if (isOnDashboard()) break;
   }
 
+  runStats.loginOk = isOnDashboard();
+
   if (!isOnDashboard()) {
     console.log(`\n⚠ Login falló tras ${MAX_LOGIN_ATTEMPTS} intento(s) (URL: ${page.url()}). No abro el menú.`);
     await stagehand.close();
@@ -411,6 +451,7 @@ async function main() {
   }
 
   const menuOpen = await openMenu();
+  runStats.menuOpen = menuOpen;
   console.log(
     menuOpen
       ? "\n✅ Login + menú ☰ abierto."
@@ -424,6 +465,8 @@ async function main() {
   if (process.env.STEPHY_SEARCH === "1" && menuOpen) {
     const limit = Number(process.env.STEPHY_SEARCH_LIMIT) || undefined;
     const preview = process.env.STEPHY_PREVIEW === "1";
+    runStats.searchRan = true;
+    runStats.preview = preview;
 
     const onSearch = await gotoSearchViaMenu(page);
     if (!onSearch) {
@@ -448,6 +491,9 @@ async function main() {
       } else {
         const { encontrados, noEncontrados, sessionExpiredCount } =
           await searchAllTrackings(page, nopsData, { limit });
+        runStats.encontrados = encontrados.length;
+        runStats.noEncontrados = noEncontrados.length;
+        runStats.sessionExpired = sessionExpiredCount;
 
         if (sessionExpiredCount > 0 && encontrados.length === 0) {
           console.log(
@@ -457,6 +503,16 @@ async function main() {
           await finalizeRunHistory(nopsData, encontrados, noEncontrados);
         } else {
           const persistResult = await persistMatches(encontrados, { preview });
+          if (persistResult) {
+            runStats.detalleActualizados =
+              (preview
+                ? persistResult.detalle_a_actualizar
+                : persistResult.detalle_actualizados) ?? null;
+            runStats.gruposActualizados =
+              (preview
+                ? persistResult.grupos_a_actualizar
+                : persistResult.grupos_actualizados) ?? null;
+          }
           await finalizeRunHistory(nopsData, encontrados, noEncontrados, persistResult);
         }
       }
@@ -466,7 +522,69 @@ async function main() {
   await stagehand.close();
 }
 
-main().catch((err) => {
-  console.error("Flujo falló:\n", err);
-  process.exit(1);
-});
+/** Timestamp local legible para el asunto/cuerpo del correo. */
+function fmtLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+    `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+  );
+}
+
+/** Arma asunto + cuerpo (resumen arriba + log completo) para el correo. */
+function buildEmailContent(): { asunto: string; cuerpo: string } {
+  const estado = runStats.error
+    ? "❌ ERROR"
+    : runStats.loginOk
+      ? "✅ OK"
+      : "⚠ LOGIN FALLÓ";
+  const inicio = fmtLocal(runStats.inicio);
+  const fin = fmtLocal(new Date());
+  const modo = runStats.preview ? " (PREVIEW)" : "";
+
+  const asunto = `Stephy ${inicio} — ${estado}${modo}`;
+
+  const resumen = [
+    `RESUMEN DE LA CORRIDA`,
+    `─────────────────────`,
+    `Estado:        ${estado}`,
+    `Inicio:        ${inicio}`,
+    `Fin:           ${fin}`,
+    `Login:         ${runStats.loginOk ? "OK" : "NO llegó al dashboard"}`,
+    `Menú ☰:        ${runStats.menuOpen ? "abierto" : "no abierto"}`,
+    `Búsqueda:      ${
+      runStats.searchRan
+        ? runStats.preview
+          ? "ejecutada (PREVIEW, no escribe)"
+          : "ejecutada (escritura real)"
+        : "no ejecutada"
+    }`,
+    `Receipts:      ${runStats.encontrados} encontrado(s), ${runStats.noEncontrados} no encontrado(s)`,
+    `Sesión exp.:   ${runStats.sessionExpired}`,
+    `Supabase:      ${
+      runStats.detalleActualizados === null && runStats.gruposActualizados === null
+        ? "sin write-back"
+        : `${runStats.detalleActualizados ?? "?"} producto(s), ${runStats.gruposActualizados ?? "?"} grupo(s)`
+    }`,
+    runStats.error ? `Error:         ${runStats.error.split("\n")[0]}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const sep = "=".repeat(60);
+  const cuerpo = `${resumen}\n\n${sep}\nLOG COMPLETO DE LA CORRIDA\n${sep}\n\n${getCapturedLog()}`;
+  return { asunto, cuerpo };
+}
+
+main()
+  .then(async () => {
+    const { asunto, cuerpo } = buildEmailContent();
+    await sendRunLog(asunto, cuerpo);
+  })
+  .catch(async (err) => {
+    runStats.error = (err && (err.stack || err.message)) || String(err);
+    console.error("Flujo falló:\n", err);
+    const { asunto, cuerpo } = buildEmailContent();
+    await sendRunLog(asunto, cuerpo);
+    process.exit(1);
+  });
