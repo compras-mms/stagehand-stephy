@@ -201,6 +201,30 @@ async function runOnce() {
   //  Helpers (closures sobre `page` / `stagehand`)
   // ======================================================================
 
+  /**
+   * #2-hardening (endurecer login) — `stagehand.act()` envuelto en try/catch.
+   * Los act() de fallback dependen del LLM, que a veces devuelve salida
+   * estructurada inválida/truncada (ej. `{"`) → `AI_NoObjectGeneratedError`.
+   * DESNUDO, ese error no lo captura nadie y mata el proceso ENTERO a mitad de
+   * corrida (fue el culpable de corridas caídas el 2026-07-14). Aquí lo tragamos
+   * y devolvemos `false`: como cada bloque ya tiene su gate por URL (/login,
+   * /login/a, isOnDashboard) o su `res!=='ok'`, un act() fallido deja que el gate
+   * aborte limpio o que el loop reintente. OJO: los errores REALES de
+   * CDP/navegador (isFatalBrowserError) SÍ se relanzan — deben propagar para el
+   * retry de corrida (#3); no los tragamos.
+   */
+  const safeAct = async (instruction: string): Promise<boolean> => {
+    try {
+      await stagehand.act(instruction);
+      return true;
+    } catch (err) {
+      const msg = (err as Error)?.message ?? String(err);
+      if (isFatalBrowserError(msg)) throw err; // CDP/browser real → lo maneja #3
+      console.log(`  ⚠ act() falló (ignorado): ${msg.split("\n")[0]}`);
+      return false;
+    }
+  };
+
   /** Primer selector de `selectors` presente y visible en la página. */
   const firstVisible = async (selectors: string[]) => {
     for (const sel of selectors) {
@@ -412,7 +436,7 @@ async function runOnce() {
       await box.click().catch(() => {});
       await box.fill(COMPANY);
     } else {
-      await stagehand.act(`type "${COMPANY}" into the company search box`);
+      await safeAct(`type "${COMPANY}" into the company search box`);
     }
     await page.keyPress("Enter");
     await sleep(2000);
@@ -430,7 +454,7 @@ async function runOnce() {
       console.log(
         `  ↻ Tarjeta por DOM no avanzó (res=${companyDom}, URL=${page.url()}); uso el agente…`,
       );
-      await stagehand.act(
+      await safeAct(
         `click the "${COMPANY}" (Tecnoship Group) company result card`,
       );
       await page.waitForLoadState("networkidle").catch(() => {});
@@ -475,13 +499,13 @@ async function runOnce() {
       console.log(
         `  ↻ Rol por DOM no confirmó (open=${open}, pick=${pick}, ok=${ok}); pruebo el agente…`,
       );
-      await stagehand.act(
+      await safeAct(
         'click the role dropdown that currently shows "Consignatario"',
       );
       await sleep(1000);
-      await stagehand.act(`select the "${ROLE}" option in the role dialog`);
+      await safeAct(`select the "${ROLE}" option in the role dialog`);
       await sleep(500);
-      await stagehand.act("click the OK button in the dialog");
+      await safeAct("click the OK button in the dialog");
       await page.waitForLoadState("networkidle").catch(() => {});
       await sleep(1500);
       if (/\/login\/a/i.test(page.url())) break;
@@ -509,11 +533,11 @@ async function runOnce() {
         `⚠ No se pudieron llenar campos por DOM (user=${userRes}, pass=${passRes}); intento con el agente…`,
       );
       if (userRes !== "ok")
-        await stagehand.act(
+        await safeAct(
           `type "${user}" into the "Número de Cuenta" account field`,
         );
       if (passRes !== "ok")
-        await stagehand.act(
+        await safeAct(
           "type the password into the Contraseña password field",
         );
     }
@@ -524,7 +548,7 @@ async function runOnce() {
     const entrarRes = await clickVisibleButton("ENTRAR");
     if (entrarRes !== "ok") {
       console.log("⚠ No hallé el botón ENTRAR visible; uso el agente…");
-      await stagehand.act("click the ENTRAR login button");
+      await safeAct("click the ENTRAR login button");
     }
 
     // 1f. Esperar el dashboard.
@@ -570,7 +594,7 @@ async function runOnce() {
     })()`;
     const res = (await page.evaluate(expr)) as string;
     if (res === "ok") return "ok";
-    await stagehand.act(
+    await safeAct(
       'click the hamburger menu (three horizontal lines, the "div.burger-menu") in the TOP-LEFT corner, just above the word "Dashboard"',
     );
     return "agent";
