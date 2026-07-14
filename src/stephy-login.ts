@@ -5,6 +5,12 @@ import {
   finalizeRunHistory,
 } from "./nops-con-tracking.js";
 import { gotoSearchViaMenu, searchAllTrackings } from "./search-receipts.js";
+import {
+  loadSearchState,
+  planIncrementalSearch,
+  recordResults,
+  saveSearchState,
+} from "./search-state.js";
 import { installLogCapture, getCapturedLog, sendRunLog } from "./email-log.js";
 
 // Capturar TODO el log de la corrida desde el primer instante (incluso los logs
@@ -22,6 +28,9 @@ interface RunStats {
   menuOpen: boolean;
   searchRan: boolean;
   preview: boolean;
+  incremental: boolean;
+  incrementalDue: number | null;
+  incrementalSkipped: number | null;
   encontrados: number;
   noEncontrados: number;
   sessionExpired: number;
@@ -36,6 +45,9 @@ const runStats: RunStats = {
   menuOpen: false,
   searchRan: false,
   preview: false,
+  incremental: false,
+  incrementalDue: null,
+  incrementalSkipped: null,
   encontrados: 0,
   noEncontrados: 0,
   sessionExpired: 0,
@@ -729,18 +741,48 @@ async function runOnce() {
       if (!nopsData) {
         console.log("⚠ Sin NOPs de n8n; no hay nada que buscar.");
       } else {
+        // #4 — Búsqueda incremental: no re-buscar cada corrida los ~145
+        // trackings sin receipt. Filtra a los NUEVOS + los que vencieron su
+        // backoff, y depura del estado los que n8n ya no devuelve (encontraron
+        // receipt). Se desactiva con STEPHY_INCREMENTAL=0 o con el override de
+        // trackings de prueba (que fuerza buscar exactamente esos).
+        const incremental =
+          process.env.STEPHY_INCREMENTAL !== "0" && !override;
+        runStats.incremental = incremental;
+        let toSearch = nopsData;
+        const state = incremental ? await loadSearchState() : null;
+        if (incremental && state) {
+          const plan = planIncrementalSearch(nopsData, state);
+          runStats.incrementalDue = plan.dueDetalle.length;
+          runStats.incrementalSkipped = plan.skipped;
+          console.log(
+            `\n→ [incremental] De ${plan.considered} NOPs de n8n: ` +
+              `${plan.dueDetalle.length} por buscar (nuevos o backoff vencido), ` +
+              `${plan.skipped} en backoff, ${plan.pruned} depurado(s) del estado.`,
+          );
+          toSearch = { ...nopsData, nops_detalle: plan.dueDetalle };
+        }
+
         const { encontrados, noEncontrados, sessionExpiredCount } =
-          await searchAllTrackings(page, nopsData, { limit });
+          await searchAllTrackings(page, toSearch, { limit });
         runStats.encontrados = encontrados.length;
         runStats.noEncontrados = noEncontrados.length;
         runStats.sessionExpired = sessionExpiredCount;
+
+        // Registra resultados en el estado ANTES de persistir/ramificar, para
+        // que aun en el caso "todo sesión expirada" quede el rastro (sin
+        // penalizar el backoff de esos).
+        if (incremental && state) {
+          recordResults(state, { encontrados, noEncontrados });
+          await saveSearchState(state);
+        }
 
         if (sessionExpiredCount > 0 && encontrados.length === 0) {
           console.log(
             `\n⛔ Todas las búsquedas dieron "Sesión Expirada" (${sessionExpiredCount}). ` +
               "No persisto nada; hay que resolver el permiso/sesión de Search.",
           );
-          await finalizeRunHistory(nopsData, encontrados, noEncontrados);
+          await finalizeRunHistory(toSearch, encontrados, noEncontrados);
         } else {
           const persistResult = await persistMatches(encontrados, { preview });
           if (persistResult) {
@@ -753,7 +795,7 @@ async function runOnce() {
                 ? persistResult.grupos_a_actualizar
                 : persistResult.grupos_actualizados) ?? null;
           }
-          await finalizeRunHistory(nopsData, encontrados, noEncontrados, persistResult);
+          await finalizeRunHistory(toSearch, encontrados, noEncontrados, persistResult);
         }
       }
     }
@@ -839,6 +881,9 @@ function buildEmailContent(): { asunto: string; cuerpo: string } {
           : "ejecutada (escritura real)"
         : "no ejecutada"
     }`,
+    runStats.searchRan && runStats.incremental
+      ? `Incremental:   ${runStats.incrementalDue ?? "?"} buscado(s), ${runStats.incrementalSkipped ?? "?"} en backoff`
+      : null,
     `Receipts:      ${runStats.encontrados} encontrado(s), ${runStats.noEncontrados} no encontrado(s)`,
     `Sesión exp.:   ${runStats.sessionExpired}`,
     `Supabase:      ${

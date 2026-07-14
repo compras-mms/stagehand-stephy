@@ -51,7 +51,7 @@ function stamp(): string {
 
 // --- Tipos ----------------------------------------------------------------
 
-interface NopDetalle {
+export interface NopDetalle {
   nop: string;
   id_venta: number | number[] | null;
   tracking_proveedor?: string | string[];

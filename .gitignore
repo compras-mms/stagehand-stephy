@@ -6,5 +6,8 @@ dist/
 # Perfil de Chrome dedicado a stephy (ruido recurrente en git status; no versionar)
 chrome-user-data/
 
+# Estado de la búsqueda incremental (#4): trabajo local con backoff por tracking.
+data/search-state.json
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json
