@@ -26,7 +26,10 @@ export type EvalPage = {
   evaluate: (expr: string) => Promise<unknown>;
   url: () => string;
   goto?: (url: string) => Promise<unknown>;
-  waitForLoadState: (state: "networkidle") => Promise<unknown>;
+  waitForLoadState: (
+    state: "networkidle",
+    timeoutMs?: number,
+  ) => Promise<unknown>;
   keyPress?: (key: string) => Promise<unknown>;
 };
 
@@ -170,18 +173,60 @@ export interface OneSearchResult {
 }
 
 /**
+ * Tiempos del poll por tracking (#5 — recortar latencia). Todos con override por
+ * env para poder afinarlos sin recompilar si el sitio cambia de velocidad:
+ *   - settleMs   : pausa tras llenar el input antes de click (Angular registra el valor).
+ *   - pollMs     : intervalo entre lecturas del resultado.
+ *   - idleCapMs  : tope del waitForLoadState("networkidle") — evita el cuelgue de 30s
+ *                  (default de Playwright) en esta SPA que casi nunca queda idle.
+ *   - minWaitMs  : NO concluir "sin receipt" antes de esto (da tiempo a que el XHR
+ *                  de búsqueda salga y responda → evita falsos negativos).
+ *   - maxWaitMs  : presupuesto total de espera de un resultado (backstop duro).
+ */
+export interface SearchTiming {
+  settleMs: number;
+  pollMs: number;
+  idleCapMs: number;
+  minWaitMs: number;
+  maxWaitMs: number;
+}
+
+const numEnv = (name: string, fallback: number): number => {
+  const v = Number(process.env[name]);
+  return Number.isFinite(v) && v >= 0 ? v : fallback;
+};
+
+/** Resuelve los tiempos del poll (defaults calibrados + override por env). */
+export function resolveSearchTiming(): SearchTiming {
+  return {
+    settleMs: numEnv("STEPHY_SEARCH_SETTLE_MS", 120),
+    pollMs: numEnv("STEPHY_SEARCH_POLL_MS", 200),
+    idleCapMs: numEnv("STEPHY_SEARCH_IDLE_CAP_MS", 1500),
+    minWaitMs: numEnv("STEPHY_SEARCH_MIN_WAIT_MS", 500),
+    maxWaitMs: numEnv("STEPHY_SEARCH_MAX_WAIT_MS", 3500),
+  };
+}
+
+/**
  * Busca un tracking en la página Search y lee el receipt resultante.
  * `verbose` loguea lo que ve (para calibrar en las primeras vueltas).
+ *
+ * Poll ADAPTATIVO con salida temprana (#5): en vez de sleeps fijos + un
+ * `networkidle` sin tope (que colgaba hasta 30s por tracking en esta SPA), leemos
+ * el resultado en intervalos cortos y salimos apenas aparece el receipt / la
+ * alerta / la sesión expirada. El "no está" se concluye cuando la red se aquieta
+ * (con tope) pasado `minWaitMs`, o al agotar `maxWaitMs`.
  */
 export async function searchOneTracking(
   page: EvalPage,
   tracking: string,
   verbose = false,
+  timing: SearchTiming = resolveSearchTiming(),
 ): Promise<OneSearchResult> {
   const fillRaw = (await page.evaluate(fillTrackingExpr(tracking))) as string;
   const fill = JSON.parse(fillRaw) as { res: string; count: number };
   if (verbose) console.log(`    · fill: ${fill.res} (inputs visibles: ${fill.count})`);
-  await sleep(300);
+  await sleep(timing.settleMs);
 
   const click = (await page.evaluate(clickSearchExpr)) as string;
   if (verbose) console.log(`    · click Buscar: ${click}`);
@@ -190,12 +235,21 @@ export async function searchOneTracking(
     await page.keyPress("Enter").catch(() => {});
   }
 
-  await page.waitForLoadState("networkidle").catch(() => {});
+  // Espera la quietud de red EN PARALELO al poll, con tope duro. En esta SPA el
+  // networkidle sin tope colgaba hasta 30s por tracking. Aquí solo lo usamos como
+  // señal de "el XHR de búsqueda ya terminó" para concluir el "no está" antes.
+  let netSettled = false;
+  const idleWatch = page
+    .waitForLoadState("networkidle", timing.idleCapMs)
+    .then(() => {
+      netSettled = true;
+    })
+    .catch(() => {});
 
-  // Poll: esperamos a que aparezca el receipt (input der), una alerta, o timeout.
+  // Poll: leemos hasta que aparezca el receipt (input der), una alerta, o timeout.
+  const start = Date.now();
   let last: OneSearchResult = { vals: [], alertText: "", sessionExpired: false, notFound: false };
-  for (let i = 0; i < 10; i++) {
-    await sleep(500);
+  while (true) {
     const raw = (await page.evaluate(readResultExpr)) as string;
     const r = JSON.parse(raw) as OneSearchResult;
     last = r;
@@ -207,7 +261,16 @@ export async function searchOneTracking(
       break;
     }
     if (r.notFound) break;
+
+    const elapsed = Date.now() - start;
+    if (elapsed >= timing.maxWaitMs) break;
+    // Red aquietada + ya pasó el guard mínimo → el receipt no está aquí; no
+    // gastamos el presupuesto completo esperando algo que no vendrá.
+    if (netSettled && elapsed >= timing.minWaitMs) break;
+    await sleep(timing.pollMs);
   }
+  void idleWatch; // el .catch ya lo hace inofensivo; no bloqueamos por él.
+
   if (verbose) {
     console.log(`    · result vals=${JSON.stringify(last.vals)} alert="${last.alertText}" notFound=${last.notFound} sessionExpired=${last.sessionExpired}`);
     if (last.resultSnap?.length) console.log(`    · resultSnap=${JSON.stringify(last.resultSnap)}`);
@@ -242,6 +305,9 @@ export async function searchAllTrackings(
   const noEncontrados: SearchMatch[] = [];
   let sessionExpiredCount = 0;
 
+  const timing = resolveSearchTiming(); // resuelve una vez (mismo para todos).
+  let sumMs = 0; // suma de latencias reales para promediar (#5).
+
   for (let i = 0; i < total; i++) {
     const d = detalle[i];
     const tracking = Array.isArray(d.tracking_proveedor)
@@ -257,26 +323,32 @@ export async function searchAllTrackings(
 
     const verbose = i < 3; // primeras 3 vueltas: logueo detallado para calibrar.
     process.stdout.write(`  [${i + 1}/${total}] ${trimmed} … `);
-    const r = await searchOneTracking(page, trimmed, verbose);
+    const t0 = Date.now();
+    const r = await searchOneTracking(page, trimmed, verbose, timing);
+    const ms = Date.now() - t0;
+    sumMs += ms;
 
     if (r.sessionExpired) {
       sessionExpiredCount++;
-      console.log("⛔ Sesión Expirada");
+      console.log(`⛔ Sesión Expirada (${ms}ms)`);
       noEncontrados.push({ ...base, motivo: "sesión expirada" });
       continue;
     }
     if (r.receipt) {
-      console.log(`✓ receipt ${r.receipt}`);
+      console.log(`✓ receipt ${r.receipt} (${ms}ms)`);
       encontrados.push({ ...base, receipt: r.receipt });
     } else {
-      console.log("∅ sin receipt");
+      console.log(`∅ sin receipt (${ms}ms)`);
       noEncontrados.push({ ...base, motivo: "no está en Search" });
     }
   }
 
+  const searched = encontrados.length + noEncontrados.filter((n) => n.motivo !== "sin tracking_proveedor").length;
+  const avg = searched ? Math.round(sumMs / searched) : 0;
   console.log(
     `\n  ✓ [search] Encontrados: ${encontrados.length} · ` +
-      `No encontrados: ${noEncontrados.length} · Sesión Expirada: ${sessionExpiredCount}`,
+      `No encontrados: ${noEncontrados.length} · Sesión Expirada: ${sessionExpiredCount} · ` +
+      `latencia ~${avg}ms/tracking (${Math.round(sumMs / 1000)}s total)`,
   );
   return { encontrados, noEncontrados, sessionExpiredCount };
 }
