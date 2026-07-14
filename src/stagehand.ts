@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 // Stagehand does NOT auto-load .env — we do it here, once, for every script.
 dotenv.config();
 
-const DEFAULT_MODEL = "google/gemini-3.5-flash";
+const DEFAULT_MODEL = "google/gemini-2.5-flash";
 
 // Windows default Chrome location. Override with CHROME_PATH if yours differs,
 // e.g. "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",

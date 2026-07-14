@@ -67,11 +67,16 @@ function isFatalBrowserError(msg: string): boolean {
 
 /**
  * #2 — Watchdog anti-cuelgue. Si una corrida supera STEPHY_WATCHDOG_MS (default
- * 30 min) — típicamente porque Chrome se trabó y el proceso quedó vivo bloqueando
+ * 60 min) — típicamente porque Chrome se trabó y el proceso quedó vivo bloqueando
  * el perfil — forzamos cierre del navegador, mandamos el log por correo y salimos
  * con exit(1) para que la siguiente corrida del cron encuentre el perfil libre.
+ *
+ * OJO: una corrida COMPLETA (190 trackings, uno por uno) tarda ~40-47 min, así que
+ * el default DEBE ser mayor. Con 30 min el watchdog mataba la corrida a mitad, ANTES
+ * de persistir en Supabase (el write-back ocurre al terminar el loop) → se perdía todo
+ * lo hallado. Bajar solo cuando #4 (búsqueda incremental) recorte la duración real.
  */
-const WATCHDOG_MS = Number(process.env.STEPHY_WATCHDOG_MS) || 30 * 60_000;
+const WATCHDOG_MS = Number(process.env.STEPHY_WATCHDOG_MS) || 60 * 60_000;
 let watchdogTimer: ReturnType<typeof setTimeout> | null = null;
 
 function armWatchdog(): void {
