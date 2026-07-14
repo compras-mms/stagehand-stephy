@@ -283,15 +283,34 @@ export async function searchOneTracking(
 //  Loop sobre todos los NOPs
 // ==========================================================================
 
+/** Un lote de resultados listo para persistir + registrar en el estado. */
+export interface SearchBatch {
+  encontrados: SearchMatch[];
+  noEncontrados: SearchMatch[];
+}
+
 /**
  * Recorre cada tracking_proveedor del JSON de n8n, lo busca en la página Search
  * y arma encontrados/noEncontrados. `limit` (env STEPHY_SEARCH_LIMIT) acota para
  * pruebas. Devuelve null en `sessionExpired` global para que el caller decida.
+ *
+ * Persistencia INCREMENTAL (durabilidad ante cortes): si el caller pasa
+ * `onBatch`, cada `batchSize` trackings procesados (o al terminar el loop) se le
+ * entrega el lote acumulado para que persista los receipts hallados y guarde el
+ * estado incremental EN CALIENTE. Así, si el watchdog (#2) o un corte de CDP (#3)
+ * matan la corrida a mitad, lo ya encontrado YA está escrito en Supabase en vez
+ * de perderse (antes `persistMatches` corría solo al final del loop). Cada
+ * tracking se entrega en EXACTAMENTE un lote → sin doble conteo de backoff. El
+ * `onBatch` es best-effort: si falla, se loguea y la búsqueda continúa.
  */
 export async function searchAllTrackings(
   page: EvalPage,
   nopsData: NopsResponse,
-  opts: { limit?: number } = {},
+  opts: {
+    limit?: number;
+    batchSize?: number;
+    onBatch?: (batch: SearchBatch) => Promise<void>;
+  } = {},
 ): Promise<{
   encontrados: SearchMatch[];
   noEncontrados: SearchMatch[];
@@ -305,6 +324,45 @@ export async function searchAllTrackings(
   const noEncontrados: SearchMatch[] = [];
   let sessionExpiredCount = 0;
 
+  // --- Lotes para persistencia incremental ---------------------------------
+  // Umbral de flush: cada N trackings PROCESADOS entregamos el lote (así el
+  // estado incremental se guarda periódicamente aunque no haya hallazgos).
+  const envBatch = Number(process.env.STEPHY_PERSIST_BATCH);
+  const batchSize =
+    opts.batchSize && opts.batchSize > 0
+      ? opts.batchSize
+      : Number.isFinite(envBatch) && envBatch > 0
+        ? envBatch
+        : 10;
+  const pendingEnc: SearchMatch[] = [];
+  const pendingNoEnc: SearchMatch[] = [];
+  const addFound = (m: SearchMatch) => {
+    encontrados.push(m);
+    pendingEnc.push(m);
+  };
+  const addMissing = (m: SearchMatch) => {
+    noEncontrados.push(m);
+    pendingNoEnc.push(m);
+  };
+  /** Entrega el lote acumulado al caller (best-effort) y limpia los buffers. */
+  const flush = async () => {
+    if (pendingEnc.length === 0 && pendingNoEnc.length === 0) return;
+    const batch: SearchBatch = {
+      encontrados: pendingEnc.slice(),
+      noEncontrados: pendingNoEnc.slice(),
+    };
+    pendingEnc.length = 0;
+    pendingNoEnc.length = 0;
+    if (!opts.onBatch) return;
+    try {
+      await opts.onBatch(batch);
+    } catch (err) {
+      console.log(
+        `  ⚠ [batch] onBatch falló (ignorado, la búsqueda continúa): ${(err as Error).message}`,
+      );
+    }
+  };
+
   const timing = resolveSearchTiming(); // resuelve una vez (mismo para todos).
   let sumMs = 0; // suma de latencias reales para promediar (#5).
 
@@ -317,7 +375,7 @@ export async function searchAllTrackings(
     const base: SearchMatch = { nop: d.nop, id_venta: d.id_venta, tracking_proveedor: trimmed };
 
     if (!trimmed) {
-      noEncontrados.push({ ...base, motivo: "sin tracking_proveedor" });
+      addMissing({ ...base, motivo: "sin tracking_proveedor" });
       continue;
     }
 
@@ -331,17 +389,20 @@ export async function searchAllTrackings(
     if (r.sessionExpired) {
       sessionExpiredCount++;
       console.log(`⛔ Sesión Expirada (${ms}ms)`);
-      noEncontrados.push({ ...base, motivo: "sesión expirada" });
-      continue;
-    }
-    if (r.receipt) {
+      addMissing({ ...base, motivo: "sesión expirada" });
+    } else if (r.receipt) {
       console.log(`✓ receipt ${r.receipt} (${ms}ms)`);
-      encontrados.push({ ...base, receipt: r.receipt });
+      addFound({ ...base, receipt: r.receipt });
     } else {
       console.log(`∅ sin receipt (${ms}ms)`);
-      noEncontrados.push({ ...base, motivo: "no está en Search" });
+      addMissing({ ...base, motivo: "no está en Search" });
     }
+
+    // Flush por lote: cada `batchSize` trackings procesados (encontrados o no).
+    if (pendingEnc.length + pendingNoEnc.length >= batchSize) await flush();
   }
+
+  await flush(); // remanente del último lote parcial.
 
   const searched = encontrados.length + noEncontrados.filter((n) => n.motivo !== "sin tracking_proveedor").length;
   const avg = searched ? Math.round(sumMs / searched) : 0;

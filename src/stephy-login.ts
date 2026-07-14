@@ -3,8 +3,13 @@ import {
   runNopsConTracking,
   persistMatches,
   finalizeRunHistory,
+  type PersistResponse,
 } from "./nops-con-tracking.js";
-import { gotoSearchViaMenu, searchAllTrackings } from "./search-receipts.js";
+import {
+  gotoSearchViaMenu,
+  searchAllTrackings,
+  type SearchBatch,
+} from "./search-receipts.js";
 import {
   loadSearchState,
   planIncrementalSearch,
@@ -787,39 +792,83 @@ async function runOnce() {
           toSearch = { ...nopsData, nops_detalle: plan.dueDetalle };
         }
 
+        // --- Persistencia INCREMENTAL (durabilidad ante cortes) --------------
+        // El write-back a Supabase y el guardado del estado incremental ya NO
+        // corren solo al final del loop: `searchAllTrackings` nos entrega lotes
+        // conforme avanza (onBatch) y los persistimos EN CALIENTE. Así, si el
+        // watchdog (#2) o un corte de CDP (#3) matan la corrida a mitad, lo
+        // hallado hasta ese punto YA quedó escrito en Supabase y con su backoff
+        // registrado, en vez de perderse. `persistMatches` y el webhook son
+        // idempotentes; cada tracking llega en UN solo lote → sin doble conteo.
+        const toNum = (v: unknown): number => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        };
+        let persistAttempted = false; // ¿hubo algún receipt que persistir?
+        let persistFailed = false; // ¿algún lote falló el POST a Supabase?
+        let detalleSum = 0;
+        let gruposSum = 0;
+        const persistResponses: unknown[] = [];
+
+        const flushBatch = async (batch: SearchBatch): Promise<void> => {
+          // 1. Persistir los receipts hallados del lote cuanto antes.
+          if (batch.encontrados.length > 0) {
+            persistAttempted = true;
+            const pr = await persistMatches(batch.encontrados, { preview });
+            if (pr) {
+              persistResponses.push(pr);
+              detalleSum += toNum(
+                preview ? pr.detalle_a_actualizar : pr.detalle_actualizados,
+              );
+              gruposSum += toNum(
+                preview ? pr.grupos_a_actualizar : pr.grupos_actualizados,
+              );
+            } else {
+              persistFailed = true;
+            }
+          }
+          // 2. Registrar el lote en el estado incremental y guardarlo en disco.
+          //    Los "sesión expirada" no penalizan backoff (lo maneja recordResults).
+          if (incremental && state) {
+            recordResults(state, batch);
+            await saveSearchState(state);
+          }
+        };
+
         const { encontrados, noEncontrados, sessionExpiredCount } =
-          await searchAllTrackings(page, toSearch, { limit });
+          await searchAllTrackings(page, toSearch, { limit, onBatch: flushBatch });
         runStats.encontrados = encontrados.length;
         runStats.noEncontrados = noEncontrados.length;
         runStats.sessionExpired = sessionExpiredCount;
 
-        // Registra resultados en el estado ANTES de persistir/ramificar, para
-        // que aun en el caso "todo sesión expirada" quede el rastro (sin
-        // penalizar el backoff de esos).
-        if (incremental && state) {
-          recordResults(state, { encontrados, noEncontrados });
-          await saveSearchState(state);
-        }
-
-        if (sessionExpiredCount > 0 && encontrados.length === 0) {
+        // Caso "todo sesión expirada" (0 hallados, nada persistido): sin archivo
+        // supabase en el histórico (como antes). En cualquier otro caso dejamos el
+        // 4º archivo con las sumas de los lotes (aunque sean 0).
+        const allSessionExpired =
+          sessionExpiredCount > 0 && encontrados.length === 0 && !persistAttempted;
+        if (allSessionExpired) {
           console.log(
             `\n⛔ Todas las búsquedas dieron "Sesión Expirada" (${sessionExpiredCount}). ` +
-              "No persisto nada; hay que resolver el permiso/sesión de Search.",
+              "No se persistió nada; hay que resolver el permiso/sesión de Search.",
           );
           await finalizeRunHistory(toSearch, encontrados, noEncontrados);
         } else {
-          const persistResult = await persistMatches(encontrados, { preview });
-          if (persistResult) {
-            runStats.detalleActualizados =
-              (preview
-                ? persistResult.detalle_a_actualizar
-                : persistResult.detalle_actualizados) ?? null;
-            runStats.gruposActualizados =
-              (preview
-                ? persistResult.grupos_a_actualizar
-                : persistResult.grupos_actualizados) ?? null;
-          }
-          await finalizeRunHistory(toSearch, encontrados, noEncontrados, persistResult);
+          runStats.detalleActualizados = detalleSum;
+          runStats.gruposActualizados = gruposSum;
+          const merged: PersistResponse = preview
+            ? {
+                preview: true,
+                detalle_a_actualizar: detalleSum,
+                grupos_a_actualizar: gruposSum,
+                batches: persistResponses,
+              }
+            : {
+                detalle_actualizados: detalleSum,
+                grupos_actualizados: gruposSum,
+                batches: persistResponses,
+              };
+          if (persistFailed) merged.persist_failed = true;
+          await finalizeRunHistory(toSearch, encontrados, noEncontrados, merged);
         }
       }
     }
