@@ -45,6 +45,68 @@ const runStats: RunStats = {
 };
 
 /**
+ * Referencia al Stagehand vivo de la corrida actual, a nivel de módulo, para que
+ * el watchdog (#2) y el retry de corrida (#3) puedan cerrar el navegador aunque
+ * el error ocurra dentro de runOnce(). runOnce() la setea al crear el browser y
+ * la limpia en su `finally`.
+ */
+let activeStagehand: ReturnType<typeof makeStagehand> | null = null;
+
+/**
+ * #3 — ¿Es un error de CDP/inicialización que justifica RELANZAR Chrome? Un hipo
+ * del socket CDP (close 1006), un `StagehandNotInitializedError` o un "Target
+ * closed" tiran toda la corrida sin que el flujo esté realmente roto. Ante estos
+ * reintentamos la corrida completa con un navegador nuevo (solo en fase de
+ * login/menú; ver main()). Otros errores (lógica, red del webhook) NO se reintentan.
+ */
+function isFatalBrowserError(msg: string): boolean {
+  return /StagehandNotInitialized|not initialized|Target (?:page|closed|crashed)|Target.*closed|Session closed|websocket|socket hang|\bCDP\b|\b1006\b|Connection closed|browser (?:has been|was) closed|Protocol error|Execution context was destroyed/i.test(
+    msg,
+  );
+}
+
+/**
+ * #2 — Watchdog anti-cuelgue. Si una corrida supera STEPHY_WATCHDOG_MS (default
+ * 30 min) — típicamente porque Chrome se trabó y el proceso quedó vivo bloqueando
+ * el perfil — forzamos cierre del navegador, mandamos el log por correo y salimos
+ * con exit(1) para que la siguiente corrida del cron encuentre el perfil libre.
+ */
+const WATCHDOG_MS = Number(process.env.STEPHY_WATCHDOG_MS) || 30 * 60_000;
+let watchdogTimer: ReturnType<typeof setTimeout> | null = null;
+
+function armWatchdog(): void {
+  watchdogTimer = setTimeout(async () => {
+    const mins = Math.round(WATCHDOG_MS / 60_000);
+    console.error(
+      `\n⏱ WATCHDOG: la corrida superó ${mins} min sin terminar. Fuerzo cierre y salgo.`,
+    );
+    runStats.error = runStats.error ?? `Watchdog: timeout tras ${mins} min sin terminar la corrida`;
+    try {
+      await activeStagehand?.close();
+    } catch {
+      /* best-effort: el navegador ya podía estar muerto */
+    }
+    try {
+      const { asunto, cuerpo } = buildEmailContent();
+      await sendRunLog(asunto, cuerpo);
+    } catch {
+      /* best-effort */
+    }
+    process.exit(1);
+  }, WATCHDOG_MS);
+  // No mantener vivo el event loop solo por el watchdog: si todo termina antes,
+  // el proceso puede salir sin esperar a este timer.
+  watchdogTimer.unref?.();
+}
+
+function disarmWatchdog(): void {
+  if (watchdogTimer) {
+    clearTimeout(watchdogTimer);
+    watchdogTimer = null;
+  }
+}
+
+/**
  * StephyTracking (https://app.stephytracking.com/) — flujo reconstruido desde
  * cero para ser confiable:
  *
@@ -102,9 +164,16 @@ function requireEnv(...names: string[]): string {
   );
 }
 
-async function main() {
+/**
+ * Una corrida completa con SU PROPIO navegador. Crea Stagehand, ejecuta el flujo
+ * (login → menú → receipts) y cierra el navegador al terminar bien. Si algo
+ * revienta, propaga el error SIN cerrar aquí: main() cierra `activeStagehand` y
+ * decide si relanzar Chrome (#3).
+ */
+async function runOnce() {
   const env = resolveStagehandEnv();
   const stagehand = makeStagehand({ env, headless: false });
+  activeStagehand = stagehand;
   await stagehand.init();
 
   type AnyPage = ReturnType<typeof stagehand.context.pages>[number];
@@ -172,6 +241,84 @@ async function main() {
   };
 
   const isOnDashboard = () => /dashboard/i.test(page.url());
+
+  /**
+   * Click DETERMINISTA en la tarjeta de la compañía por DOM (sin LLM). Busca el
+   * elemento VISIBLE más específico (texto corto) que contenga el nombre de la
+   * compañía, y clickea su ancestro clickeable (ion-card / item / card). Devuelve
+   * "ok" | "no-target". El LLM queda solo como fallback en doLogin().
+   */
+  const clickCompanyCardDom = async (company: string): Promise<string> => {
+    const expr = `(() => {
+      const want = ${JSON.stringify(company.toUpperCase())};
+      const vis = (el) => { const s=getComputedStyle(el), r=el.getBoundingClientRect();
+        return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0; };
+      const T = (el) => (el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim();
+      const all = Array.from(document.querySelectorAll(
+        'ion-card, ion-item, .card, [class*="card" i], [class*="company" i], [class*="result" i], li, a, button, div'
+      ));
+      const cands = all.filter((el) => {
+        if (!vis(el)) return false;
+        if (/^(input|textarea)$/i.test(el.tagName)) return false;
+        const t = T(el).toUpperCase();
+        return t.includes(want) && t.length < 120; // evita contenedores gigantes
+      });
+      if (!cands.length) return 'no-target';
+      cands.sort((a, b) => T(a).length - T(b).length); // el más específico primero
+      const target = cands[0];
+      const clickable = target.closest(
+        'ion-card, ion-item, a, button, [role=button], [class*="card" i]'
+      ) || target;
+      clickable.click();
+      return 'ok';
+    })()`;
+    return (await page.evaluate(expr)) as string;
+  };
+
+  /** Abre el ion-select del rol (formcontrolname="type"). "ok" | "no-select". */
+  const openRoleSelectDom = async (): Promise<string> => {
+    const expr = `(() => {
+      const sel = document.querySelector('ion-select[formcontrolname="type"]') ||
+                  document.querySelector('ion-select');
+      if (!sel) return 'no-select';
+      sel.click();
+      return 'ok';
+    })()`;
+    return (await page.evaluate(expr)) as string;
+  };
+
+  /** En el ion-alert del rol, click en el radio cuyo texto contiene `role`. */
+  const pickRoleInAlertDom = async (role: string): Promise<string> => {
+    const expr = `(() => {
+      const al = document.querySelector('ion-alert');
+      if (!al) return 'no-alert';
+      const want = ${JSON.stringify(role.toUpperCase())};
+      const T = (el) => (el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim().toUpperCase();
+      const radios = Array.from(al.querySelectorAll('button.alert-radio-button, [role=radio]'));
+      const target = radios.find((r) => T(r).includes(want));
+      if (!target) return 'no-option';
+      target.click();
+      return 'ok';
+    })()`;
+    return (await page.evaluate(expr)) as string;
+  };
+
+  /** Click en el botón OK/Aceptar del ion-alert (evita CANCELAR). */
+  const clickAlertOkDom = async (): Promise<string> => {
+    const expr = `(() => {
+      const al = document.querySelector('ion-alert');
+      if (!al) return 'no-alert';
+      const T = (el) => (el.innerText||el.textContent||el.value||'').replace(/\\s+/g,' ').trim().toUpperCase();
+      const btns = Array.from(al.querySelectorAll('button.alert-button, .alert-button-group button, button'));
+      const ok = btns.find((b) => { const t = T(b);
+        return (t === 'OK' || t.includes('ACEPT') || t === 'ACCEPT') && !t.includes('CANCEL'); });
+      const target = ok || btns.find((b) => !T(b).includes('CANCEL'));
+      if (!target) return 'no-ok';
+      target.click();
+      return 'ok';
+    })()`;
+    return (await page.evaluate(expr)) as string;
+  };
 
   /** ¿Hay un ion-alert visible en pantalla? */
   const isAlertVisible = async (): Promise<boolean> => {
@@ -253,19 +400,64 @@ async function main() {
     await page.keyPress("Enter");
     await sleep(2000);
 
-    // 1b. Click en la tarjeta de la compañía (markup custom → agente).
+    // 1b. Click en la tarjeta de la compañía. DOM-first (determinista); el
+    //     agente (LLM) queda solo como fallback. Gate: verificamos que la URL
+    //     avanzó a /login/* — si seguimos en la landing, NO tiene sentido
+    //     continuar (es el caso que rompía la corrida al llegar a llenar campos
+    //     que aún no existen).
     console.log(`→ Seleccionando la compañía "${COMPANY}"…`);
-    await stagehand.act(
-      `click the "${COMPANY}" (Tecnoship Group) company result card`,
-    );
+    const companyDom = await clickCompanyCardDom(COMPANY);
     await page.waitForLoadState("networkidle").catch(() => {});
-    await sleep(2500);
+    await sleep(2000);
+    if (!/\/login/i.test(page.url())) {
+      console.log(
+        `  ↻ Tarjeta por DOM no avanzó (res=${companyDom}, URL=${page.url()}); uso el agente…`,
+      );
+      await stagehand.act(
+        `click the "${COMPANY}" (Tecnoship Group) company result card`,
+      );
+      await page.waitForLoadState("networkidle").catch(() => {});
+      await sleep(2500);
+    } else {
+      console.log(`  ✓ Compañía seleccionada por DOM (${page.url()}).`);
+    }
+    if (!/\/login/i.test(page.url())) {
+      console.log(
+        `⚠ No se llegó a la pantalla de login (URL: ${page.url()}). Aborto este intento de login.`,
+      );
+      return;
+    }
 
     // 1c. Cambiar rol Consignatario → Agente PRIMERO (define la URL + re-render).
-    //     Los act() dependen del LLM y a veces fallan en silencio, así que
-    //     reintentamos hasta confirmar /login/a por URL.
+    //     DOM-first (ion-select → ion-alert → radio → OK), determinista. Si el
+    //     DOM no confirma /login/a, caemos al agente (LLM) en el mismo intento.
+    //     Confirmamos SIEMPRE por URL (/login/a) porque los act() fallan en silencio.
     console.log(`→ Cambiando el rol a "${ROLE}"…`);
     for (let roleTry = 1; roleTry <= 3; roleTry++) {
+      // --- Intento por DOM ---
+      const open = await openRoleSelectDom();
+      let pick = "skip";
+      let ok = "skip";
+      if (open === "ok") {
+        for (let i = 0; i < 8; i++) {
+          if (await isAlertVisible()) break;
+          await sleep(300);
+        }
+        pick = await pickRoleInAlertDom(ROLE);
+        await sleep(300);
+        ok = await clickAlertOkDom();
+        await page.waitForLoadState("networkidle").catch(() => {});
+        await sleep(1200);
+      }
+      if (/\/login\/a/i.test(page.url())) {
+        console.log(`  ✓ Rol por DOM (open=${open}, pick=${pick}, ok=${ok}).`);
+        break;
+      }
+
+      // --- Fallback al agente (LLM) si el DOM no confirmó ---
+      console.log(
+        `  ↻ Rol por DOM no confirmó (open=${open}, pick=${pick}, ok=${ok}); pruebo el agente…`,
+      );
       await stagehand.act(
         'click the role dropdown that currently shows "Consignatario"',
       );
@@ -425,28 +617,71 @@ async function main() {
   }
 
   // ======================================================================
-  //  Orquestación: SIEMPRE login limpio → abrir menú ☰ → TERMINAR
+  //  Paso 1-bis — Login MANUAL (STEPHY_MANUAL_LOGIN=1)
   // ======================================================================
-  await hardLogout();
-
-  // Login SIEMPRE de primero (no confiamos en sesión previa). Reintentamos solo
-  // si no llegó al dashboard; doLogin() re-navega a la landing en cada intento.
-  const MAX_LOGIN_ATTEMPTS = 3;
-  for (let attempt = 1; attempt <= MAX_LOGIN_ATTEMPTS; attempt++) {
-    if (attempt > 1) {
-      console.log(
-        `\n↻ Login no llegó al dashboard; reintento ${attempt}/${MAX_LOGIN_ATTEMPTS}…`,
-      );
+  /**
+   * Modo asistido: el script NO loguea. Abre la landing, tú haces el login a
+   * mano en la ventana de Chrome, y el flujo se queda esperando (polling de la
+   * URL) hasta detectar /dashboard. En cuanto lo detecta, sigue solo (menú →
+   * Search → receipts). Timeout configurable con STEPHY_MANUAL_TIMEOUT_MS
+   * (default 5 min).
+   */
+  async function waitForManualLogin(): Promise<void> {
+    const timeoutMs = Number(process.env.STEPHY_MANUAL_TIMEOUT_MS) || 5 * 60_000;
+    console.log(`\n→ Abriendo ${STEPHY_URL} para login MANUAL…`);
+    await page.goto(STEPHY_URL).catch(() => {});
+    console.log(
+      "\n🖐  LOGIN MANUAL: inicia sesión tú mismo en la ventana de Chrome.\n" +
+        "    El flujo continuará automáticamente en cuanto detecte el dashboard.\n" +
+        `    (esperando hasta ${Math.round(timeoutMs / 1000)}s)…\n`,
+    );
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (isOnDashboard()) {
+        console.log(`\n✓ Dashboard detectado: ${page.url()}`);
+        return;
+      }
+      await sleep(1500);
     }
-    await doLogin();
-    if (isOnDashboard()) break;
+    console.log(
+      `\n⚠ Se agotó el tiempo de espera del login manual (URL actual: ${page.url()}).`,
+    );
+  }
+
+  // ======================================================================
+  //  Orquestación: login (manual o automático) → abrir menú ☰ → receipts
+  // ======================================================================
+  const MANUAL_LOGIN = process.env.STEPHY_MANUAL_LOGIN === "1";
+
+  if (MANUAL_LOGIN) {
+    await waitForManualLogin();
+  } else {
+    await hardLogout();
+
+    // Login SIEMPRE de primero (no confiamos en sesión previa). Reintentamos solo
+    // si no llegó al dashboard; doLogin() re-navega a la landing en cada intento.
+    const MAX_LOGIN_ATTEMPTS = 3;
+    for (let attempt = 1; attempt <= MAX_LOGIN_ATTEMPTS; attempt++) {
+      if (attempt > 1) {
+        console.log(
+          `\n↻ Login no llegó al dashboard; reintento ${attempt}/${MAX_LOGIN_ATTEMPTS}…`,
+        );
+      }
+      await doLogin();
+      if (isOnDashboard()) break;
+    }
   }
 
   runStats.loginOk = isOnDashboard();
 
   if (!isOnDashboard()) {
-    console.log(`\n⚠ Login falló tras ${MAX_LOGIN_ATTEMPTS} intento(s) (URL: ${page.url()}). No abro el menú.`);
+    console.log(
+      MANUAL_LOGIN
+        ? `\n⚠ Login manual no llegó al dashboard a tiempo (URL: ${page.url()}). No abro el menú.`
+        : `\n⚠ Login falló tras varios intentos (URL: ${page.url()}). No abro el menú.`,
+    );
     await stagehand.close();
+    activeStagehand = null;
     return;
   }
 
@@ -520,6 +755,46 @@ async function main() {
   }
 
   await stagehand.close();
+  activeStagehand = null;
+}
+
+/**
+ * Orquesta las corridas: intenta runOnce() y, si muere con un error de
+ * CDP/inicialización (#3) ANTES de que arranque la búsqueda, relanza Chrome desde
+ * cero. No reintentamos una vez que la búsqueda empezó: re-buscar ~140 trackings
+ * sería lento y dispararía el watchdog; además el write-back ya es idempotente.
+ */
+async function main() {
+  const MAX_RUN_ATTEMPTS = Number(process.env.STEPHY_RUN_ATTEMPTS) || 2;
+  for (let runTry = 1; runTry <= MAX_RUN_ATTEMPTS; runTry++) {
+    try {
+      await runOnce();
+      return;
+    } catch (err) {
+      const e = err as Error | undefined;
+      const msg: string = (e && (e.stack || e.message)) || String(err);
+      // Cerrar el navegador muerto antes de decidir (best-effort).
+      try {
+        await activeStagehand?.close();
+      } catch {
+        /* ya estaba caído */
+      }
+      activeStagehand = null;
+
+      const fatal = isFatalBrowserError(msg);
+      const canRetry = fatal && !runStats.searchRan && runTry < MAX_RUN_ATTEMPTS;
+      if (!canRetry) throw err;
+
+      console.error(
+        `\n↻ Corrida abortó por error de CDP/inicialización (intento ${runTry}/${MAX_RUN_ATTEMPTS}). ` +
+          `Relanzo Chrome…\n   ${msg.split("\n")[0]}`,
+      );
+      // Resetear las banderas de fase; runStats.inicio se conserva (mide el total).
+      runStats.loginOk = false;
+      runStats.menuOpen = false;
+      await sleep(3000);
+    }
+  }
 }
 
 /** Timestamp local legible para el asunto/cuerpo del correo. */
@@ -576,12 +851,18 @@ function buildEmailContent(): { asunto: string; cuerpo: string } {
   return { asunto, cuerpo };
 }
 
+// #2 — Armamos el watchdog ANTES de arrancar: si la corrida se cuelga, él fuerza
+// el cierre + correo + exit(1). Lo desarmamos al terminar (bien o mal).
+armWatchdog();
+
 main()
   .then(async () => {
+    disarmWatchdog();
     const { asunto, cuerpo } = buildEmailContent();
     await sendRunLog(asunto, cuerpo);
   })
   .catch(async (err) => {
+    disarmWatchdog();
     runStats.error = (err && (err.stack || err.message)) || String(err);
     console.error("Flujo falló:\n", err);
     const { asunto, cuerpo } = buildEmailContent();

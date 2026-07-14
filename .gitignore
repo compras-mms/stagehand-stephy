@@ -3,5 +3,8 @@ node_modules/
 *.log
 dist/
 
+# Perfil de Chrome dedicado a stephy (ruido recurrente en git status; no versionar)
+chrome-user-data/
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json
