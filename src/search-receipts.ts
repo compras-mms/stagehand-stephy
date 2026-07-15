@@ -39,6 +39,12 @@ export interface SearchMatch {
   tracking_proveedor: string;
   receipt?: string;
   motivo?: string;
+  /** Telemetría: clasificación del resultado para la auditoría en BD. */
+  resultado?: "encontrado" | "no_encontrado" | "sesion_expirada" | "sin_tracking";
+  /** Telemetría: latencia de la búsqueda de este tracking (ms). */
+  ms?: number;
+  /** Telemetría: si el receipt se escribió en Supabase (lo fija el caller). */
+  persistido_db?: boolean;
 }
 
 // ==========================================================================
@@ -375,7 +381,7 @@ export async function searchAllTrackings(
     const base: SearchMatch = { nop: d.nop, id_venta: d.id_venta, tracking_proveedor: trimmed };
 
     if (!trimmed) {
-      addMissing({ ...base, motivo: "sin tracking_proveedor" });
+      addMissing({ ...base, resultado: "sin_tracking", motivo: "sin tracking_proveedor", ms: 0 });
       continue;
     }
 
@@ -389,13 +395,13 @@ export async function searchAllTrackings(
     if (r.sessionExpired) {
       sessionExpiredCount++;
       console.log(`⛔ Sesión Expirada (${ms}ms)`);
-      addMissing({ ...base, motivo: "sesión expirada" });
+      addMissing({ ...base, resultado: "sesion_expirada", motivo: "sesión expirada", ms });
     } else if (r.receipt) {
       console.log(`✓ receipt ${r.receipt} (${ms}ms)`);
-      addFound({ ...base, receipt: r.receipt });
+      addFound({ ...base, receipt: r.receipt, resultado: "encontrado", ms });
     } else {
       console.log(`∅ sin receipt (${ms}ms)`);
-      addMissing({ ...base, motivo: "no está en Search" });
+      addMissing({ ...base, resultado: "no_encontrado", motivo: "no está en Search", ms });
     }
 
     // Flush por lote: cada `batchSize` trackings procesados (encontrados o no).

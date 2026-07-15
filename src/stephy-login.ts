@@ -9,6 +9,7 @@ import {
   gotoSearchViaMenu,
   searchAllTrackings,
   type SearchBatch,
+  type SearchMatch,
 } from "./search-receipts.js";
 import {
   loadSearchState,
@@ -18,6 +19,12 @@ import {
 } from "./search-state.js";
 import { installLogCapture, getCapturedLog, sendRunLog } from "./email-log.js";
 import { recordRunHealth, type RunReason } from "./run-health.js";
+import { getLlmUsage, estimateLlmCostUsd } from "./llm-usage.js";
+import { postRunTelemetry, type TelemetryPayload } from "./telemetry.js";
+import { hostname } from "node:os";
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Capturar TODO el log de la corrida desde el primer instante (incluso los logs
 // internos de Stagehand), para mandarlo por correo al final.
@@ -37,11 +44,15 @@ interface RunStats {
   incremental: boolean;
   incrementalDue: number | null;
   incrementalSkipped: number | null;
+  nopsTotal: number | null;
+  runAttempts: number;
   encontrados: number;
   noEncontrados: number;
   sessionExpired: number;
   detalleActualizados: number | string | null;
   gruposActualizados: number | string | null;
+  persistFailed: boolean;
+  writeBack: unknown;
   error: string | null;
 }
 
@@ -54,13 +65,29 @@ const runStats: RunStats = {
   incremental: false,
   incrementalDue: null,
   incrementalSkipped: null,
+  nopsTotal: null,
+  runAttempts: 0,
   encontrados: 0,
   noEncontrados: 0,
   sessionExpired: 0,
   detalleActualizados: null,
   gruposActualizados: null,
+  persistFailed: false,
+  writeBack: null,
   error: null,
 };
+
+/**
+ * Items de auditoría de la corrida (1 por tracking buscado), a nivel de MÓDULO
+ * como runStats. Se llenan EN CALIENTE conforme llegan los lotes (flushBatch), de
+ * modo que si el watchdog (#2) o un corte de CDP matan la corrida a mitad,
+ * `finishRun()` (llamado también desde el watchdog) igual puede postear lo que ya
+ * se buscó. La telemetría es best-effort y no altera la lógica del pipeline.
+ */
+const runItems: SearchMatch[] = [];
+
+/** Evita que dos finales (p.ej. watchdog + resolución tardía) posteen dos veces. */
+let runFinished = false;
 
 /**
  * Referencia al Stagehand vivo de la corrida actual, a nivel de módulo, para que
@@ -109,12 +136,9 @@ function armWatchdog(): void {
     } catch {
       /* best-effort: el navegador ya podía estar muerto */
     }
-    try {
-      const { asunto, cuerpo } = await buildEmailContent();
-      await sendRunLog(asunto, cuerpo);
-    } catch {
-      /* best-effort */
-    }
+    // Cierre único: correo + telemetría (registra el CUELGUE, que es el error más
+    // importante de trazar y antes NO quedaba en BD).
+    await finishRun({ exitCode: 1, watchdog: true });
     process.exit(1);
   }, WATCHDOG_MS);
   // No mantener vivo el event loop solo por el watchdog: si todo termina antes,
@@ -771,6 +795,10 @@ async function runOnce() {
       if (!nopsData) {
         console.log("⚠ Sin NOPs de n8n; no hay nada que buscar.");
       } else {
+        // Telemetría: NOPs con tracking que devolvió n8n (universo considerado).
+        runStats.nopsTotal = Array.isArray(nopsData.nops_detalle)
+          ? nopsData.nops_detalle.length
+          : (nopsData.total_nops ?? null);
         // #4 — Búsqueda incremental: no re-buscar cada corrida los ~145
         // trackings sin receipt. Filtra a los NUEVOS + los que vencieron su
         // backoff, y depura del estado los que n8n ya no devuelve (encontraron
@@ -813,6 +841,7 @@ async function runOnce() {
 
         const flushBatch = async (batch: SearchBatch): Promise<void> => {
           // 1. Persistir los receipts hallados del lote cuanto antes.
+          let batchPersisted = false;
           if (batch.encontrados.length > 0) {
             persistAttempted = true;
             const pr = await persistMatches(batch.encontrados, { preview });
@@ -824,11 +853,19 @@ async function runOnce() {
               gruposSum += toNum(
                 preview ? pr.grupos_a_actualizar : pr.grupos_actualizados,
               );
+              // En preview NO se escribió nada (dry-run); solo cuenta como
+              // persistido cuando fue escritura real y el POST tuvo éxito.
+              batchPersisted = !preview;
             } else {
               persistFailed = true;
             }
           }
-          // 2. Registrar el lote en el estado incremental y guardarlo en disco.
+          // 2. Telemetría EN CALIENTE: registrar los items del lote (marcando si
+          //    el receipt quedó escrito en Supabase). Se acumulan aunque el
+          //    watchdog mate la corrida después.
+          for (const m of batch.encontrados) runItems.push({ ...m, persistido_db: batchPersisted });
+          for (const m of batch.noEncontrados) runItems.push({ ...m, persistido_db: false });
+          // 3. Registrar el lote en el estado incremental y guardarlo en disco.
           //    Los "sesión expirada" no penalizan backoff (lo maneja recordResults).
           if (incremental && state) {
             recordResults(state, batch);
@@ -841,6 +878,7 @@ async function runOnce() {
         runStats.encontrados = encontrados.length;
         runStats.noEncontrados = noEncontrados.length;
         runStats.sessionExpired = sessionExpiredCount;
+        runStats.persistFailed = persistFailed;
 
         // Caso "todo sesión expirada" (0 hallados, nada persistido): sin archivo
         // supabase en el histórico (como antes). En cualquier otro caso dejamos el
@@ -869,6 +907,7 @@ async function runOnce() {
                 batches: persistResponses,
               };
           if (persistFailed) merged.persist_failed = true;
+          runStats.writeBack = merged; // para la telemetría (payload crudo)
           await finalizeRunHistory(toSearch, encontrados, noEncontrados, merged);
         }
       }
@@ -888,6 +927,7 @@ async function runOnce() {
 async function main() {
   const MAX_RUN_ATTEMPTS = Number(process.env.STEPHY_RUN_ATTEMPTS) || 2;
   for (let runTry = 1; runTry <= MAX_RUN_ATTEMPTS; runTry++) {
+    runStats.runAttempts = runTry;
     try {
       await runOnce();
       return;
@@ -1012,21 +1052,157 @@ async function buildEmailContent(): Promise<{ asunto: string; cuerpo: string }> 
   return { asunto, cuerpo };
 }
 
+// ==========================================================================
+//  Cierre único de la corrida — telemetría (#) + correo
+// ==========================================================================
+
+const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * Lee el commit corto de HEAD SIN child_process (leyendo .git directamente):
+ * .git/HEAD → si es "ref: …" sigue el ref (loose o packed-refs). Best-effort:
+ * null si no se puede resolver (p.ej. no es un repo git).
+ */
+async function readGitCommit(): Promise<string | null> {
+  try {
+    const head = (await readFile(join(PROJECT_ROOT, ".git", "HEAD"), "utf8")).trim();
+    const m = head.match(/^ref:\s*(.+)$/);
+    if (!m) return head.slice(0, 7); // HEAD desprendido = sha crudo
+    const ref = m[1];
+    try {
+      const sha = (await readFile(join(PROJECT_ROOT, ".git", ref), "utf8")).trim();
+      return sha.slice(0, 7);
+    } catch {
+      const packed = await readFile(join(PROJECT_ROOT, ".git", "packed-refs"), "utf8");
+      for (const line of packed.split("\n")) {
+        if (!line || line.startsWith("#") || line.startsWith("^")) continue;
+        const [sha, r] = line.split(" ");
+        if (r === ref) return sha.slice(0, 7);
+      }
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** Cómo se disparó la corrida (para segmentar métricas). */
+function resolveDisparo(): string {
+  if (process.env.STEPHY_DISPARO) return process.env.STEPHY_DISPARO;
+  if (runStats.preview) return "preview";
+  if (process.env.STEPHY_MANUAL_LOGIN === "1") return "manual";
+  return "auto";
+}
+
+/** `corrida_id` idempotente, mismo formato que el bot Walmart (ISO con guiones). */
+function buildCorridaId(inicio: Date): string {
+  return inicio.toISOString().replace(/[:.]/g, "-");
+}
+
+/** number | string | null → number | null (para las columnas int de la BD). */
+function numOrNull(v: number | string | null): number | null {
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Cierre ÚNICO de la corrida, llamado desde los 3 finales (éxito, catch y
+ * watchdog): manda el correo (con su resumen + salud) y registra la corrida en
+ * Supabase vía webhook n8n (telemetría). Idempotente en proceso (runFinished)
+ * para que un watchdog + resolución tardía no dupliquen. Todo best-effort: un
+ * fallo de correo o de telemetría nunca tumba el proceso.
+ */
+async function finishRun(opts: { exitCode: number; watchdog?: boolean }): Promise<void> {
+  if (runFinished) return;
+  runFinished = true;
+  disarmWatchdog();
+
+  // 1. Correo (incluye el registro de salud #11). Nunca bloquear por esto.
+  try {
+    const { asunto, cuerpo } = await buildEmailContent();
+    await sendRunLog(asunto, cuerpo);
+  } catch (err) {
+    console.log(`⚠ [correo] Falló el armado/envío del correo: ${(err as Error).message}`);
+  }
+
+  // 2. Telemetría a Supabase (best-effort).
+  try {
+    const usage = getLlmUsage();
+    const costUsd = await estimateLlmCostUsd(usage);
+    const estado = opts.watchdog
+      ? "watchdog"
+      : runStats.error
+        ? "error"
+        : runStats.loginOk
+          ? "ok"
+          : "login_failed";
+    const fin = new Date();
+    const payload: TelemetryPayload = {
+      corrida: {
+        corrida_id: buildCorridaId(runStats.inicio),
+        disparo: resolveDisparo(),
+        host: hostname() || null,
+        git_commit: await readGitCommit(),
+        inicio: runStats.inicio.toISOString(),
+        fin: fin.toISOString(),
+        duracion_ms: fin.getTime() - runStats.inicio.getTime(),
+        estado,
+        exit_code: opts.exitCode,
+        login_ok: runStats.loginOk,
+        menu_open: runStats.menuOpen,
+        search_ran: runStats.searchRan,
+        preview: runStats.preview,
+        incremental: runStats.incremental,
+        run_attempts: runStats.runAttempts,
+        nops_total: runStats.nopsTotal,
+        incremental_due: runStats.incrementalDue,
+        incremental_skipped: runStats.incrementalSkipped,
+        encontrados: runStats.encontrados,
+        no_encontrados: runStats.noEncontrados,
+        sesion_expirada: runStats.sessionExpired,
+        detalle_actualizados: numOrNull(runStats.detalleActualizados),
+        grupos_actualizados: numOrNull(runStats.gruposActualizados),
+        persist_failed: runStats.persistFailed,
+        llm_model: usage.model || null,
+        llm_calls: usage.calls,
+        llm_errors: usage.errors,
+        llm_prompt_tokens: usage.promptTokens,
+        llm_completion_tokens: usage.completionTokens,
+        llm_total_tokens: usage.totalTokens,
+        llm_ms: usage.ms,
+        llm_cost_usd: costUsd,
+        write_back: runStats.writeBack,
+        error_msg: runStats.error,
+      },
+      items: runItems.map((m) => ({
+        nop: m.nop,
+        id_venta: m.id_venta,
+        tracking_proveedor: m.tracking_proveedor,
+        receipt: m.receipt ?? null,
+        resultado: m.resultado ?? null,
+        motivo: m.motivo ?? null,
+        ms: m.ms ?? null,
+        persistido_db: m.persistido_db ?? false,
+      })),
+    };
+    await postRunTelemetry(payload);
+  } catch (err) {
+    console.log(`⚠ [telemetría] No se registró la corrida: ${(err as Error).message}`);
+  }
+}
+
 // #2 — Armamos el watchdog ANTES de arrancar: si la corrida se cuelga, él fuerza
-// el cierre + correo + exit(1). Lo desarmamos al terminar (bien o mal).
+// el cierre + correo + telemetría + exit(1). finishRun() desarma el watchdog.
 armWatchdog();
 
 main()
   .then(async () => {
-    disarmWatchdog();
-    const { asunto, cuerpo } = await buildEmailContent();
-    await sendRunLog(asunto, cuerpo);
+    await finishRun({ exitCode: 0 });
   })
   .catch(async (err) => {
-    disarmWatchdog();
     runStats.error = (err && (err.stack || err.message)) || String(err);
     console.error("Flujo falló:\n", err);
-    const { asunto, cuerpo } = await buildEmailContent();
-    await sendRunLog(asunto, cuerpo);
+    await finishRun({ exitCode: 1 });
     process.exit(1);
   });
