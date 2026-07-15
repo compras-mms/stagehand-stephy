@@ -17,6 +17,7 @@ import {
   saveSearchState,
 } from "./search-state.js";
 import { installLogCapture, getCapturedLog, sendRunLog } from "./email-log.js";
+import { recordRunHealth, type RunReason } from "./run-health.js";
 
 // Capturar TODO el log de la corrida desde el primer instante (incluso los logs
 // internos de Stagehand), para mandarlo por correo al final.
@@ -109,7 +110,7 @@ function armWatchdog(): void {
       /* best-effort: el navegador ya podía estar muerto */
     }
     try {
-      const { asunto, cuerpo } = buildEmailContent();
+      const { asunto, cuerpo } = await buildEmailContent();
       await sendRunLog(asunto, cuerpo);
     } catch {
       /* best-effort */
@@ -926,8 +927,25 @@ function fmtLocal(d: Date): string {
   );
 }
 
-/** Arma asunto + cuerpo (resumen arriba + log completo) para el correo. */
-function buildEmailContent(): { asunto: string; cuerpo: string } {
+/**
+ * Clasifica la corrida para el historial de salud (#11). Sana = completó login +
+ * búsqueda sin error. NO se cuenta "0 receipts" como fallo (con incremental es lo
+ * normal). El orden importa: `error` cubre también el watchdog (setea runStats.error).
+ */
+function classifyRun(): { ok: boolean; reason: RunReason } {
+  if (runStats.error) return { ok: false, reason: "error" };
+  if (!runStats.loginOk) return { ok: false, reason: "login-failed" };
+  if (!runStats.searchRan) return { ok: false, reason: "no-search" };
+  return { ok: true, reason: "ok" };
+}
+
+/**
+ * Arma asunto + cuerpo (resumen arriba + log completo) para el correo. Async
+ * porque además registra la salud de la corrida (#11) y, si hay racha de fallos,
+ * escala el asunto. Se llama EXACTAMENTE una vez por corrida (una sola de las
+ * ramas .then/.catch/watchdog dispara), así que registra un único resultado.
+ */
+async function buildEmailContent(): Promise<{ asunto: string; cuerpo: string }> {
   const estado = runStats.error
     ? "❌ ERROR"
     : runStats.loginOk
@@ -937,7 +955,23 @@ function buildEmailContent(): { asunto: string; cuerpo: string } {
   const fin = fmtLocal(new Date());
   const modo = runStats.preview ? " (PREVIEW)" : "";
 
-  const asunto = `Stephy ${inicio} — ${estado}${modo}`;
+  // #11 — Las PREVIEW (dry-run manual) no reflejan la salud del cron: no se
+  // registran ni escalan. Para las reales, registramos el resultado y miramos la
+  // racha de fallos consecutivos. Best-effort: si falla, seguimos sin alerta.
+  let health: Awaited<ReturnType<typeof recordRunHealth>> | null = null;
+  if (!runStats.preview) {
+    try {
+      health = await recordRunHealth(classifyRun());
+    } catch {
+      /* nunca bloquear el correo por el historial de salud */
+    }
+  }
+
+  let asunto = `Stephy ${inicio} — ${estado}${modo}`;
+  if (health?.alert) {
+    // Prefijo prominente al INICIO para que salte y ordene primero en la bandeja.
+    asunto = `🚨 [STEPHY ${health.streak}× SIN COMPLETAR] ${asunto}`;
+  }
 
   const resumen = [
     `RESUMEN DE LA CORRIDA`,
@@ -965,6 +999,10 @@ function buildEmailContent(): { asunto: string; cuerpo: string } {
         : `${runStats.detalleActualizados ?? "?"} producto(s), ${runStats.gruposActualizados ?? "?"} grupo(s)`
     }`,
     runStats.error ? `Error:         ${runStats.error.split("\n")[0]}` : null,
+    health && health.streak > 0
+      ? `Racha fallos:  ${health.streak} corrida(s) seguida(s) sin completar` +
+        ` (umbral ${health.threshold}${health.alert ? " — 🚨 ALERTA" : ""})`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -981,14 +1019,14 @@ armWatchdog();
 main()
   .then(async () => {
     disarmWatchdog();
-    const { asunto, cuerpo } = buildEmailContent();
+    const { asunto, cuerpo } = await buildEmailContent();
     await sendRunLog(asunto, cuerpo);
   })
   .catch(async (err) => {
     disarmWatchdog();
     runStats.error = (err && (err.stack || err.message)) || String(err);
     console.error("Flujo falló:\n", err);
-    const { asunto, cuerpo } = buildEmailContent();
+    const { asunto, cuerpo } = await buildEmailContent();
     await sendRunLog(asunto, cuerpo);
     process.exit(1);
   });

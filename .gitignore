@@ -9,5 +9,8 @@ chrome-user-data/
 # Estado de la búsqueda incremental (#4): trabajo local con backoff por tracking.
 data/search-state.json
 
+# Salud de corridas (#11): historial local para alertar rachas de fallos.
+data/run-health.json
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json
