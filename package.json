@@ -6,6 +6,7 @@
   "description": "Automated StephyTracking (Tecnoship) sign-in with Stagehand (local Chrome + OpenRouter). Shares the 'Mama SAN Amazon' Supabase DB.",
   "scripts": {
     "smoke": "tsx src/smoke.ts",
+    "preflight": "tsx src/preflight.ts",
     "stephy": "tsx src/stephy-login.ts",
     "stephy:preview": "cross-env STEPHY_SEARCH=1 STEPHY_PREVIEW=1 tsx src/stephy-login.ts",
     "stephy:auto": "cross-env STEPHY_AUTORUN=1 STEPHY_SEARCH=1 tsx src/stephy-login.ts",

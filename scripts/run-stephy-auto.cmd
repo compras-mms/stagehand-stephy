@@ -27,6 +27,18 @@ if exist "data\auto-runs.log" (
 
 echo ============================================================ >> "data\auto-runs.log"
 echo [%date% %time%] iniciando stephy:auto >> "data\auto-runs.log"
+
+rem -- #13 Gate de preflight: typecheck sin navegador. Si falla (codigo roto),
+rem    se salta la corrida (el preflight ya mando el correo de alerta). --
+echo [%date% %time%] preflight (typecheck) >> "data\auto-runs.log"
+call pnpm preflight >> "data\auto-runs.log" 2>&1
+if errorlevel 1 (
+  echo [%date% %time%] preflight FALLO - corrida SALTADA >> "data\auto-runs.log"
+  echo. >> "data\auto-runs.log"
+  endlocal
+  exit /b 1
+)
+
 call pnpm stephy:auto >> "data\auto-runs.log" 2>&1
 echo [%date% %time%] fin (exit %errorlevel%) >> "data\auto-runs.log"
 echo. >> "data\auto-runs.log"
