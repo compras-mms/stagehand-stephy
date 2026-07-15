@@ -1,4 +1,4 @@
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, writeFile, rm, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -260,6 +260,10 @@ export async function finalizeRunHistory(
 
   await rm(LIVE_JSON, { force: true });
 
+  // #12 — Retención: conservar solo las N carpetas más recientes (env
+  // STEPHY_HISTORY_KEEP, default 30) para que data/history/ no crezca sin tope.
+  await pruneHistory();
+
   const n = persistResult !== undefined ? 4 : 3;
   console.log(`\n🗂  Histórico de la corrida → data/history/${ts}/ (${n} archivos):`);
   console.log(`   • nops-con-tracking.json       (${nopsData.total_nops ?? "?"} NOPs)`);
@@ -275,4 +279,47 @@ export async function finalizeRunHistory(
   }
   console.log(`🧹 Eliminado data/nops-con-tracking.json (archivo de trabajo).`);
   return dir;
+}
+
+/** Nº de carpetas de histórico a conservar (env STEPHY_HISTORY_KEEP, default 30). */
+export function historyKeep(): number {
+  const raw = Number(process.env.STEPHY_HISTORY_KEEP);
+  return Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 30;
+}
+
+/**
+ * #12 — Poda data/history/ dejando solo las `historyKeep()` carpetas más recientes.
+ * Las carpetas se nombran `YYYY-MM-DD_HH-mm-ss`, así que ordenar por nombre = por
+ * fecha. Best-effort: cualquier fallo se loguea y NO rompe la corrida (el histórico
+ * ya quedó escrito). Ignora entradas que no sean carpetas de timestamp.
+ */
+export async function pruneHistory(keep: number = historyKeep()): Promise<number> {
+  try {
+    const entries = await readdir(HISTORY_DIR, { withFileTypes: true });
+    const dirs = entries
+      .filter((e) => e.isDirectory() && /^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/.test(e.name))
+      .map((e) => e.name)
+      .sort(); // ascendente: más viejas primero
+
+    const excess = dirs.length - keep;
+    if (excess <= 0) return 0;
+
+    const toDelete = dirs.slice(0, excess);
+    let removed = 0;
+    for (const name of toDelete) {
+      try {
+        await rm(join(HISTORY_DIR, name), { recursive: true, force: true });
+        removed++;
+      } catch (err) {
+        console.log(`⚠ [retención] No se pudo borrar history/${name}: ${(err as Error).message}.`);
+      }
+    }
+    if (removed > 0) {
+      console.log(`🧹 Retención: podadas ${removed} corrida(s) vieja(s) de history/ (conservo ${keep}).`);
+    }
+    return removed;
+  } catch {
+    // history/ no existe todavía o no se pudo leer → nada que podar.
+    return 0;
+  }
 }

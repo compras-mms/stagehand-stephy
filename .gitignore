@@ -1,6 +1,7 @@
 node_modules/
 .env
 *.log
+*.log.*
 dist/
 
 # Perfil de Chrome dedicado a stephy (ruido recurrente en git status; no versionar)
@@ -11,6 +12,11 @@ data/search-state.json
 
 # Salud de corridas (#11): historial local para alertar rachas de fallos.
 data/run-health.json
+
+# Artefactos de corrida (#12): histórico por corrida + archivo de trabajo de n8n.
+# Son datos locales que se regeneran cada corrida; no versionar (ruido en git status).
+data/history/
+data/nops-con-tracking.json
 
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json
