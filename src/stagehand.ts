@@ -1,6 +1,7 @@
-import { Stagehand, AISdkClient } from "@browserbasehq/stagehand";
+import { Stagehand } from "@browserbasehq/stagehand";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import dotenv from "dotenv";
+import { UsageTrackingAISdkClient, setLlmModel } from "./llm-usage.js";
 
 // Stagehand does NOT auto-load .env — we do it here, once, for every script.
 dotenv.config();
@@ -64,8 +65,11 @@ export function makeStagehand(opts: MakeStagehandOptions = {}): Stagehand {
 
   const modelId = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
   const openrouter = createOpenRouter({ apiKey: apiKey ?? "missing-key" });
-  // Route every Stagehand LLM call (act / extract / observe / agent) through OpenRouter.
-  const llmClient = new AISdkClient({ model: openrouter.chat(modelId) });
+  // Route every Stagehand LLM call (act / extract / observe / agent) through
+  // OpenRouter. Usamos la subclase que contabiliza tokens/costo por corrida
+  // (telemetría, sin alterar el comportamiento del cliente).
+  setLlmModel(modelId);
+  const llmClient = new UsageTrackingAISdkClient({ model: openrouter.chat(modelId) });
 
   if (env === "BROWSERBASE") {
     const bbApiKey = process.env.BROWSERBASE_API_KEY;
