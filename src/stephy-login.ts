@@ -967,6 +967,14 @@ function fmtLocal(d: Date): string {
   );
 }
 
+/** Escapa texto para incrustarlo seguro en el HTML del correo. */
+function esc(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 /**
  * Clasifica la corrida para el historial de salud (#11). Sana = completó login +
  * búsqueda sin error. NO se cuenta "0 receipts" como fallo (con incremental es lo
@@ -985,7 +993,11 @@ function classifyRun(): { ok: boolean; reason: RunReason } {
  * escala el asunto. Se llama EXACTAMENTE una vez por corrida (una sola de las
  * ramas .then/.catch/watchdog dispara), así que registra un único resultado.
  */
-async function buildEmailContent(): Promise<{ asunto: string; cuerpo: string }> {
+async function buildEmailContent(): Promise<{
+  asunto: string;
+  cuerpo: string;
+  html: string;
+}> {
   const estado = runStats.error
     ? "❌ ERROR"
     : runStats.loginOk
@@ -1049,7 +1061,137 @@ async function buildEmailContent(): Promise<{ asunto: string; cuerpo: string }> 
 
   const sep = "=".repeat(60);
   const cuerpo = `${resumen}\n\n${sep}\nLOG COMPLETO DE LA CORRIDA\n${sep}\n\n${getCapturedLog()}`;
-  return { asunto, cuerpo };
+
+  const html = buildEmailHtml({ estado, inicio, fin, health });
+  return { asunto, cuerpo, html };
+}
+
+/**
+ * Arma la versión HTML amigable del correo (misma info que `resumen`, pero con
+ * encabezado a color según estado, tarjeta de métricas y el log completo abajo).
+ * Estilo alineado a los correos de stagehand-amazon / stagehand-audit-amazon:
+ * HTML autocontenido con estilos inline (Gmail ignora <style>), tablas para el
+ * layout y un pie "MamaSAN · … · generado". El nodo Gmail lo envía como HTML.
+ */
+function buildEmailHtml(ctx: {
+  estado: string;
+  inicio: string;
+  fin: string;
+  health: Awaited<ReturnType<typeof recordRunHealth>> | null;
+}): string {
+  const { estado, inicio, fin, health } = ctx;
+
+  // Paleta según resultado: verde OK · ámbar login-falló · rojo error.
+  const kind: "ok" | "warn" | "error" = runStats.error
+    ? "error"
+    : runStats.loginOk
+      ? "ok"
+      : "warn";
+  const theme = {
+    ok: { accent: "#16a34a", bg: "#ecfdf5", emoji: "✅", label: "OK" },
+    warn: { accent: "#d97706", bg: "#fffbeb", emoji: "⚠️", label: "LOGIN FALLÓ" },
+    error: { accent: "#dc2626", bg: "#fef2f2", emoji: "❌", label: "ERROR" },
+  }[kind];
+
+  // Filas de la tarjeta de métricas (label → valor). Se omiten las condicionales
+  // que no aplican, igual que en el resumen de texto plano.
+  const busqueda = runStats.searchRan
+    ? runStats.preview
+      ? "ejecutada (PREVIEW, no escribe)"
+      : "ejecutada (escritura real)"
+    : "no ejecutada";
+  const supabase =
+    runStats.detalleActualizados === null && runStats.gruposActualizados === null
+      ? "sin write-back"
+      : `${runStats.detalleActualizados ?? "?"} producto(s), ${runStats.gruposActualizados ?? "?"} grupo(s)`;
+
+  const rows: Array<[string, string]> = [
+    ["Inicio", inicio],
+    ["Fin", fin],
+    ["Login", runStats.loginOk ? "OK" : "NO llegó al dashboard"],
+    ["Menú ☰", runStats.menuOpen ? "abierto" : "no abierto"],
+    ["Búsqueda", busqueda],
+  ];
+  if (runStats.searchRan && runStats.incremental) {
+    rows.push([
+      "Incremental",
+      `${runStats.incrementalDue ?? "?"} buscado(s), ${runStats.incrementalSkipped ?? "?"} en backoff`,
+    ]);
+  }
+  rows.push(["Sesión expirada", String(runStats.sessionExpired)]);
+  rows.push(["Supabase", supabase]);
+  if (health && health.streak > 0) {
+    rows.push([
+      "Racha fallos",
+      `${health.streak} seguida(s) sin completar (umbral ${health.threshold})`,
+    ]);
+  }
+
+  const rowsHtml = rows
+    .map(
+      ([k, v], i) =>
+        `<tr style="background:${i % 2 ? "#ffffff" : "#f8fafc"}">` +
+        `<td style="padding:8px 14px;color:#64748b;font-weight:600;white-space:nowrap;vertical-align:top">${esc(k)}</td>` +
+        `<td style="padding:8px 14px;color:#0f172a">${esc(v)}</td></tr>`,
+    )
+    .join("");
+
+  // Chips de receipts: encontrados (color del estado) vs no encontrados (gris).
+  const chip = (n: number | string, txt: string, color: string, bg: string) =>
+    `<td style="padding:0 6px"><div style="background:${bg};border-radius:10px;padding:12px 16px;text-align:center">` +
+    `<div style="font-size:26px;font-weight:700;color:${color};line-height:1">${esc(n)}</div>` +
+    `<div style="font-size:12px;color:#64748b;margin-top:4px">${esc(txt)}</div></div></td>`;
+
+  const alertBanner = health?.alert
+    ? `<tr><td style="padding:14px 24px;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600">` +
+      `🚨 ${health.streak} corridas seguidas sin completar — revisar el bot.</td></tr>`
+    : "";
+
+  const errorBox = runStats.error
+    ? `<tr><td style="padding:8px 24px 0">` +
+      `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;color:#991b1b;font-size:13px">` +
+      `<b>Error:</b> ${esc(runStats.error.split("\n")[0])}</div></td></tr>`
+    : "";
+
+  const modoBadge = runStats.preview
+    ? `<span style="background:#e0e7ff;color:#3730a3;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:8px">PREVIEW</span>`
+    : "";
+
+  return `<!-- Stephy run email -->
+<div style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
+    <tr><td style="height:6px;background:${theme.accent}"></td></tr>
+    ${alertBanner}
+    <tr><td style="padding:22px 24px 14px;background:${theme.bg}">
+      <div style="font-size:21px;font-weight:700;color:#0f172a">${theme.emoji} Stephy — ${esc(theme.label)}${modoBadge}</div>
+      <div style="font-size:13px;color:#64748b;margin-top:6px">Corrida de tracking en StephyTracking · ${esc(inicio)}</div>
+    </td></tr>
+
+    <tr><td style="padding:18px 18px 4px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+        ${chip(runStats.encontrados, "receipts encontrados", theme.accent, theme.bg)}
+        ${chip(runStats.noEncontrados, "no encontrados", "#475569", "#f1f5f9")}
+      </tr></table>
+    </td></tr>
+
+    ${errorBox}
+
+    <tr><td style="padding:14px 24px 4px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e8f0;border-radius:8px;border-collapse:separate;overflow:hidden;font-size:13px">
+        ${rowsHtml}
+      </table>
+    </td></tr>
+
+    <tr><td style="padding:16px 24px 6px">
+      <div style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px">Log completo de la corrida</div>
+      <pre style="margin:0;background:#0f172a;color:#e2e8f0;border-radius:8px;padding:14px;font-size:11px;line-height:1.5;font-family:'SF Mono',Consolas,'Courier New',monospace;white-space:pre-wrap;word-break:break-word;overflow-x:auto">${esc(getCapturedLog())}</pre>
+    </td></tr>
+
+    <tr><td style="padding:14px 24px 22px;border-top:1px solid #f1f5f9">
+      <div style="font-size:12px;color:#94a3b8">MamaSAN · Stephy Bot · generado ${esc(fin)}</div>
+    </td></tr>
+  </table>
+</div>`;
 }
 
 // ==========================================================================
@@ -1120,8 +1262,8 @@ async function finishRun(opts: { exitCode: number; watchdog?: boolean }): Promis
 
   // 1. Correo (incluye el registro de salud #11). Nunca bloquear por esto.
   try {
-    const { asunto, cuerpo } = await buildEmailContent();
-    await sendRunLog(asunto, cuerpo);
+    const { asunto, cuerpo, html } = await buildEmailContent();
+    await sendRunLog(asunto, cuerpo, html);
   } catch (err) {
     console.log(`⚠ [correo] Falló el armado/envío del correo: ${(err as Error).message}`);
   }

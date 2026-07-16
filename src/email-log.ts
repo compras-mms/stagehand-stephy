@@ -7,9 +7,11 @@
  *      al cargar el módulo, antes de que arranque el flujo, para no perder nada.
  *   2. getCapturedLog(): devuelve el log acumulado (con tope de tamaño para no
  *      mandar un correo gigante).
- *   3. sendRunLog(asunto, cuerpo): POST al webhook n8n `enviar-log-stephy`, que
- *      manda el correo a moises@mamasan.app vía Gmail. Best-effort: nunca lanza,
- *      así un fallo de correo no rompe la corrida.
+ *   3. sendRunLog(asunto, cuerpo, html): POST al webhook n8n `enviar-log-stephy`,
+ *      que manda el correo a moises@mamasan.app vía Gmail. Se envía tanto la
+ *      versión HTML (bonita, la que renderiza Gmail) como el texto plano `cuerpo`
+ *      (fallback). Best-effort: nunca lanza, así un fallo de correo no rompe la
+ *      corrida.
  */
 
 import { Buffer } from "node:buffer";
@@ -73,12 +75,16 @@ export function getCapturedLog(): string {
  * Manda el log de la corrida por correo (webhook n8n → Gmail). Best-effort:
  * loguea el resultado y nunca lanza.
  */
-export async function sendRunLog(asunto: string, cuerpo: string): Promise<void> {
+export async function sendRunLog(
+  asunto: string,
+  cuerpo: string,
+  html?: string,
+): Promise<void> {
   try {
     const res = await fetch(ENVIAR_LOG_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ asunto, cuerpo }),
+      body: JSON.stringify({ asunto, cuerpo, html }),
     });
     if (!res.ok) {
       console.log(`⚠ [correo] enviar-log-stephy respondió HTTP ${res.status}.`);
