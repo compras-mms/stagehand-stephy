@@ -18,5 +18,12 @@ data/run-health.json
 data/history/
 data/nops-con-tracking.json
 
+# Salidas de la consulta de consignatarios: llevan nombres de clientes y números
+# de consignatario. Son datos de la corrida, se regeneran; NO versionar.
+data/consignee-*.json
+data/consignee-*.csv
+data/receipts-*.csv
+data/receipts-contaminados.json
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json

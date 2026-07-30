@@ -17,12 +17,22 @@ import {
   recordResults,
   saveSearchState,
 } from "./search-state.js";
+import {
+  searchAllConsignees,
+  reconOneReceipt,
+  type ConsigneeMatch,
+} from "./search-consignee.js";
+import {
+  gotoReceiptsViaMenu,
+  gotoReceiptsDirect,
+  scrapeReceiptsForConsignees,
+} from "./receipts-page.js";
 import { installLogCapture, getCapturedLog, sendRunLog } from "./email-log.js";
 import { recordRunHealth, type RunReason } from "./run-health.js";
 import { getLlmUsage, estimateLlmCostUsd } from "./llm-usage.js";
 import { postRunTelemetry, type TelemetryPayload } from "./telemetry.js";
 import { hostname } from "node:os";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -54,6 +64,15 @@ interface RunStats {
   persistFailed: boolean;
   writeBack: unknown;
   error: string | null;
+  /**
+   * Corrida de MANTENIMIENTO (STEPHY_CONSIGNEE=1): busca consignatarios por
+   * receipt, no trackings. No es una corrida de tracking, así que no cuenta como
+   * "no-search" (no dispara alarma ni racha) ni se registra en la telemetría de
+   * corridas, que mide el pipeline normal.
+   */
+  consigneeRan: boolean;
+  consigneeOk: number;
+  consigneeTotal: number;
 }
 
 const runStats: RunStats = {
@@ -75,6 +94,9 @@ const runStats: RunStats = {
   persistFailed: false,
   writeBack: null,
   error: null,
+  consigneeRan: false,
+  consigneeOk: 0,
+  consigneeTotal: 0,
 };
 
 /**
@@ -218,6 +240,10 @@ function requireEnv(...names: string[]): string {
  * decide si relanzar Chrome (#3).
  */
 async function runOnce() {
+  // Se marca ANTES de nada: si se marcara dentro del paso de consignatarios, un
+  // login fallido nunca llegaría a marcarlo y la corrida se registraría como una
+  // corrida de tracking (ensuciando corridas_tracking_stephy y la racha #11).
+  runStats.consigneeRan = process.env.STEPHY_CONSIGNEE === "1";
   const env = resolveStagehandEnv();
   const stagehand = makeStagehand({ env, headless: false });
   activeStagehand = stagehand;
@@ -409,7 +435,15 @@ async function runOnce() {
    */
   const cancelIfAlert = async (): Promise<boolean> => {
     if (!(await isAlertVisible())) return false;
-    console.log("  ⚠ Alert detectado → Cancelar.");
+    // Log del TEXTO: si el alert se repite y bloquea el menú, sin esto no hay
+    // forma de saber cuál es sin volver a explorar a ciegas.
+    const texto = (await page
+      .evaluate(
+        `(() => { const a = document.querySelector('ion-alert');
+          return a ? (a.innerText || a.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200) : ''; })()`,
+      )
+      .catch(() => "")) as string;
+    console.log(`  ⚠ Alert detectado → Cancelar. Texto: "${texto}"`);
     // "CANCELAR".includes("CANCEL") es true, así matchea ambos idiomas.
     let res = await clickVisibleButton("CANCEL");
     if (res !== "ok") res = await clickVisibleButton("CANCELAR");
@@ -914,8 +948,168 @@ async function runOnce() {
     }
   }
 
+  // ======================================================================
+  //  Paso 3-bis (STEPHY_CONSIGNEE=1) — Consignatario POR RECEIPT
+  //  Búsqueda inversa para curar los recibos que quedaron pegados a varios
+  //  clientes. NO escribe en Supabase: deja un JSON+CSV para revisar y decidir.
+  //  Lista de receipts: STEPHY_CONSIGNEE_RECEIPTS="1,2,3" o
+  //  STEPHY_CONSIGNEE_FILE=<ruta> (JSON array, o texto con uno por línea).
+  // ======================================================================
+  if (process.env.STEPHY_CONSIGNEE === "1" && runStats.loginOk) {
+    const receipts = await loadConsigneeReceipts();
+    // Vía RECEIPTS (default): la lista trae el consignatario en cada fila, así que
+    // una pasada resuelve todos. En /search el resultado solo muestra "Box N / M"
+    // (verificado con RECON: el body no trae nada más y la caja no es clickeable),
+    // por eso esa vía queda solo como fallback con STEPHY_CONSIGNEE_VIA=search.
+    const via = (process.env.STEPHY_CONSIGNEE_VIA ?? "receipts").toLowerCase();
+    if (via === "receipts") {
+      // El menú ☰ queda atrapado a veces en un bucle de alertas (Cancelar
+      // refresca y el alert vuelve). Si no abrió, se intenta la URL directa,
+      // que verifica que la tabla exista antes de dar por buena la navegación.
+      const enReceipts =
+        (menuOpen && (await gotoReceiptsViaMenu(page))) ||
+        (await gotoReceiptsDirect(page, `${ORIGIN}/${COMPANY}/1/receipts`));
+      if (!receipts.length) {
+        console.log("⚠ Sin receipts que buscar. Pasa STEPHY_CONSIGNEE_RECEIPTS o STEPHY_CONSIGNEE_FILE.");
+      } else if (!enReceipts) {
+        console.log("⚠ No pude entrar a Receipts (ni por menú ni directo); salto el paso.");
+      } else {
+        const { mapa } = await scrapeReceiptsForConsignees(page, receipts);
+        const resultados: ConsigneeMatch[] = receipts.map((receipt) => {
+          const hit = mapa.get(receipt.trim());
+          return hit
+            ? {
+                receipt,
+                consignee: hit.consignee,
+                n_consignatario: hit.n_consignatario,
+                resultado: "encontrado" as const,
+              }
+            : {
+                receipt,
+                resultado: "no_encontrado" as const,
+                motivo: "no apareció en la lista de Receipts",
+              };
+        });
+        runStats.consigneeTotal = resultados.length;
+        runStats.consigneeOk = resultados.filter((r) => r.resultado === "encontrado").length;
+        const dataDir = join(PROJECT_ROOT, "data");
+        const stamp = fmtLocal(new Date()).replace(/[: ]/g, "-").slice(0, 19);
+        await mkdir(dataDir, { recursive: true });
+        const outJson = join(dataDir, `consignee-${stamp}.json`);
+        const outCsv = join(dataDir, `consignee-${stamp}.csv`);
+        await writeFile(
+          outJson,
+          JSON.stringify({ generado_en: new Date().toISOString(), via: "receipts", total: resultados.length, resultados }, null, 2),
+          "utf8",
+        );
+        await writeFile(
+          outCsv,
+          [
+            "receipt;n_consignatario;consignee;resultado;motivo",
+            ...resultados.map((r) =>
+              [r.receipt, r.n_consignatario ?? "", (r.consignee ?? "").replace(/;/g, ","), r.resultado, r.motivo ?? ""].join(";"),
+            ),
+          ].join("\n"),
+          "utf8",
+        );
+        console.log(
+          `\n  ✓ [consignee] ${runStats.consigneeOk}/${runStats.consigneeTotal} resueltos.` +
+            `\n  💾 ${outJson}\n     ${outCsv}`,
+        );
+      }
+    } else if (!(await gotoSearchViaMenu(page))) {
+      console.log("⚠ No pude entrar a Search por el menú; salto el paso de consignatarios.");
+    } else {
+      if (!receipts.length) {
+        console.log(
+          "⚠ Sin receipts que buscar. Pasa STEPHY_CONSIGNEE_RECEIPTS o STEPHY_CONSIGNEE_FILE.",
+        );
+      } else if (process.env.STEPHY_CONSIGNEE_RECON === "1") {
+        // Reconocimiento: vuelca la estructura del resultado de 2 receipts para
+        // calibrar dónde vive el consignatario. No produce CSV.
+        for (const r of receipts.slice(0, 2)) await reconOneReceipt(page, r);
+      } else {
+        const limit = Number(process.env.STEPHY_SEARCH_LIMIT) || undefined;
+        const dataDir = join(PROJECT_ROOT, "data");
+        const stamp = fmtLocal(new Date()).replace(/[: ]/g, "-").slice(0, 19);
+        const outJson = join(dataDir, `consignee-${stamp}.json`);
+        const outCsv = join(dataDir, `consignee-${stamp}.csv`);
+        await mkdir(dataDir, { recursive: true });
+
+        // Guardado EN CALIENTE por lote: si la corrida muere a mitad, lo ya
+        // resuelto queda en disco (mismo criterio que la búsqueda de receipts).
+        const acumulado: ConsigneeMatch[] = [];
+        const dump = async () => {
+          await writeFile(
+            outJson,
+            JSON.stringify({ generado_en: new Date().toISOString(), total: acumulado.length, resultados: acumulado }, null, 2),
+            "utf8",
+          );
+          const filas = acumulado.map((r) =>
+            [r.receipt, r.n_consignatario ?? "", (r.consignee ?? "").replace(/;/g, ","), r.resultado, r.motivo ?? ""].join(";"),
+          );
+          await writeFile(
+            outCsv,
+            ["receipt;n_consignatario;consignee;resultado;motivo", ...filas].join("\n"),
+            "utf8",
+          );
+        };
+
+        const { resultados, sessionExpiredCount } = await searchAllConsignees(page, receipts, {
+          limit,
+          onBatch: async (batch) => {
+            acumulado.push(...batch);
+            await dump();
+          },
+        });
+        if (acumulado.length === 0 && resultados.length) {
+          acumulado.push(...resultados);
+          await dump();
+        }
+        runStats.consigneeTotal = resultados.length;
+        runStats.consigneeOk = resultados.filter((r) => r.resultado === "encontrado").length;
+
+        console.log(`\n  💾 Consignatarios guardados en:\n     ${outJson}\n     ${outCsv}`);
+        if (sessionExpiredCount > 0) {
+          console.log(
+            `  ⚠ ${sessionExpiredCount} búsqueda(s) dieron "Sesión Expirada"; ` +
+              "conviene repetir esas antes de decidir la limpieza.",
+          );
+        }
+      }
+    }
+  }
+
   await stagehand.close();
   activeStagehand = null;
+}
+
+/**
+ * Lee la lista de receipts a consultar: variable con lista separada por comas, o
+ * archivo (JSON array de strings/objetos con `receipt`, o texto con uno por línea).
+ */
+async function loadConsigneeReceipts(): Promise<string[]> {
+  const inline = process.env.STEPHY_CONSIGNEE_RECEIPTS?.trim();
+  if (inline) return inline.split(",").map((s) => s.trim()).filter(Boolean);
+
+  const file = process.env.STEPHY_CONSIGNEE_FILE?.trim();
+  if (!file) return [];
+  const raw = await readFile(file, "utf8").catch((err) => {
+    console.log(`⚠ No pude leer ${file}: ${(err as Error).message}`);
+    return "";
+  });
+  if (!raw.trim()) return [];
+  try {
+    const j = JSON.parse(raw) as unknown;
+    const arr = Array.isArray(j) ? j : [];
+    return arr
+      .map((x) => (typeof x === "string" ? x : String((x as { receipt?: unknown }).receipt ?? "")))
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch {
+    // No es JSON: uno por línea.
+    return raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  }
 }
 
 /**
@@ -983,6 +1177,9 @@ function esc(s: unknown): string {
 function classifyRun(): { ok: boolean; reason: RunReason } {
   if (runStats.error) return { ok: false, reason: "error" };
   if (!runStats.loginOk) return { ok: false, reason: "login-failed" };
+  // La corrida de consignatarios no busca trackings a propósito: "no-search" ahí
+  // sería un falso fallo (correo de alarma + racha #11 contaminada).
+  if (runStats.consigneeRan) return { ok: true, reason: "ok" };
   if (!runStats.searchRan) return { ok: false, reason: "no-search" };
   return { ok: true, reason: "ok" };
 }
@@ -1034,12 +1231,17 @@ async function buildEmailContent(): Promise<{
     `Login:         ${runStats.loginOk ? "OK" : "NO llegó al dashboard"}`,
     `Menú ☰:        ${runStats.menuOpen ? "abierto" : "no abierto"}`,
     `Búsqueda:      ${
-      runStats.searchRan
-        ? runStats.preview
-          ? "ejecutada (PREVIEW, no escribe)"
-          : "ejecutada (escritura real)"
-        : "no ejecutada"
+      runStats.consigneeRan
+        ? "N/A — corrida de CONSIGNATARIOS (mantenimiento, no escribe)"
+        : runStats.searchRan
+          ? runStats.preview
+            ? "ejecutada (PREVIEW, no escribe)"
+            : "ejecutada (escritura real)"
+          : "no ejecutada"
     }`,
+    runStats.consigneeRan
+      ? `Consignatarios: ${runStats.consigneeOk}/${runStats.consigneeTotal} receipt(s) resueltos`
+      : null,
     runStats.searchRan && runStats.incremental
       ? `Incremental:   ${runStats.incrementalDue ?? "?"} buscado(s), ${runStats.incrementalSkipped ?? "?"} en backoff`
       : null,
@@ -1268,7 +1470,13 @@ async function finishRun(opts: { exitCode: number; watchdog?: boolean }): Promis
     console.log(`⚠ [correo] Falló el armado/envío del correo: ${(err as Error).message}`);
   }
 
-  // 2. Telemetría a Supabase (best-effort).
+  // 2. Telemetría a Supabase (best-effort). La corrida de consignatarios es
+  //    mantenimiento puntual, no una corrida del pipeline: registrarla metería
+  //    una fila con 0 encontrados en corridas_tracking_stephy y torcería v_bot_salud.
+  if (runStats.consigneeRan) {
+    console.log("  ⓘ [telemetría] Corrida de consignatarios: no se registra como corrida de tracking.");
+    return;
+  }
   try {
     const usage = getLlmUsage();
     const costUsd = await estimateLlmCostUsd(usage);
