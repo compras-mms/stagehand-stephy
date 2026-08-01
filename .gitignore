@@ -26,5 +26,9 @@ data/receipts-*.csv
 data/receipts-*.md
 data/receipts-contaminados.json
 
+# Trazado del poll en modo calibración (STEPHY_CALIBRATE=1): lleva trackings y
+# recibos de clientes, y se regenera en cada corrida de laboratorio.
+data/calibracion-*.jsonl
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json

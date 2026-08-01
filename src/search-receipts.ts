@@ -17,9 +17,16 @@
  * los inputs, alertas) para poder ajustar selectores sin re-explorar a ciegas.
  */
 
+import { appendFile, mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { NopsResponse } from "./nops-con-tracking.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const DATA_DIR = join(PROJECT_ROOT, "data");
 
 /** Subconjunto de la page de Stagehand que usamos aquí. */
 export type EvalPage = {
@@ -176,7 +183,40 @@ export interface OneSearchResult {
   notFound: boolean;
   bodySlice?: string;
   resultSnap?: string[];
+  /** Calibración (Fase 1.1): TODAS las lecturas del poll, en orden. */
+  reads?: PollRead[];
+  /** Calibración: por qué salió el poll. */
+  exitReason?: PollExit;
 }
+
+/**
+ * Calibración (Fase 1.1) — una lectura del poll tal cual salió de la página,
+ * con el instante en que se tomó. La iteración 0 es la lectura INMEDIATA tras el
+ * click: si ya trae recibo, es residuo por definición (el XHR no ha respondido).
+ */
+export interface PollRead {
+  iter: number;
+  /** ms desde el click de Buscar. */
+  ms: number;
+  vals: string[];
+  alertText: string;
+  notFound: boolean;
+  sessionExpired: boolean;
+  /** ¿La red ya se había aquietado cuando se tomó esta lectura? */
+  netSettled: boolean;
+  resultSnap?: string[];
+}
+
+/** Por qué terminó el poll (calibración). */
+export type PollExit =
+  | "receipt"
+  | "sesion_expirada"
+  | "not_found"
+  | "max_wait"
+  | "net_settled";
+
+/** Modo calibración: instrumenta el poll sin cambiar ninguna decisión. */
+export const calibrating = (): boolean => process.env.STEPHY_CALIBRATE === "1";
 
 /**
  * Tiempos del poll por tracking (#5 — recortar latencia). Todos con override por
@@ -255,27 +295,62 @@ export async function searchOneTracking(
   // Poll: leemos hasta que aparezca el receipt (input der), una alerta, o timeout.
   const start = Date.now();
   let last: OneSearchResult = { vals: [], alertText: "", sessionExpired: false, notFound: false };
+  // Calibración (1.1): guardamos CADA lectura sin alterar ninguna decisión.
+  const cal = calibrating();
+  const reads: PollRead[] = [];
+  let iter = 0;
+  let exitReason: PollExit = "max_wait";
   while (true) {
     const raw = (await page.evaluate(readResultExpr)) as string;
     const r = JSON.parse(raw) as OneSearchResult;
     last = r;
-    if (r.sessionExpired) break;
+    if (cal) {
+      reads.push({
+        iter,
+        ms: Date.now() - start,
+        vals: r.vals,
+        alertText: r.alertText,
+        notFound: r.notFound,
+        sessionExpired: r.sessionExpired,
+        netSettled,
+        resultSnap: r.resultSnap,
+      });
+      iter++;
+    }
+    if (r.sessionExpired) {
+      exitReason = "sesion_expirada";
+      break;
+    }
     // El receipt aparece en el input de la DERECHA (vals[1]), distinto del tracking.
     const receipt = (r.vals[1] || "").trim();
     if (receipt && receipt.toUpperCase() !== tracking.toUpperCase()) {
       last.receipt = receipt;
+      exitReason = "receipt";
       break;
     }
-    if (r.notFound) break;
+    if (r.notFound) {
+      exitReason = "not_found";
+      break;
+    }
 
     const elapsed = Date.now() - start;
-    if (elapsed >= timing.maxWaitMs) break;
+    if (elapsed >= timing.maxWaitMs) {
+      exitReason = "max_wait";
+      break;
+    }
     // Red aquietada + ya pasó el guard mínimo → el receipt no está aquí; no
     // gastamos el presupuesto completo esperando algo que no vendrá.
-    if (netSettled && elapsed >= timing.minWaitMs) break;
+    if (netSettled && elapsed >= timing.minWaitMs) {
+      exitReason = "net_settled";
+      break;
+    }
     await sleep(timing.pollMs);
   }
   void idleWatch; // el .catch ya lo hace inofensivo; no bloqueamos por él.
+  if (cal) {
+    last.reads = reads;
+    last.exitReason = exitReason;
+  }
 
   if (verbose) {
     console.log(`    · result vals=${JSON.stringify(last.vals)} alert="${last.alertText}" notFound=${last.notFound} sessionExpired=${last.sessionExpired}`);
@@ -372,6 +447,28 @@ export async function searchAllTrackings(
   const timing = resolveSearchTiming(); // resuelve una vez (mismo para todos).
   let sumMs = 0; // suma de latencias reales para promediar (#5).
 
+  // --- Calibración (Fase 1.1) ----------------------------------------------
+  // Con STEPHY_CALIBRATE=1 volcamos, tracking por tracking, TODAS las lecturas
+  // del poll a un JSONL: la primera lectura (residuo si trae recibo), la
+  // aceptada, el ms y el resultSnap completo. Sirve para responder las dos
+  // preguntas abiertas del plan (¿repinta vals[0]? ¿el snap trae el par?) sin
+  // tocar la lógica de decisión. Best-effort: si falla el disco, se sigue.
+  const cal = calibrating();
+  const calFile = join(DATA_DIR, `calibracion-${new Date().toISOString().replace(/[:.]/g, "-")}.jsonl`);
+  if (cal) {
+    await mkdir(DATA_DIR, { recursive: true }).catch(() => {});
+    console.log(`\n🔬 [calibración] STEPHY_CALIBRATE=1 → trazado del poll en ${calFile}`);
+    console.log(`   timing: ${JSON.stringify(timing)}`);
+  }
+  const calDump = async (row: unknown) => {
+    if (!cal) return;
+    try {
+      await appendFile(calFile, JSON.stringify(row) + "\n", "utf8");
+    } catch (err) {
+      console.log(`  ⚠ [calibración] no pude escribir el trazado: ${(err as Error).message}`);
+    }
+  };
+
   for (let i = 0; i < total; i++) {
     const d = detalle[i];
     const tracking = Array.isArray(d.tracking_proveedor)
@@ -385,12 +482,36 @@ export async function searchAllTrackings(
       continue;
     }
 
-    const verbose = i < 3; // primeras 3 vueltas: logueo detallado para calibrar.
+    const verbose = cal || i < 3; // primeras 3 vueltas (o calibración): detalle.
     process.stdout.write(`  [${i + 1}/${total}] ${trimmed} … `);
     const t0 = Date.now();
     const r = await searchOneTracking(page, trimmed, verbose, timing);
     const ms = Date.now() - t0;
     sumMs += ms;
+
+    if (cal) {
+      const first = r.reads?.[0];
+      const firstReceipt = (first?.vals?.[1] || "").trim();
+      // La señal cruda: recibo YA presente en la lectura inmediata al click.
+      if (firstReceipt) {
+        console.log(
+          `\n    ⚠ [calibración] RESIDUO: la lectura 0 (${first?.ms}ms) ya traía «${firstReceipt}»`,
+        );
+      }
+      await calDump({
+        idx: i + 1,
+        tracking: trimmed,
+        ts: new Date().toISOString(),
+        ms,
+        exitReason: r.exitReason,
+        receiptAceptado: r.receipt ?? null,
+        receiptPrimeraLectura: firstReceipt || null,
+        trackingEnInput: r.vals?.[0] ?? null,
+        inputConservaTracking:
+          (r.vals?.[0] || "").trim().toUpperCase() === trimmed.toUpperCase(),
+        lecturas: r.reads ?? [],
+      });
+    }
 
     if (r.sessionExpired) {
       sessionExpiredCount++;

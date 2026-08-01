@@ -80,6 +80,12 @@ export async function sendRunLog(
   cuerpo: string,
   html?: string,
 ): Promise<void> {
+  // Corridas de laboratorio (calibración/diagnóstico): STEPHY_EMAIL=0 evita
+  // mandar a moises@mamasan.app un correo que no es de una corrida real.
+  if (process.env.STEPHY_EMAIL === "0") {
+    console.log("ⓘ [correo] STEPHY_EMAIL=0 → no se envía el log de esta corrida.");
+    return;
+  }
   try {
     const res = await fetch(ENVIAR_LOG_WEBHOOK_URL, {
       method: "POST",

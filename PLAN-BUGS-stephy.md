@@ -1,6 +1,6 @@
 # Plan de bugs — Stephy
 
-**Abierto:** 2026-07-31 · **Revisado:** 2026-07-31 23:31 · **Estado:** Fase 0 ✅ hecha, Fase 1 sin empezar
+**Abierto:** 2026-07-31 · **Revisado:** 2026-08-01 (calibración 1.1) · **Estado:** Fase 0 ✅ · Fase 1.1 ✅ (bug reproducido; guardas B y C descartadas) · 1.2 por implementar
 
 > Sin nombres de clientes. El detalle con PII vive en `data/receipts-cruzados-20260731.md`
 > (gitignoreado por `data/receipts-*.md`).
@@ -129,16 +129,72 @@ STEPHY_SEARCH_TRACKINGS="<trk1>,<trk2>" STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 pn
 `actualizar-receipts` en dry-run (SELECT, no UPDATE); `STEPHY_INCREMENTAL=0` ignora el backoff.
 Añadir `STEPHY_TELEMETRY=0` para no ensuciar `v_bot_salud` con corridas de calibración.
 
-### 1.2 Las tres guardas en `searchOneTracking`
+### ✅ 1.1 RESULTADO — corrida 2026-08-01 18:15 UTC (7 trackings, dry-run)
 
-| Guarda | Qué hace | Ataca |
+Instrumentación añadida: `STEPHY_CALIBRATE=1` vuelca cada lectura del poll a
+`data/calibracion-*.jsonl` (gitignoreado) sin tocar ninguna decisión. `STEPHY_EMAIL=0` evita
+mandar correo de una corrida de laboratorio.
+
+**El bug se reprodujo en vivo, y es peor que "a veces": la corrida entera va corrida una
+posición.** Set: 2 trackings sanos con recibo conocido, 2 que NUNCA han estado en Stephy
+(24 corridas cada uno, siempre `no_encontrado`), y el par del caso 449829.
+
+| # | Tracking | Leyó | ms | Qué pasó de verdad |
+|---|---|---|---|---|
+| 1 | `SPX…6008` | 449181 ✅ | 2305 | su propia respuesta, a 2162 ms |
+| 2 | `YT…1456` (no existe) | ∅ | 3784 | agotó `maxWaitMs`; su respuesta seguía viva |
+| 3 | `SPX…9219` (recibo real 450364) | ∅ **falso negativo** | 3166 | leyó el «No Results» **de #2** |
+| 4 | `YT…8675` (no existe) | **450364** ❌ | 784 | recibió el recibo **de #3** |
+| 5 | `SPX…6008` (recibo real 449181) | ∅ **falso negativo** | 2948 | leyó el «No Results» **de #4** |
+| 6 | `TBA332974596221` | **449181** ❌ | 1866 | recibió el recibo **de #5** |
+| 7 | `SPX…0568` (Shein, venta 30510) | **449829** ❌ | 351 | recibió el recibo **de #6** ← el cruce histórico, calcado |
+
+Un tracking que **no existe en Stephy** salió con recibo (#4). El cruce del caso 449829 se
+reprodujo idéntico (#7). Y aparece un daño que el plan no contemplaba: **falsos negativos** —
+recibos que SÍ están se reportan como «no encontrado» (#3, #5) y entran al backoff de 6/12/24 h.
+
+**Respuesta 1 — ¿Angular repinta `vals[0]`? NO: lo BORRA.** Cuando pinta un recibo, los inputs
+quedan `["", "<recibo>"]`, **igual en la lectura legítima que en la contaminada** (#1 sano y #7
+cruzado son indistinguibles). En cambio el «No Results» **conserva** el tracking en `vals[0]`.
+⇒ **La guarda B queda descartada: rechazaría el 100% de las lecturas, incluidas las buenas.**
+
+**Respuesta 2 — ¿`resultSnap` trae el par? NO.** Siempre
+`["Tracking Search Receipt Search", "Qr Code"]` (+ `"No Results"`). No hay fila de resultados:
+el recibo solo vive en el input. ⇒ **La guarda C también queda descartada.**
+
+**Hallazgo extra — el residuo no apareció.** Las 7 lecturas de la iteración 0 salieron limpias;
+`fillTrackingExpr` sí borra. Las 3 contaminaciones fueron **XHR tardío, ninguna residuo**. La
+firma `ms < 900` no delata residuo: delata *respuesta ajena que ya venía en camino*.
+
+**La causa habilitadora, medida:** la latencia real de la búsqueda va de **2,2 s a 6,9 s**
+(reconstruida por dónde aterrizó cada respuesta), contra un presupuesto `maxWaitMs` de **3500 ms**.
+Cada vez que una búsqueda excede el presupuesto, **todas las siguientes quedan corridas una
+posición** hasta que una respuesta lenta rompa la cadena. El atajo `netSettled` no intervino:
+`waitForLoadState("networkidle", 1500)` **nunca** resolvió en toda la corrida (`netSettled=n` en
+las 7 búsquedas) — el culpable fue `maxWaitMs`, no el atajo de 500 ms.
+
+### 1.2 Las guardas — REDISEÑADAS tras 1.1
+
+⚠️ **La calibración mató las guardas B y C**: el DOM no ofrece NADA que ate la lectura a la
+búsqueda (borra `vals[0]`, no hay fila con el par). Y la A ataca un residuo que no existe. Con
+lo que la página muestra, **la correlación es imposible desde el DOM**. Hay que sacarla de otro
+lado.
+
+| Guarda | Qué hace | Estado |
 |---|---|---|
-| **A. Descartar la primera lectura** | El poll lee de inmediato tras el click; un recibo presente en la iteración 0 es residuo por definición. Guardarlo como `baseline` y exigir que el valor **cambie** respecto de él | residuo |
-| **B. Exigir `vals[0] === tracking`** | Si el input de Tracking ya no contiene lo buscado, la pantalla es de otra búsqueda | respuesta tardía *(si 1.1 confirma que repinta)* |
-| **C. Leer el par de la fila, no del input** | Tomar tracking↔recibo del `resultSnap` y exigir que el tracking de la fila sea el buscado | ambas |
+| ~~A. Descartar la primera lectura~~ | — | ❌ innecesaria: no hubo residuo en 7/7 |
+| ~~B. Exigir `vals[0] === tracking`~~ | — | ❌ **rechazaría también las lecturas buenas** |
+| ~~C. Leer el par de la fila~~ | — | ❌ no existe tal fila en el DOM |
+| **D. Correlacionar por la RED** | Enganchar `XMLHttpRequest`/`fetch` desde la página (`page.evaluate`, el idioma del proyecto) y llevar un registro `{url, request, response, t}`. Ahí **sí** viaja el tracking pedido junto a su respuesta → se acepta el recibo solo si su petición es la que lanzamos | ✅ propuesta |
+| **E. Drenar antes de seguir** | Una búsqueda abandonada deja su XHR vivo. Antes del siguiente tracking, esperar/descartar esa respuesta (o resetear por el menú ☰) para que no tenga dónde pintar | ✅ propuesta, ver 1.3 |
+| **F. Presupuesto realista** | `maxWaitMs` 3500 < latencia real (2,2–6,9 s). Subirlo y hacerlo adaptativo | ✅ propuesta |
 
-Si 1.1 confirma que la fila trae el par, **C sustituye a B** y es más fuerte. Si no, quedan
-A + B + 1.3.
+**D es la única que da correlación de verdad**; E y F reducen la exposición pero no la
+garantizan. Verificar primero que el hook ve el tracking en la petición (una corrida corta con
+`STEPHY_CALIBRATE=1` volcando el log de red).
+
+Sobre F: subir el presupuesto **alarga la corrida** (hoy ~2,2 s/tracking × ~145). El drenaje de E
+se paga solo en las abandonadas, así que la combinación sensata es F moderada + E siempre.
 
 ### 1.2-bis El lector gemelo tiene el mismo bug
 
@@ -170,7 +226,13 @@ cómo repinta el framework.
 ### 1.4 Marcar en vez de creer
 
 - Registrar `sospechoso = true` cuando `ms < 900` (umbral validado: 88% de esas lecturas traen
-  recibo ambiguo, vs 40% de las normales).
+  recibo ambiguo, vs 40% de las normales). ⚠️ Tras 1.1 el umbral queda como **señal de respaldo,
+  no como criterio**: el cruce #6 de la calibración se aceptó a **1866 ms** y habría pasado el
+  filtro. Con la guarda D el criterio es la correlación; `ms` solo alimenta la alerta.
+- **Marcar también el falso negativo.** 1.1 mostró que un «No Results» ajeno cierra la búsqueda
+  de un tracking que SÍ tenía recibo (#3 y #5, 2 de 7). Hoy eso entra al backoff 6/12/24 h como
+  si el recibo no existiera. Un `no_encontrado` cuya búsqueda quedó sin respuesta propia debe
+  reintentarse, no penalizarse.
 - **Un recibo sospechoso no se persiste** — se reencola para una segunda búsqueda al final de la
   corrida. Si la segunda coincide, entra; si no, se reporta.
 - Columnas nuevas en `auditoria_tracking_stephy`: `sospechoso`, `motivo_descarte`,
