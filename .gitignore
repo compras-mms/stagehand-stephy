@@ -23,6 +23,7 @@ data/nops-con-tracking.json
 data/consignee-*.json
 data/consignee-*.csv
 data/receipts-*.csv
+data/receipts-*.md
 data/receipts-contaminados.json
 
 # Claude Code personal/local settings (no versionar)
