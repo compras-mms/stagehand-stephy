@@ -12,7 +12,7 @@
 | Fase | Qué | Bloquea a | Estado |
 |---|---|---|---|
 | **0** | Parar la sangría — scraper **+ instructor** | Fase 1 | ✅ 2026-07-31 23:31 |
-| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | ⬜ |
+| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | 🟡 1.1 ✅ · **sigue 1.2-A (sonda de red)** |
 | **2** | Casos puntuales abiertos (18559, 30510) | — | 🟡 parcial |
 | **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ⬜ |
 | **4** | Blindaje | — | ⬜ |
@@ -195,6 +195,57 @@ garantizan. Verificar primero que el hook ve el tracking en la petición (una co
 
 Sobre F: subir el presupuesto **alarga la corrida** (hoy ~2,2 s/tracking × ~145). El drenaje de E
 se paga solo en las abandonadas, así que la combinación sensata es F moderada + E siempre.
+
+### ▶️ 1.2-A EMPEZAR AQUÍ EN LA PRÓXIMA SESIÓN — sonda de red (2ª corrida de calibración)
+
+Objetivo único: **comprobar que la petición de búsqueda lleva el tracking y que su respuesta
+lleva el recibo.** Si los lleva, la guarda D es viable y con ella se cierra el arreglo de fondo.
+Si no los lleva, D muere igual que B y C y hay que replantear (ver "Si la sonda falla").
+
+**Todavía NO se implementa la guarda** — esta corrida solo mira. Mismo blindaje que la 1.1:
+`STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 STEPHY_TELEMETRY=0 STEPHY_EMAIL=0`, crons **siguen
+deshabilitados**.
+
+**Qué hay que escribir** (en `src/search-receipts.ts`, junto a las demás exprs):
+
+1. `installNetHookExpr` — expr que parchea `XMLHttpRequest.prototype.open/send` **y**
+   `window.fetch`, y va empujando a `window.__stephyNet` (array, tope ~50) un registro por
+   petición: `{ id, t0, t1, method, url, reqBody, status, respSlice }`. `respSlice` = primeros
+   ~1500 chars del cuerpo de respuesta. Idempotente (`if (window.__stephyNet) return 'ya'`) —
+   se llama tras cada `gotoSearchViaMenu`.
+   ⚠️ Ojo: el SPA no recarga al navegar por el menú, así que el hook sobrevive; pero un
+   `logout`/recarga lo borra → re-inyectar y verificarlo en el log.
+2. `readNetExpr(desdeIdx)` — devuelve las entradas nuevas desde un índice.
+3. En `searchOneTracking`, con `STEPHY_CALIBRATE=1`: leer la red **antes** del click (marca de
+   agua) y **al salir** del poll, y meter esas entradas en el JSONL junto a las lecturas del DOM.
+
+**Qué mirar en el JSONL resultante** — las 4 preguntas, en orden:
+
+| # | Pregunta | Por qué importa |
+|---|---|---|
+| 1 | ¿Aparece el **tracking buscado** en `url` o en `reqBody` de alguna petición? | sin esto no hay correlación posible |
+| 2 | ¿La **respuesta** de esa misma petición trae el **número de recibo**? | si el recibo solo lo pinta Angular por otra vía, D se complica |
+| 3 | ¿La petición de una búsqueda **abandonada** aparece resuelta DURANTE la siguiente? | confirma el mecanismo por la red y da la señal para el drenaje (E) |
+| 4 | ¿`XMLHttpRequest` o `fetch`? ¿Una sola petición por búsqueda o varias? | define el filtro del hook |
+
+**Usar el mismo set de 7 trackings de la 1.1** — está calibrado para forzar el desfase y permite
+comparar contra la corrida anterior (`data/calibracion-2026-08-01T18-15-36-517Z.jsonl`):
+
+```bash
+STEPHY_SEARCH=1 STEPHY_CALIBRATE=1 STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 STEPHY_TELEMETRY=0 STEPHY_EMAIL=0 STEPHY_SEARCH_TRACKINGS="SPXMIA005672607090006008,YT2614801002001456,SPXMIA013672607210009219,YT2610801001888675,SPXMIA005672607090006008,TBA332974596221,SPXMIA013672607210010568" npx tsx src/stephy-login.ts
+```
+
+(`SPX…6008` → recibo real `449181`; `SPX…9219` → `450364`; `TBA332974596221` → `449829`;
+los dos `YT…` **no existen** en Stephy: cualquier recibo que salga ahí es contaminación.)
+
+**Criterio de salida:** respuestas 1 y 2 en positivo ⇒ se implementa D en los **dos** lectores
+(`searchOneTracking` y `searchOneReceipt`, ver 1.2-bis) + E + F, y luego la verificación 1.5.
+
+**Si la sonda falla** (la petición no lleva el tracking, o va cifrada/opaca), el plan B es
+**serializar por fuerza bruta**: una búsqueda por página limpia — resetear por el menú ☰
+(`gotoSearchViaMenu`, NUNCA por URL, ver 1.3) entre tracking y tracking y subir `maxWaitMs` a
+~8 s. Cuesta corrida más lenta (~145 trackings × varios segundos extra) pero no depende de que
+el sitio nos deje ver nada.
 
 ### 1.2-bis El lector gemelo tiene el mismo bug
 
