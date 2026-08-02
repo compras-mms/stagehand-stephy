@@ -148,6 +148,134 @@ export const readResultExpr = `(() => {
 })()`;
 
 // ==========================================================================
+//  Sonda de red (Fase 1.2-A) — SOLO con STEPHY_CALIBRATE=1
+// ==========================================================================
+
+/**
+ * La calibración 1.1 probó que el DOM no ofrece NADA que ate la lectura del
+ * recibo a la búsqueda que la pidió: Angular BORRA `vals[0]` al pintar el recibo
+ * y no existe fila de resultados con el par. La correlación tiene que salir de
+ * la RED — de ahí esta sonda.
+ *
+ * Parchea `XMLHttpRequest.prototype.open/send` y `window.fetch` para ir dejando
+ * en `window.__stephyNet` un registro por petición: `{id, kind, method, url,
+ * reqBody, t0, t1, status, respSlice}`. NO cambia ninguna decisión del scraper:
+ * solo observa, para responder las 4 preguntas del plan §1.2-A.
+ *
+ * Idempotente (`if (window.__stephyNet) return 'ya'`) porque se reinyecta en
+ * cada búsqueda: el SPA no recarga al navegar por el menú, pero un logout o una
+ * recarga sí borrarían el hook.
+ */
+export const installNetHookExpr = `(() => {
+  if (window.__stephyNet) return 'ya';
+  const CAP = 120;
+  const LOG = [];
+  window.__stephyNet = LOG;
+  let seq = 0;
+  const push = (rec) => { LOG.push(rec); if (LOG.length > CAP) LOG.splice(0, LOG.length - CAP); };
+  const slice = (s) => { try { return String(s == null ? '' : s).slice(0, 1500); } catch (e) { return '<unreadable>'; } };
+  const bodyOf = (b) => {
+    if (b == null) return '';
+    if (typeof b === 'string') return slice(b);
+    try {
+      if (typeof URLSearchParams !== 'undefined' && b instanceof URLSearchParams) return slice(b.toString());
+      if (typeof FormData !== 'undefined' && b instanceof FormData) {
+        const out = []; b.forEach((v, k) => { out.push(k + '=' + v); }); return slice(out.join('&'));
+      }
+    } catch (e) {}
+    try { return slice('[' + (b.constructor && b.constructor.name) + ']'); } catch (e) { return '[?]'; }
+  };
+
+  // --- XMLHttpRequest ---
+  const XO = XMLHttpRequest.prototype.open;
+  const XS = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    try { this.__st = { method: String(method || ''), url: String(url || '') }; } catch (e) {}
+    return XO.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function (body) {
+    const m = this.__st || { method: '?', url: '?' };
+    const rec = {
+      id: ++seq, kind: 'xhr', method: m.method, url: m.url,
+      reqBody: bodyOf(body), t0: Date.now(), t1: null, status: null, respSlice: null,
+    };
+    push(rec);
+    const self = this;
+    const done = () => {
+      if (rec.t1 != null) return;
+      rec.t1 = Date.now();
+      try { rec.status = self.status; } catch (e) { rec.status = -1; }
+      try {
+        const rt = self.responseType;
+        if (rt === '' || rt === 'text') rec.respSlice = slice(self.responseText);
+        else if (rt === 'json') rec.respSlice = slice(JSON.stringify(self.response));
+        else rec.respSlice = '<responseType:' + rt + '>';
+      } catch (e) { rec.respSlice = '<err>'; }
+    };
+    try { this.addEventListener('loadend', done); } catch (e) {}
+    return XS.apply(this, arguments);
+  };
+
+  // --- fetch ---
+  const F = window.fetch;
+  if (typeof F === 'function') {
+    window.fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : ((input && input.url) || '');
+      const method = (init && init.method) || (input && input.method) || 'GET';
+      const rec = {
+        id: ++seq, kind: 'fetch', method: String(method), url: String(url),
+        reqBody: bodyOf(init && init.body), t0: Date.now(), t1: null, status: null, respSlice: null,
+      };
+      push(rec);
+      return F.apply(this, arguments).then(
+        (res) => {
+          rec.t1 = Date.now();
+          try { rec.status = res.status; } catch (e) {}
+          try { res.clone().text().then((t) => { rec.respSlice = slice(t); }).catch(() => {}); } catch (e) {}
+          return res;
+        },
+        (err) => { rec.t1 = Date.now(); rec.status = -1; rec.respSlice = '<error>'; throw err; },
+      );
+    };
+  }
+  return 'ok';
+})()`;
+
+/**
+ * Devuelve las peticiones registradas por la sonda: las NUEVAS (`id > sinceId`)
+ * más las que se pidan explícitamente por id (`alsoIds` — las que quedaron sin
+ * responder antes del click, para ver si aterrizan DURANTE esta búsqueda, que es
+ * la pregunta 3 del plan). `maxId` sirve de marca de agua para la próxima.
+ */
+export const readNetExpr = (sinceId: number, alsoIds: number[] = []) => `(() => {
+  const L = window.__stephyNet;
+  if (!L) return JSON.stringify({ hooked: false, maxId: 0, entries: [] });
+  const since = ${Number.isFinite(sinceId) ? sinceId : 0};
+  const also = ${JSON.stringify(alsoIds)};
+  let maxId = 0;
+  const entries = [];
+  for (const r of L) {
+    if (r.id > maxId) maxId = r.id;
+    if (r.id > since || also.indexOf(r.id) >= 0) entries.push(r);
+  }
+  return JSON.stringify({ hooked: true, maxId, entries });
+})()`;
+
+/** Una petición vista por la sonda de red (calibración 1.2-A). */
+export interface NetEntry {
+  id: number;
+  kind: "xhr" | "fetch";
+  method: string;
+  url: string;
+  reqBody: string;
+  t0: number;
+  /** null = seguía en vuelo cuando se leyó (XHR abandonado). */
+  t1: number | null;
+  status: number | null;
+  respSlice: string | null;
+}
+
+// ==========================================================================
 //  Navegación a Search por el menú
 // ==========================================================================
 
@@ -187,6 +315,12 @@ export interface OneSearchResult {
   reads?: PollRead[];
   /** Calibración: por qué salió el poll. */
   exitReason?: PollExit;
+  /** Calibración 1.2-A: peticiones de red de ESTA búsqueda (+ las heredadas). */
+  net?: NetEntry[];
+  /** Calibración 1.2-A: ¿estaba puesta la sonda? ('ok' = recién inyectada). */
+  netHook?: string;
+  /** Calibración 1.2-A: ids que seguían en vuelo ANTES del click (herencia). */
+  netPendientesAntes?: number[];
 }
 
 /**
@@ -269,10 +403,41 @@ export async function searchOneTracking(
   verbose = false,
   timing: SearchTiming = resolveSearchTiming(),
 ): Promise<OneSearchResult> {
+  // --- Sonda de red (1.2-A), solo en calibración ---------------------------
+  // Se (re)inyecta en cada búsqueda: es idempotente y así sobrevive a un logout
+  // o a una recarga que la borrarían. Best-effort: si falla, la corrida sigue.
+  const calNet = calibrating();
+  let netHook = "";
+  let netWatermark = 0;
+  let netPendientesAntes: number[] = [];
+  if (calNet) {
+    try {
+      netHook = (await page.evaluate(installNetHookExpr)) as string;
+    } catch (err) {
+      netHook = `err:${(err as Error).message}`;
+    }
+  }
+
   const fillRaw = (await page.evaluate(fillTrackingExpr(tracking))) as string;
   const fill = JSON.parse(fillRaw) as { res: string; count: number };
   if (verbose) console.log(`    · fill: ${fill.res} (inputs visibles: ${fill.count})`);
   await sleep(timing.settleMs);
+
+  // Marca de agua JUSTO antes del click: todo lo que venga después es de esta
+  // búsqueda; lo que quede aquí sin `t1` es herencia de la anterior (pregunta 3).
+  if (calNet) {
+    try {
+      const raw = (await page.evaluate(readNetExpr(0))) as string;
+      const snap = JSON.parse(raw) as { hooked: boolean; maxId: number; entries: NetEntry[] };
+      netWatermark = snap.maxId;
+      netPendientesAntes = snap.entries.filter((e) => e.t1 == null).map((e) => e.id);
+      if (verbose && netPendientesAntes.length) {
+        console.log(`    · [red] ${netPendientesAntes.length} petición(es) heredada(s) en vuelo: ${netPendientesAntes.join(",")}`);
+      }
+    } catch (err) {
+      netHook += ` read-pre-err:${(err as Error).message}`;
+    }
+  }
 
   const click = (await page.evaluate(clickSearchExpr)) as string;
   if (verbose) console.log(`    · click Buscar: ${click}`);
@@ -350,6 +515,20 @@ export async function searchOneTracking(
   if (cal) {
     last.reads = reads;
     last.exitReason = exitReason;
+  }
+
+  // Lectura de la red al salir del poll: lo nuevo de esta búsqueda + el estado
+  // final de lo que se heredó en vuelo.
+  if (calNet) {
+    last.netHook = netHook;
+    last.netPendientesAntes = netPendientesAntes;
+    try {
+      const raw = (await page.evaluate(readNetExpr(netWatermark, netPendientesAntes))) as string;
+      const snap = JSON.parse(raw) as { hooked: boolean; maxId: number; entries: NetEntry[] };
+      last.net = snap.entries;
+    } catch (err) {
+      last.netHook = `${netHook} read-post-err:${(err as Error).message}`;
+    }
   }
 
   if (verbose) {
@@ -498,6 +677,48 @@ export async function searchAllTrackings(
           `\n    ⚠ [calibración] RESIDUO: la lectura 0 (${first?.ms}ms) ya traía «${firstReceipt}»`,
         );
       }
+      // --- Sonda de red (1.2-A): las 4 preguntas, resueltas en el momento ---
+      const net = r.net ?? [];
+      const hay = (pajar: string | null | undefined, aguja: string) =>
+        !!pajar && pajar.toUpperCase().includes(aguja.toUpperCase());
+      // P1 — ¿el tracking buscado viaja en la petición?
+      const pedidoConTracking = net.filter(
+        (e) => hay(e.url, trimmed) || hay(e.reqBody, trimmed),
+      );
+      // P2 — ¿la respuesta de ESA petición trae el recibo aceptado?
+      const rec = (r.receipt ?? "").trim();
+      const respuestaConRecibo = rec
+        ? net.filter((e) => hay(e.respSlice, rec))
+        : [];
+      const correlaciona =
+        !!rec &&
+        pedidoConTracking.some((e) => respuestaConRecibo.some((x) => x.id === e.id));
+      // P3 — ¿una petición heredada (abandonada) resolvió DURANTE esta búsqueda?
+      const heredadasResueltas = net.filter(
+        (e) => (r.netPendientesAntes ?? []).includes(e.id) && e.t1 != null,
+      );
+      if (pedidoConTracking.length) {
+        console.log(
+          `    · [red] P1 ✓ el tracking viaja en ${pedidoConTracking.length} petición(es): ` +
+            pedidoConTracking.map((e) => `#${e.id} ${e.kind} ${e.method} ${e.url.slice(0, 90)}`).join(" | "),
+        );
+      } else {
+        console.log(`    · [red] P1 ✗ NINGUNA de las ${net.length} peticiones lleva el tracking`);
+      }
+      if (rec) {
+        console.log(
+          respuestaConRecibo.length
+            ? `    · [red] P2 ${correlaciona ? "✓ CORRELACIONA" : "⚠ el recibo viene en otra petición"}: ` +
+                `recibo «${rec}» en #${respuestaConRecibo.map((e) => e.id).join(",#")}`
+            : `    · [red] P2 ✗ el recibo «${rec}» NO aparece en ninguna respuesta capturada`,
+        );
+      }
+      if (heredadasResueltas.length) {
+        console.log(
+          `    · [red] P3 ⚠ ${heredadasResueltas.length} petición(es) de la búsqueda ANTERIOR resolvieron aquí: ` +
+            heredadasResueltas.map((e) => `#${e.id} (${(e.t1 as number) - e.t0}ms)`).join(", "),
+        );
+      }
       await calDump({
         idx: i + 1,
         tracking: trimmed,
@@ -510,6 +731,18 @@ export async function searchAllTrackings(
         inputConservaTracking:
           (r.vals?.[0] || "").trim().toUpperCase() === trimmed.toUpperCase(),
         lecturas: r.reads ?? [],
+        // --- red (1.2-A) ---
+        redHook: r.netHook ?? null,
+        redPendientesAntes: r.netPendientesAntes ?? [],
+        red: net,
+        redResumen: {
+          p1_trackingEnPeticion: pedidoConTracking.map((e) => e.id),
+          p2_reciboEnRespuesta: respuestaConRecibo.map((e) => e.id),
+          p2_correlaciona: correlaciona,
+          p3_heredadasResueltasAqui: heredadasResueltas.map((e) => e.id),
+          p4_kinds: Array.from(new Set(net.map((e) => e.kind))),
+          p4_peticiones: net.length,
+        },
       });
     }
 

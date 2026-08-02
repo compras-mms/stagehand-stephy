@@ -1,6 +1,9 @@
 # Plan de bugs — Stephy
 
-**Abierto:** 2026-07-31 · **Revisado:** 2026-08-01 (calibración 1.1) · **Estado:** Fase 0 ✅ · Fase 1.1 ✅ (bug reproducido; guardas B y C descartadas) · 1.2 por implementar
+**Abierto:** 2026-07-31 · **Revisado:** 2026-08-01 (calibración 1.1 + sonda de red 1.2-A) ·
+**Estado:** Fase 0 ✅ · 1.1 ✅ (bug reproducido; guardas A/B/C muertas) · 1.2-A ✅ (la petición va
+cifrada, pero la respuesta trae el recibo en claro → **guarda D′ por identidad de petición,
+validada 7/7**) · **sigue 1.2-B: implementarla**
 
 > Sin nombres de clientes. El detalle con PII vive en `data/receipts-cruzados-20260731.md`
 > (gitignoreado por `data/receipts-*.md`).
@@ -12,7 +15,7 @@
 | Fase | Qué | Bloquea a | Estado |
 |---|---|---|---|
 | **0** | Parar la sangría — scraper **+ instructor** | Fase 1 | ✅ 2026-07-31 23:31 |
-| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | 🟡 1.1 ✅ · **sigue 1.2-A (sonda de red)** |
+| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | 🟡 1.1 ✅ · 1.2-A ✅ · **sigue 1.2-B (implementar D′)** |
 | **2** | Casos puntuales abiertos (18559, 30510) | — | 🟡 parcial |
 | **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ⬜ |
 | **4** | Blindaje | — | ⬜ |
@@ -185,67 +188,84 @@ lado.
 | ~~A. Descartar la primera lectura~~ | — | ❌ innecesaria: no hubo residuo en 7/7 |
 | ~~B. Exigir `vals[0] === tracking`~~ | — | ❌ **rechazaría también las lecturas buenas** |
 | ~~C. Leer el par de la fila~~ | — | ❌ no existe tal fila en el DOM |
-| **D. Correlacionar por la RED** | Enganchar `XMLHttpRequest`/`fetch` desde la página (`page.evaluate`, el idioma del proyecto) y llevar un registro `{url, request, response, t}`. Ahí **sí** viaja el tracking pedido junto a su respuesta → se acepta el recibo solo si su petición es la que lanzamos | ✅ propuesta |
+| ~~D. Correlacionar por el CONTENIDO de la red~~ | — | ❌ la petición va **cifrada** (`?params=` AES) — el tracking no viaja en claro |
+| **D′. Correlacionar por IDENTIDAD de petición** | El hook ya distingue cada XHR. Se acepta como recibo el campo `Result` de la respuesta de **la petición que lanzó nuestro click**, no lo que pinte el DOM | ✅ **validada 7/7 en la corrida 1.2-A** |
 | **E. Drenar antes de seguir** | Una búsqueda abandonada deja su XHR vivo. Antes del siguiente tracking, esperar/descartar esa respuesta (o resetear por el menú ☰) para que no tenga dónde pintar | ✅ propuesta, ver 1.3 |
 | **F. Presupuesto realista** | `maxWaitMs` 3500 < latencia real (2,2–6,9 s). Subirlo y hacerlo adaptativo | ✅ propuesta |
 
-**D es la única que da correlación de verdad**; E y F reducen la exposición pero no la
-garantizan. Verificar primero que el hook ve el tracking en la petición (una corrida corta con
-`STEPHY_CALIBRATE=1` volcando el log de red).
+**D′ es la única que da correlación de verdad**; E y F reducen la exposición pero no la
+garantizan. Ya verificada con la sonda (§1.2-A ✅).
 
 Sobre F: subir el presupuesto **alarga la corrida** (hoy ~2,2 s/tracking × ~145). El drenaje de E
 se paga solo en las abandonadas, así que la combinación sensata es F moderada + E siempre.
 
-### ▶️ 1.2-A EMPEZAR AQUÍ EN LA PRÓXIMA SESIÓN — sonda de red (2ª corrida de calibración)
+### 1.2-A Sonda de red — ✅ HECHA 2026-08-01 (2ª corrida de calibración)
 
-Objetivo único: **comprobar que la petición de búsqueda lleva el tracking y que su respuesta
-lleva el recibo.** Si los lleva, la guarda D es viable y con ella se cierra el arreglo de fondo.
-Si no los lleva, D muere igual que B y C y hay que replantear (ver "Si la sonda falla").
+Instrumentación añadida a `src/search-receipts.ts`: `installNetHookExpr` (parchea
+`XMLHttpRequest.open/send` y `window.fetch`, empuja a `window.__stephyNet`, idempotente y
+reinyectada en cada búsqueda) + `readNetExpr(sinceId, alsoIds)` + volcado al JSONL con el
+resumen de las 4 preguntas ya resuelto. Solo se activa con `STEPHY_CALIBRATE=1`.
 
-**Todavía NO se implementa la guarda** — esta corrida solo mira. Mismo blindaje que la 1.1:
-`STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 STEPHY_TELEMETRY=0 STEPHY_EMAIL=0`, crons **siguen
-deshabilitados**.
+Corrida: mismos 7 trackings de la 1.1, `STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0
+STEPHY_TELEMETRY=0 STEPHY_EMAIL=0`, los 5 crons verificados deshabilitados.
+Traza: `data/calibracion-2026-08-02T03-48-54-832Z.jsonl` (16 peticiones, 7 búsquedas).
 
-**Qué hay que escribir** (en `src/search-receipts.ts`, junto a las demás exprs):
+**P1 — ¿el tracking viaja en la petición? NO.** Todo va a `POST https://api.stephytracking.com/`
+con el cuerpo VACÍO y dos parámetros de query: `params` (~1.8 KB, AES de CryptoJS —
+base64 de `U2FsdGVkX1…` = `Salted__`) y `AppToken`. **La petición es opaca.**
+⇒ **La guarda D tal como estaba escrita (emparejar por contenido) muere igual que B y C.**
 
-1. `installNetHookExpr` — expr que parchea `XMLHttpRequest.prototype.open/send` **y**
-   `window.fetch`, y va empujando a `window.__stephyNet` (array, tope ~50) un registro por
-   petición: `{ id, t0, t1, method, url, reqBody, status, respSlice }`. `respSlice` = primeros
-   ~1500 chars del cuerpo de respuesta. Idempotente (`if (window.__stephyNet) return 'ya'`) —
-   se llama tras cada `gotoSearchViaMenu`.
-   ⚠️ Ojo: el SPA no recarga al navegar por el menú, así que el hook sobrevive; pero un
-   `logout`/recarga lo borra → re-inyectar y verificarlo en el log.
-2. `readNetExpr(desdeIdx)` — devuelve las entradas nuevas desde un índice.
-3. En `searchOneTracking`, con `STEPHY_CALIBRATE=1`: leer la red **antes** del click (marca de
-   agua) y **al salir** del poll, y meter esas entradas en el JSONL junto a las lecturas del DOM.
+**P2 — ¿la respuesta trae el recibo? SÍ, EN CLARO.** Y además se auto-describe. Tres formas
+distintas, distinguibles por su cuerpo:
 
-**Qué mirar en el JSONL resultante** — las 4 preguntas, en orden:
-
-| # | Pregunta | Por qué importa |
+| Forma de la respuesta | Qué es | Cuántas |
 |---|---|---|
-| 1 | ¿Aparece el **tracking buscado** en `url` o en `reqBody` de alguna petición? | sin esto no hay correlación posible |
-| 2 | ¿La **respuesta** de esa misma petición trae el **número de recibo**? | si el recibo solo lo pinta Angular por otra vía, D se complica |
-| 3 | ¿La petición de una búsqueda **abandonada** aparece resuelta DURANTE la siguiente? | confirma el mecanismo por la red y da la señal para el drenaje (E) |
-| 4 | ¿`XMLHttpRequest` o `fetch`? ¿Una sola petición por búsqueda o varias? | define el filtro del hook |
+| `data:[{'Result':'449181','Message':''}]` / `{'Result':'','Message':'Receipt Not Found'}` | **la respuesta a NUESTRA búsqueda**; `Result` = el número de recibo | 7 — exactamente una por búsqueda |
+| `data:[{'Receipt':'449181','PCS':'1'}]` | encadenada por la app tras el resultado | 4 |
+| `data:[{'Box':'449181-1/001-001','Date':…,'Status':…}]` | detalle/estatus, encadenada | 3 |
 
-**Usar el mismo set de 7 trackings de la 1.1** — está calibrado para forzar el desfase y permite
-comparar contra la corrida anterior (`data/calibracion-2026-08-01T18-15-36-517Z.jsonl`):
+⇒ **Correlación posible sin descifrar nada: por IDENTIDAD de petición.** La respuesta con forma
+`Result`/`Message` de la petición creada tras nuestro click ES la respuesta a nuestro tracking.
+**Emparejó 7/7**, incluidos los dos `YT…` inexistentes (`Message:'Receipt Not Found'` de su
+propia petición, no de una ajena). Esto es **mejor** que guardar el DOM: se lee el recibo de la
+red y el input deja de importar.
 
-```bash
-STEPHY_SEARCH=1 STEPHY_CALIBRATE=1 STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 STEPHY_TELEMETRY=0 STEPHY_EMAIL=0 STEPHY_SEARCH_TRACKINGS="SPXMIA005672607090006008,YT2614801002001456,SPXMIA013672607210009219,YT2610801001888675,SPXMIA005672607090006008,TBA332974596221,SPXMIA013672607210010568" npx tsx src/stephy-login.ts
-```
+**P3 — ¿lo abandonado aterriza en la búsqueda siguiente? SÍ, SIEMPRE.** 6 de las 7 búsquedas
+heredaron peticiones en vuelo, y en 5 de ellas aterrizaron ahí dentro: **#4 tardó 9.148 ms** y
+cayó en la 5ª búsqueda; #8 4.036 ms; #12 3.038 ms. **Es el mecanismo del bug, filmado.**
+Ojo: son las encadenadas (`Receipt/PCS`, `Box`) las que quedan colgando, y son justo las que
+pueden repintar el input con el recibo ANTERIOR.
 
-(`SPX…6008` → recibo real `449181`; `SPX…9219` → `450364`; `TBA332974596221` → `449829`;
-los dos `YT…` **no existen** en Stephy: cualquier recibo que salga ahí es contaminación.)
+**P4 — `XMLHttpRequest`, nunca `fetch`. Varias por búsqueda** (1 de búsqueda + 1-2 encadenadas).
+El filtro va por **forma de la respuesta**, no por la URL (todas comparten path `/`).
 
-**Criterio de salida:** respuestas 1 y 2 en positivo ⇒ se implementa D en los **dos** lectores
-(`searchOneTracking` y `searchOneReceipt`, ver 1.2-bis) + E + F, y luego la verificación 1.5.
+**Nota sobre esta corrida:** salió limpia (7/7 recibos correctos, latencias 1,6-3,6 s) — el sitio
+estaba más rápido que en la 1.1 (2,2-6,9 s). No invalida nada: el desfase depende de la latencia
+del día, que es exactamente por lo que hace falta un ancla que no dependa del reloj.
 
-**Si la sonda falla** (la petición no lleva el tracking, o va cifrada/opaca), el plan B es
-**serializar por fuerza bruta**: una búsqueda por página limpia — resetear por el menú ☰
-(`gotoSearchViaMenu`, NUNCA por URL, ver 1.3) entre tracking y tracking y subir `maxWaitMs` a
-~8 s. Cuesta corrida más lenta (~145 trackings × varios segundos extra) pero no depende de que
-el sitio nos deje ver nada.
+**Regalo de la corrida:** `SPXMIA013672607210010568` (Shein, venta 30510) → recibo **450514**,
+correlacionado a nuestra propia petición (#14). Es el número que faltaba en el caso 2 de la
+Fase 2 — confirmar con Jaime antes de escribirlo.
+
+### ▶️ 1.2-B EMPEZAR AQUÍ EN LA PRÓXIMA SESIÓN — implementar D′
+
+Criterio de salida de 1.2-A cumplido (en su variante: P1 negativa, P2 positiva y suficiente).
+Lo que hay que escribir:
+
+1. **`searchOneTracking` deja de creer en el DOM.** Marca de agua de red antes del click →
+   esperar a que aparezca **una respuesta con forma `Result`/`Message` creada después del
+   click** → el recibo es ese `Result` (vacío + `Receipt Not Found` = no encontrado de verdad).
+   El input pasa a ser señal de respaldo: si DOM y red discrepan, gana la red y se marca
+   `sospechoso`.
+2. **Presupuesto por petición, no por reloj (F).** Se espera a que NUESTRA petición resuelva,
+   con tope ~10 s. Se acaban los falsos negativos por «No Results» ajeno.
+3. **Drenaje (E)**: con la red visible ya se sabe qué quedó en vuelo — esperar/descartar antes
+   del siguiente tracking. Reset SIEMPRE por el menú ☰ (ver 1.3).
+4. **El gemelo `searchOneReceipt`** (§1.2-bis) va con la misma D′: su respuesta también debe
+   salir de la petición que lanzó su propio click.
+5. El hook deja de ser solo de calibración: pasa a instalarse siempre (es pasivo y barato).
+
+Luego, la verificación 1.5.
 
 ### 1.2-bis El lector gemelo tiene el mismo bug
 
