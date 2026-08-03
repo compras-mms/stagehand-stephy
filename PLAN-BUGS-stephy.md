@@ -19,7 +19,7 @@ Sigue: **Fase 3 (limpieza)**; los 5 crons **siguen deshabilitados a propósito**
 | **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | ✅ **CERRADA** 2026-08-02 (1.1 · 1.2-A · 1.2-B · 1.5 · 1.6) |
 | **2** | Casos puntuales abiertos (18559, 30510) | — | 🟡 parcial |
 | **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ✅ **CERRADA** 2026-08-03 (121 verificados, 60/66 corregidos) |
-| **4** | Blindaje | — | 🟡 **4.2 en código**; 4.1 y 4.3 escritos en `sql/`, faltan de correr |
+| **4** | Blindaje | — | ✅ **CERRADA** 2026-08-03 (4.1 · 4.2 · 4.3, las tres aplicadas y verificadas) |
 | **5** | NOP por producto | — | ⬜ |
 | **6** | Higiene | — | ⬜ |
 
@@ -597,12 +597,14 @@ duplicados, y desactivarlo es justo lo contrario de lo que se quiere aquí.
 
 ## Fase 4 — Blindaje
 
-Escrita el **2026-08-03**. Lo de código ya está en `main`; lo de BD quedó en dos scripts que
-corre Jaime en el SQL Editor (el clasificador me bloquea el DDL, igual que con `set_config`).
+**CERRADA el 2026-08-03.** Las tres partes aplicadas y verificadas. El código vive en `main`; el
+SQL, además de estar aplicado en Supabase, queda versionado en `sql/` (idempotente, con su
+verificación al final) por si hay que releerlo o reaplicarlo.
 
-**Ojo con el orden: 4.3 usa `norm_tracking_master`, que la crea 4.1.**
+Migraciones: `fase4_1_guard_recibo_mismo_cliente` y `fase4_3_detector_semanal_recibos_ambiguos`.
+**El orden importó: 4.3 usa `norm_tracking_master`, que la crea 4.1.**
 
-### 4.1 — `guard_recibo_duplicado` extendido ⬜ *falta correr* → `sql/fase4-1-guard-recibo-mismo-cliente.sql`
+### 4.1 — `guard_recibo_duplicado` extendido ✅ → `sql/fase4-1-guard-recibo-mismo-cliente.sql`
 
 El trigger (`trg_guard_recibo_duplicado` sobre `shipping_groups`, BEFORE INSERT OR UPDATE OF
 `tracking_master_courier`) solo actuaba si el recibo caía en un grupo de **otro cliente**
@@ -628,7 +630,13 @@ avisarían en falso: hay couriers que anteponen su prefijo al número (`51796798
 `9622001900005890833200517967985475`; `9361289677063201119748` vs `C1420331269361289677063...`).
 Esos dos casos son justo los que el detector descarta hoy.
 
-### 4.2 — Salud de la guarda D′ en el correo ✅ *hecho*
+*Verificado tras aplicar:* el normalizador da los cuatro veredictos esperados (los dos prefijos de
+courier cuentan como el mismo envío; vacío y <8 chars dan NULL; los dos `GFUS…819392` / `…863680`
+sí cuentan como distintos). La rama (B) **todavía no se ha estrenado en vivo** — no hay ninguna
+fila `accion='avisado'` porque no ha corrido ninguna escritura desde entonces (los crons siguen
+apagados). Se estrena sola cuando vuelva el primer cron.
+
+### 4.2 — Salud de la guarda D′ en el correo ✅
 
 `searchAllTrackings` ya contaba `sinRespuesta` / `sospechosos` / `rapidas` (<900 ms) pero se los
 guardaba para el log. Ahora los **devuelve** (`GuardaDStats`), viven en `runStats.guardaD` y salen
@@ -641,7 +649,7 @@ corrida de consignatarios): ahí un cero mentiría.
 Ninguna de las tres implica un dato malo escrito — con D′ el receipt solo se acepta si correlaciona
 con su propia petición. Lo que implican es que **el terreno donde vivía el bug se movió**.
 
-### 4.3 — Detector de BD semanal ⬜ *falta correr* → `sql/fase4-3-detector-semanal.sql`
+### 4.3 — Detector de BD semanal ✅ → `sql/fase4-3-detector-semanal.sql`
 
 Vista `v_recibos_ambiguos_stephy` (`security_invoker`) + función
 `alerta_recibos_ambiguos_stephy()` + job `pg_cron` **`alerta-recibos-ambiguos-stephy`**, lunes
@@ -659,6 +667,12 @@ Incluye además lo que el guard cazó en 7 días (bloqueados **y** avisados de 4
 **Línea base al 2026-08-03: 3 recibos ambiguos** — `325920` y `326092` con cruce entre clientes,
 `326250` dentro del mismo cliente. Los tres son de la era `3xxxxx`, anteriores a este bot. Si
 aparece un `4xxxxx` nuevo, eso sí es regresión.
+
+*Verificado en vivo el 2026-08-03*: se disparó `alerta_recibos_ambiguos_stephy()` a mano y la
+cadena completa respondió — `net._http_response` 200, ejecución n8n `1743537` en éxito, y el nodo
+de Gmail devolvió `labelIds: ["SENT"]` (mensaje `19fc830f12038b8c`). El correo salió con las 3
+filas y con «60 bloqueados por el guard (7 d)», que son reales: los que el guard paró durante la
+limpieza de la Fase 3. El job (`jobid 21`) quedó activo; se estrena solo el lunes.
 
 ---
 
