@@ -1,10 +1,12 @@
 # Plan de bugs — Stephy
 
-**Abierto:** 2026-07-31 · **Revisado:** 2026-08-02 (D′ implementada y verificada en vivo) ·
+**Abierto:** 2026-07-31 · **Revisado:** 2026-08-03 (anillo 3 aplicado + canario aprobado) ·
 **Estado:** Fase 0 ✅ · 1.1 ✅ · 1.2-A ✅ · **1.2-B ✅ implementada + banco de pruebas** ·
 **1.5 ✅ verificada en vivo (13 búsquedas, 13/13 correctas, 0 `fuente=dom`)** ⇒ **Fase 1 CERRADA**.
-Sigue: **Fase 3 (limpieza)**; los 5 crons **siguen deshabilitados a propósito** — reactivarlos es
-1.5-bis y va después de la limpieza, con canario.
+**Fase 3 ✅ CERRADA** · **Fase 4 ✅ CERRADA** · **anillo 3 ✅ aplicado el 2026-08-03**.
+**1.5-bis ✅ parcial:** canario aprobado ⇒ `MamaSAN-Stephy-1000` y `-2000` **reactivados**
+(`0600`/`1600` siguen apagados desde el 2026-07-13 por decisión previa, no por el bug).
+Sigue: **1.5-ter** — desbloquear `MamaSAN Instruir`, que es el único cron que falta.
 
 > Sin nombres de clientes. El detalle con PII vive en `data/receipts-cruzados-20260731.md`
 > (gitignoreado por `data/receipts-*.md`).
@@ -396,11 +398,67 @@ demuestra que *evita* el cruce bajo latencia adversa sigue siendo el banco de pr
 donde el lector viejo falla 4/5 sobre el mismo guion. Las dos evidencias juntas son el criterio de
 salida; ninguna sola alcanza.
 
-### 1.5-bis Reactivación de los crons — ⬜ PENDIENTE (decisión de Jaime)
+### 1.5-bis Reactivación de los crons — ✅ HECHA para los scrapers (2026-08-03)
 
-Los 5 siguen deshabilitados. **No los reactivé**: 1.5 despeja el lector, no la Fase 3, y
-`MamaSAN Instruir` sigue siendo el que convierte un recibo cruzado en guía física al cliente
-equivocado.
+**Resultado:** `MamaSAN-Stephy-1000` y `-2000` están en `Ready`. Ése es el horario normal (2×/día).
+⚠️ Corrección al conteo de «los 5 crons»: **`0600` y `1600` estaban deshabilitados desde el
+2026-07-13 por decisión previa**, no por la pausa del bug — no cuentan como pendientes.
+`MamaSAN Instruir` sigue apagado; lo que lo bloquea está en **1.5-ter**.
+
+**Corrida canario** (`corrida_id=2026-08-03T15-54-32-469Z`, disparada a mano con
+`Start-ScheduledTask` porque su hora ya había pasado): 168 trackings · 37 encontrados (37/37
+persistidos) · 131 no encontrados · ~4,3 s por tracking (721 s total) · exit 0.
+
+| criterio de salida | resultado |
+|---|---|
+| `fuente=dom` aceptado (criterio de **parada**) | **0** ✅ |
+| lecturas aceptadas en <900 ms | **0** de 168 ✅ |
+| `v_recibos_ambiguos_stephy` | **3** — línea base intacta ✅ |
+| `auditoria_recibo_duplicado` rama (B) `avisado` | 0 — no tuvo que intervenir |
+| de los 37 recibos nuevos: formato inválido | **0** ✅ |
+| de los 37 recibos nuevos: compartidos por >1 tracking | **0** ✅ |
+
+Los **4 `sin_respuesta`** (ventas 33138, 32682, 36400, 33347) agotaron el presupuesto de 10 s
+(10,3–11,6 s); uno recibió un `500 Internal server error` de Stephy. No son «no encontrado»: se
+reintentan sin penalizar backoff. Si molestan, subir `STEPHY_SEARCH_NET_MAX_WAIT_MS` a 20000.
+
+⬜ **Falta:** comprobar **a mano en Stephy** una muestra de los recibos nuevos (requiere login ⇒
+lo hace Jaime). Los chequeos automáticos de arriba no lo sustituyen.
+
+### 1.5-ter Desbloquear `MamaSAN Instruir` — ⬜ PENDIENTE
+
+Instruir **no lee `shipping_groups`**: lee `detalle_producto_venta` con
+`estatus='Con recibo Almacen Miami'` + `estado_compra='comprado'` + **`tracking_courier` no nulo**
+(`stagehand-dar-instruccion/dar instruccion.md:190`). Medida con ese filtro real, al 2026-08-03 su
+cola son **82 filas** (138 artículos, 68 ventas):
+
+- **4 con recibo MALFORMADO** — ningún recibo válido (son 6 dígitos). Hay que limpiarlas sí o sí:
+
+  | venta | tracking | «recibo» en BD | qué es en realidad |
+  |---|---|---|---|
+  | 11238 | `1LSCXLNA043951905` | `200014630057262` | un tracking de 15 dígitos |
+  | 12106 | `GFUS01048022862912` | `44167` | 5 dígitos — truncado |
+  | 27889 | `9400111206241448619421` | `PAGFUS010630` | basura |
+  | 27891 | `GFUS010630` | `PAGFUS010630` | basura — contiene **su propio tracking** con prefijo `PA` |
+
+  v27889 es uno de los sospechosos que §1-bis había marcado por `ms` bajo (144 ms) en la corrida
+  del 24/07: el hallazgo del audit se confirmó solo.
+- **63 escritas antes de la guarda D′ y sin verificar** ⇐ la masa real de trabajo. Se pueden
+  validar en bloque con `STEPHY_PREVIEW=1` (no escribe) en vez de una por una.
+- 20 ya confirmadas contra `fase3_verdad_stephy`.
+
+Aparte, **31 grupos** están en `Con recibo Almacen Miami` **con el recibo en NULL** (consolidados
+liberados el 30/07: se les dejó el estatus y se les quitó el recibo). **Instruir NO los toca** — su
+filtro exige `tracking_courier` no nulo ⇒ inertes, pero es un estado inconsistente que conviene
+cerrar.
+
+⚠️ **Falsa alarma, no volver a perseguirla:** el lote de escrituras del 2026-08-03 04:15 **no es un
+escritor pirata** — es la propia corrección de la Fase 3 de esa madrugada
+(`fase3_verdad_stephy.verificado_at = 04:12:22`, los `dpv` a las 04:15:48). Y la venta **33826**
+resuelve limpio a nivel de grupo (`TBA333038766404`→450016 y `TBA333074732133`→450339, ambos
+correctos); lo que discrepa es **a nivel de artículo dentro de la misma venta** ⇒ no es cruce entre
+clientes, es el trigger `trigger_asignar_grupo_por_no_orden_prov` pisando los trackings del artículo
+con los del grupo — o sea, **evidencia a favor del prerrequisito 5.0**.
 
 - **Canario:** habilitar **un solo** cron de scraper (`MamaSAN-Stephy-1000`), revisar esa primera
   corrida entera (correo + `auditoria_tracking_stephy`) antes de habilitar el segundo. En el
@@ -540,8 +598,15 @@ los dos trackings de cada par son la forma corta y larga del mismo paquete), 1 r
 mismo-cliente sin `tracking_master` (v9664 `Envio Principal`) y **1 real, v31144**. Verificando por
 red salieron tres eslabones: v31200 ← **449967** · v31144 ← **449636** · v31131 ← **449660**, y a
 `449660` no lo tiene nadie ⇒ **no hay anillo 4**. Los tres en rango 70 ⇒ solo el recibo, **sin
-`set_config`**. Script listo en `data/anillo3-correccion-20260803.sql` (gitignoreado),
-**pendiente de aplicar**. Al correrlo, las bloqueadas por el guard bajan de 6 a 5.
+`set_config`**. Script `data/anillo3-correccion-20260803.sql` (gitignoreado) **✅ APLICADO el
+2026-08-03**: verificado en vivo (449967 / 449636 / 449660, artículos alineados, estatus intacto),
+respaldos `bkp_anillo3_20260803_sg`/`_dpv` (3 filas c/u, RLS on) y `fase3_correcciones_20260803` en
+**61 aplicadas / 5 pendientes**. **No volver a correr el script**: su PASO 1 liberaría los recibos
+que ya están correctos.
+
+Las **5 que quedan** (6917 `444084`, 12865 `447362`, 13715 ×2 `447362`, 16309 `447329`) **no son
+barrido**: sus tenedores comparten el mismo `tracking_master` y son recibos consolidados bajo
+MAMA SAN / JAIME MOLINA ⇒ **Fase 6**.
 
 ⚠️ **Ojo con `norm_tracking_master()` para recibos: NO sirve.** Exige ≥8 caracteres y los recibos
 son de 6 dígitos ⇒ devuelve `NULL` y cualquier `IN`/join sale vacío sin dar error. Para recibos:
