@@ -14,6 +14,7 @@
     "stephy:consignee": "cross-env STEPHY_CONSIGNEE=1 STEPHY_CONSIGNEE_FILE=data/receipts-contaminados.json tsx src/stephy-login.ts",
     "stephy:consignee:manual": "cross-env STEPHY_MANUAL_LOGIN=1 STEPHY_CONSIGNEE=1 STEPHY_CONSIGNEE_FILE=data/receipts-contaminados.json tsx src/stephy-login.ts",
     "inspect": "tsx src/inspect-dom.ts",
+    "test:guarda-d": "tsx src/test-guarda-d.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

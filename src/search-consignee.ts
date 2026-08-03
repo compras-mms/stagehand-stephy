@@ -20,7 +20,17 @@
  * entre corchetes cruza con `usuarios.n_consignatario` en Supabase.
  */
 
-import { resolveSearchTiming, type EvalPage, type SearchTiming } from "./search-receipts.js";
+import {
+  drainNet,
+  installNetHook,
+  readNetWatermark,
+  readOwnByContentExpr,
+  requireNet,
+  resolveSearchTiming,
+  type EvalPage,
+  type OwnByContentSnapshot,
+  type SearchTiming,
+} from "./search-receipts.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -36,15 +46,21 @@ export interface ConsigneeMatch {
    * `error_pagina` = no pude siquiera leer el formulario (no es un dato de
    * Stephy). Se distingue de `no_encontrado` a propósito: confundirlos haría
    * pasar un fallo de scraping por "este receipt no existe".
+   *
+   * `sin_respuesta` (guarda D′) = la búsqueda no recibió respuesta propia, o la
+   * página quedó mostrando OTRO receipt. Tampoco es "no existe": es "no sé".
    */
   resultado:
     | "encontrado"
     | "sin_consignee"
     | "no_encontrado"
     | "sesion_expirada"
-    | "error_pagina";
+    | "error_pagina"
+    | "sin_respuesta";
   motivo?: string;
   ms?: number;
+  /** D′: la lectura no está correlacionada con el receipt buscado. */
+  sospechoso?: boolean;
 }
 
 // ==========================================================================
@@ -251,8 +267,20 @@ export function pickConsignee(
 }
 
 /**
- * Busca UN receipt y devuelve su consignatario. Mismo poll adaptativo que
- * searchOneTracking: salimos apenas hay señal, sin quemar el presupuesto.
+ * Busca UN receipt y devuelve su consignatario.
+ *
+ * GUARDA D′ (Fase 1.2-B) — este lector tenía EXACTAMENTE el mismo bug que
+ * `searchOneTracking`: mismo poll, mismo atajo por `networkidle`, y ninguna
+ * correlación entre el receipt buscado y lo que leía. Como es el instrumento con
+ * el que se pensaba verificar de quién es cada recibo cruzado, arreglarlo no es
+ * opcional: verificar con él roto es verificar con el instrumento que causó el
+ * problema.
+ *
+ * Aquí la identidad de petición se ata por CONTENIDO de la respuesta, no por su
+ * forma: la respuesta a "busca el receipt R" menciona R, y lo que puede
+ * contaminar es la respuesta de un receipt ANTERIOR (R′ ≠ R). Encima va la
+ * guarda simétrica del DOM: no se acepta nada si el input de Receipt no quedó
+ * con el receipt que buscamos.
  */
 export async function searchOneReceipt(
   page: EvalPage,
@@ -261,6 +289,8 @@ export async function searchOneReceipt(
   timing: SearchTiming = resolveSearchTiming(),
 ): Promise<ConsigneeMatch> {
   const t0 = Date.now();
+  const hook = await installNetHook(page);
+  let hooked = hook.hooked;
   // Reintenta el llenado: si el form aún no está hidratado, esperar y repetir es
   // lo correcto. Rendirse al primer intento (2ms) es lo que hizo fallar los 50.
   let fill = { res: "faltan-inputs", count: 0 };
@@ -283,6 +313,14 @@ export async function searchOneReceipt(
   }
   await sleep(timing.settleMs);
 
+  // Marca de agua JUSTO antes del click (guarda D′).
+  let netWatermark = 0;
+  if (hooked) {
+    const wm = await readNetWatermark(page);
+    hooked = wm.hooked;
+    netWatermark = wm.maxId;
+  }
+
   const click = (await page.evaluate(clickSearchReceiptExpr)) as string;
   if (verbose) console.log(`    · click Buscar (derecha): ${click}`);
   if (click === "no-visible" && page.keyPress) await page.keyPress("Enter").catch(() => {});
@@ -300,23 +338,63 @@ export async function searchOneReceipt(
     vals: [], labeled: "", candidates: [], alertText: "", sessionExpired: false, notFound: false,
   };
   let picked: { consignee?: string; n_consignatario?: number } = {};
+  let own: OwnByContentSnapshot["own"] = null;
+  let sinRespuesta = false;
+  const budget = hooked ? timing.netMaxWaitMs : timing.maxWaitMs;
+
   while (true) {
     const raw = (await page.evaluate(readConsigneeExpr)) as string;
     last = JSON.parse(raw) as RawConsigneeResult;
     if (last.sessionExpired) break;
-    picked = pickConsignee(last, receipt);
-    if (picked.consignee) break;
-    if (last.notFound) break;
+
+    if (hooked) {
+      // Esperamos a que responda NUESTRA petición antes de creerle al DOM.
+      let tokenInvalido = false;
+      try {
+        const rawNet = (await page.evaluate(readOwnByContentExpr(netWatermark, receipt))) as string;
+        const snap = JSON.parse(rawNet) as OwnByContentSnapshot;
+        if (!snap.hooked) hooked = false;
+        else {
+          own = snap.own;
+          tokenInvalido = snap.tokenInvalido;
+        }
+      } catch {
+        // Reintentamos en el siguiente ciclo; si nunca sale, cae en sin_respuesta.
+      }
+      if (tokenInvalido) {
+        last.sessionExpired = true;
+        break;
+      }
+      if (own) {
+        // Ya llegó lo nuestro: ahora sí el DOM que leamos es de esta búsqueda.
+        picked = pickConsignee(last, receipt);
+        if (picked.consignee || own.forma === "vacia") break;
+      }
+    } else {
+      picked = pickConsignee(last, receipt);
+      if (picked.consignee) break;
+      if (last.notFound) break;
+    }
 
     const elapsed = Date.now() - start;
-    if (elapsed >= timing.maxWaitMs) break;
-    if (netSettled && elapsed >= timing.minWaitMs) break;
+    if (elapsed >= budget) {
+      sinRespuesta = hooked && !own;
+      break;
+    }
+    if (!hooked && netSettled && elapsed >= timing.minWaitMs) break;
     await sleep(timing.pollMs);
   }
   void idleWatch;
+
+  if (hooked && timing.drainMs > 0) {
+    await drainNet(page, netWatermark, timing.drainMs, timing.pollMs);
+  }
   const ms = Date.now() - t0;
 
   if (verbose) {
+    console.log(
+      `    · [red] own=${own ? `#${own.id} ${own.forma} (${own.ms}ms) ${own.resp}` : "—"} hooked=${hooked}`,
+    );
     console.log(`    · vals=${JSON.stringify(last.vals)} labeled="${last.labeled}"`);
     console.log(`    · candidates=${JSON.stringify(last.candidates)}`);
     if (last.resultSnap?.length) console.log(`    · resultSnap=${JSON.stringify(last.resultSnap)}`);
@@ -326,19 +404,54 @@ export async function searchOneReceipt(
   if (last.sessionExpired) {
     return { receipt, resultado: "sesion_expirada", motivo: "sesión expirada", ms };
   }
+  if (sinRespuesta) {
+    return {
+      receipt,
+      resultado: "sin_respuesta",
+      motivo: `la búsqueda no recibió respuesta propia en ${budget}ms — NO es "no existe"`,
+      ms,
+      sospechoso: true,
+    };
+  }
+  // Guarda simétrica del DOM: si el input de Receipt no quedó con LO QUE
+  // BUSCAMOS, lo pintado es de otra búsqueda. Sin sonda esto es lo único que
+  // separa un dato real de uno cruzado, así que no se acepta nada sin ella.
+  const domCorrelaciona = (last.vals[1] || "").trim() === receipt;
+  if (!domCorrelaciona && (picked.consignee || !hooked)) {
+    const motivo =
+      `el input de Receipt mostraba «${(last.vals[1] || "").trim() || "(vacío)"}» y no «${receipt}»` +
+      (hooked ? "" : " (sin sonda de red)");
+    if (requireNet() || !hooked) {
+      return { receipt, resultado: "sin_respuesta", motivo, ms, sospechoso: true };
+    }
+  }
   if (picked.consignee) {
     return {
       receipt,
       consignee: picked.consignee,
       n_consignatario: picked.n_consignatario,
-      tracking: (last.vals[0] || "").trim() || undefined,
+      // `vals[0]` solo se devuelve si el DOM está correlacionado: es el dato con
+      // el que se verifica quién es el dueño real de un recibo cruzado.
+      tracking: domCorrelaciona ? (last.vals[0] || "").trim() || undefined : undefined,
       resultado: "encontrado",
       ms,
+      sospechoso: domCorrelaciona ? undefined : true,
     };
   }
   // Distinguimos "el receipt no existe" de "existe pero no leí el consignatario":
-  // el segundo caso es un problema de selector, no un dato faltante.
-  const existe = (last.vals[1] || "").trim() === receipt && !last.notFound;
+  // el segundo caso es un problema de selector, no un dato faltante. Con sonda,
+  // quien lo dice es la respuesta propia; el DOM solo se usa como respaldo.
+  if (own) {
+    return own.forma === "vacia"
+      ? { receipt, resultado: "no_encontrado", motivo: "no está en Search (respuesta propia vacía)", ms }
+      : {
+          receipt,
+          resultado: "sin_consignee",
+          motivo: "el receipt existe (respuesta propia) pero no encontré el consignatario",
+          ms,
+        };
+  }
+  const existe = domCorrelaciona && !last.notFound;
   return {
     receipt,
     resultado: existe ? "sin_consignee" : "no_encontrado",
@@ -500,8 +613,10 @@ export async function searchAllConsignees(
     if (r.resultado === "sesion_expirada") {
       sessionExpiredCount++;
       console.log(`⛔ Sesión Expirada (${r.ms}ms)`);
+    } else if (r.resultado === "sin_respuesta") {
+      console.log(`⏳ sin correlacionar, NO es "no existe" (${r.ms}ms): ${r.motivo ?? ""}`);
     } else if (r.resultado === "encontrado") {
-      console.log(`✓ ${r.consignee} (${r.ms}ms)`);
+      console.log(`✓ ${r.consignee} (${r.ms}ms)${r.sospechoso ? " ⚠ sospechoso" : ""}`);
     } else if (r.resultado === "sin_consignee") {
       console.log(`⚠ existe pero sin consignatario legible (${r.ms}ms)`);
     } else if (r.resultado === "error_pagina") {
@@ -519,15 +634,22 @@ export async function searchAllConsignees(
   const enc = resultados.filter((r) => r.resultado === "encontrado").length;
   const avg = total ? Math.round(sumMs / total) : 0;
   const errPag = resultados.filter((r) => r.resultado === "error_pagina").length;
+  const sinResp = resultados.filter((r) => r.resultado === "sin_respuesta").length;
   console.log(
     `\n  ✓ [consignee] Con consignatario: ${enc}/${total} · ` +
       `sin consignatario: ${resultados.filter((r) => r.resultado === "sin_consignee").length} · ` +
       `no están: ${resultados.filter((r) => r.resultado === "no_encontrado").length} · ` +
+      `sin correlacionar: ${sinResp} · ` +
       `fallos de página: ${errPag} · sesión expirada: ${sessionExpiredCount} · ~${avg}ms c/u`,
   );
   if (errPag > 0) {
     console.log(
       `  ⚠ ${errPag} receipt(s) fallaron por página, NO por dato faltante: no los tomes como resueltos.`,
+    );
+  }
+  if (sinResp > 0) {
+    console.log(
+      `  ⚠ ${sinResp} receipt(s) sin correlacionar (guarda D′): tampoco son "no existe". Vuelve a buscarlos.`,
     );
   }
   return { resultados, sessionExpiredCount };

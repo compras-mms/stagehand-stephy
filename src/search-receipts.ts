@@ -46,12 +46,26 @@ export interface SearchMatch {
   tracking_proveedor: string;
   receipt?: string;
   motivo?: string;
-  /** Telemetría: clasificación del resultado para la auditoría en BD. */
-  resultado?: "encontrado" | "no_encontrado" | "sesion_expirada" | "sin_tracking";
+  /**
+   * Telemetría: clasificación del resultado para la auditoría en BD.
+   * `sin_respuesta` (guarda D′): la búsqueda NO recibió la respuesta de su propia
+   * petición, así que no sabemos si hay receipt. NO es "no encontrado" — no debe
+   * penalizar el backoff (lo trata `recordResults` como la sesión expirada).
+   */
+  resultado?:
+    | "encontrado"
+    | "no_encontrado"
+    | "sesion_expirada"
+    | "sin_tracking"
+    | "sin_respuesta";
   /** Telemetría: latencia de la búsqueda de este tracking (ms). */
   ms?: number;
   /** Telemetría: si el receipt se escribió en Supabase (lo fija el caller). */
   persistido_db?: boolean;
+  /** D′: de dónde salió el receipt — `red` es el único de fiar. */
+  fuente?: "red" | "dom";
+  /** D′: la lectura no está correlacionada o discrepa con el DOM. */
+  sospechoso?: boolean;
 }
 
 // ==========================================================================
@@ -148,7 +162,7 @@ export const readResultExpr = `(() => {
 })()`;
 
 // ==========================================================================
-//  Sonda de red (Fase 1.2-A) — SOLO con STEPHY_CALIBRATE=1
+//  Sonda de red — el ancla de la guarda D′ (Fases 1.2-A y 1.2-B)
 // ==========================================================================
 
 /**
@@ -159,8 +173,12 @@ export const readResultExpr = `(() => {
  *
  * Parchea `XMLHttpRequest.prototype.open/send` y `window.fetch` para ir dejando
  * en `window.__stephyNet` un registro por petición: `{id, kind, method, url,
- * reqBody, t0, t1, status, respSlice}`. NO cambia ninguna decisión del scraper:
- * solo observa, para responder las 4 preguntas del plan §1.2-A.
+ * reqBody, t0, t1, status, respSlice}`.
+ *
+ * Desde 1.2-B **se instala siempre**, no solo en calibración: ya no es un
+ * observador, es de donde sale el recibo. La petición va cifrada (`?params=`
+ * AES), pero la respuesta viene en claro y se auto-describe, así que el `id` de
+ * petición sirve de identidad y el recibo se lee de ahí, no del input.
  *
  * Idempotente (`if (window.__stephyNet) return 'ya'`) porque se reinyecta en
  * cada búsqueda: el SPA no recarga al navegar por el menú, pero un logout o una
@@ -275,6 +293,199 @@ export interface NetEntry {
   respSlice: string | null;
 }
 
+/**
+ * Marca de agua COMPACTA: el `id` más alto registrado y los que siguen en vuelo.
+ * Se lee justo antes del click, así que todo lo que traiga un `id` mayor nació
+ * de NUESTRA búsqueda. Es compacta a propósito: `readNetExpr` devuelve los
+ * cuerpos completos (hasta ~180 KB) y esto corre en cada tracking.
+ */
+export const netWatermarkExpr = `(() => {
+  const L = window.__stephyNet;
+  if (!L) return JSON.stringify({ hooked: false, maxId: 0, pendientes: [] });
+  let maxId = 0;
+  const pendientes = [];
+  for (const r of L) {
+    if (r.id > maxId) maxId = r.id;
+    if (r.t1 == null) pendientes.push(r.id);
+  }
+  return JSON.stringify({ hooked: true, maxId, pendientes });
+})()`;
+
+/**
+ * GUARDA D′ — la respuesta de NUESTRA petición.
+ *
+ * De las peticiones nacidas después de la marca de agua, busca la que trae la
+ * forma `{'Result':…,'Message':…}`: esa y solo esa es la respuesta a la búsqueda
+ * que lanzó nuestro click. Las que la app encadena después traen otras formas
+ * (`{'Receipt','PCS'}`, `{'Box',…}`) y son justo las que repintan el input con el
+ * recibo ANTERIOR — por eso el filtro va por forma de respuesta y no por URL
+ * (todas comparten path `/`).
+ *
+ * `Result` vacío + `Message:'Receipt Not Found'` = no encontrado DE VERDAD (de
+ * nuestra búsqueda, no de una ajena): ahí es donde se acaban los falsos negativos.
+ */
+export const readOwnResponseExpr = (sinceId: number) => `(() => {
+  const L = window.__stephyNet;
+  if (!L) return JSON.stringify({ hooked: false, maxId: 0, own: null, pendientes: 0, nuevas: 0, tokenInvalido: false, otras: [] });
+  const since = ${Number.isFinite(sinceId) ? sinceId : 0};
+  const RES = /['"]Result['"]\\s*:\\s*['"]([^'"]*)['"]/;
+  const MSG = /['"]Message['"]\\s*:\\s*['"]([^'"]*)['"]/;
+  const TOK = /['"]IsTokenValid['"]\\s*:\\s*false/;
+  let maxId = 0, pendientes = 0, nuevas = 0, tokenInvalido = false, own = null;
+  const otras = [];
+  for (const r of L) {
+    if (r.id > maxId) maxId = r.id;
+    if (r.id <= since) continue;
+    nuevas++;
+    if (r.t1 == null) { pendientes++; continue; }
+    const s = r.respSlice || '';
+    if (TOK.test(s)) tokenInvalido = true;
+    if (own) continue;
+    const m = RES.exec(s);
+    const mm = MSG.exec(s);
+    if (m && mm) {
+      own = { id: r.id, result: (m[1] || '').trim(), message: (mm[1] || '').trim(), ms: r.t1 - r.t0, status: r.status };
+    } else if (otras.length < 4) {
+      otras.push({ id: r.id, status: r.status, resp: s.slice(0, 120) });
+    }
+  }
+  return JSON.stringify({ hooked: true, maxId, own, pendientes, nuevas, tokenInvalido, otras });
+})()`;
+
+/**
+ * Variante de D′ para el lector GEMELO (`searchOneReceipt`). Allá la respuesta
+ * propia no tiene la forma `Result`/`Message` sino la de la caja, así que la
+ * identidad se ata por CONTENIDO: la respuesta a "busca el receipt R" menciona R,
+ * y la contaminación que puede llegar es de un receipt ANTERIOR (R′ ≠ R). El
+ * "no existe" se reconoce por `data:[]` / "not found".
+ */
+export const readOwnByContentExpr = (sinceId: number, needle: string) => `(() => {
+  const L = window.__stephyNet;
+  if (!L) return JSON.stringify({ hooked: false, maxId: 0, own: null, pendientes: 0, nuevas: 0, tokenInvalido: false, otras: [] });
+  const since = ${Number.isFinite(sinceId) ? sinceId : 0};
+  const needle = ${JSON.stringify(String(needle || ""))};
+  const VACIA = /['"]data['"]\\s*:\\s*\\[\\s*\\]|not\\s*found/i;
+  const TOK = /['"]IsTokenValid['"]\\s*:\\s*false/;
+  let maxId = 0, pendientes = 0, nuevas = 0, tokenInvalido = false, own = null;
+  const otras = [];
+  for (const r of L) {
+    if (r.id > maxId) maxId = r.id;
+    if (r.id <= since) continue;
+    nuevas++;
+    if (r.t1 == null) { pendientes++; continue; }
+    const s = r.respSlice || '';
+    if (TOK.test(s)) tokenInvalido = true;
+    if (own) continue;
+    if (needle && s.indexOf(needle) >= 0) {
+      own = { id: r.id, forma: 'contiene', ms: r.t1 - r.t0, status: r.status, resp: s.slice(0, 200) };
+    } else if (VACIA.test(s)) {
+      own = { id: r.id, forma: 'vacia', ms: r.t1 - r.t0, status: r.status, resp: s.slice(0, 200) };
+    } else if (otras.length < 4) {
+      otras.push({ id: r.id, status: r.status, resp: s.slice(0, 120) });
+    }
+  }
+  return JSON.stringify({ hooked: true, maxId, own, pendientes, nuevas, tokenInvalido, otras });
+})()`;
+
+/** Cuántas peticiones nacidas después de `sinceId` siguen en vuelo (drenaje E). */
+export const netPendingExpr = (sinceId: number) => `(() => {
+  const L = window.__stephyNet;
+  if (!L) return '0';
+  let n = 0;
+  for (const r of L) if (r.id > ${Number.isFinite(sinceId) ? sinceId : 0} && r.t1 == null) n++;
+  return String(n);
+})()`;
+
+/** La respuesta a NUESTRA petición, ya interpretada (guarda D′). */
+export interface OwnResponse {
+  id: number;
+  /** Número de recibo. Vacío = «Receipt Not Found» de nuestra propia búsqueda. */
+  result: string;
+  message: string;
+  ms: number;
+  status: number | null;
+}
+
+/** Lo que devuelve `readOwnResponseExpr`. */
+interface OwnSnapshot {
+  hooked: boolean;
+  maxId: number;
+  own: OwnResponse | null;
+  pendientes: number;
+  nuevas: number;
+  tokenInvalido: boolean;
+  otras: { id: number; status: number | null; resp: string }[];
+}
+
+/** Lo que devuelve `readOwnByContentExpr` (lector gemelo). */
+export interface OwnByContentSnapshot {
+  hooked: boolean;
+  maxId: number;
+  own: { id: number; forma: "contiene" | "vacia"; ms: number; status: number | null; resp: string } | null;
+  pendientes: number;
+  nuevas: number;
+  tokenInvalido: boolean;
+  otras: { id: number; status: number | null; resp: string }[];
+}
+
+/**
+ * Instala la sonda (idempotente) y devuelve si quedó puesta. Best-effort: si
+ * falla, el caller decide qué hacer — con `STEPHY_REQUIRE_NET=1` (default) eso
+ * significa NO aceptar recibos, que es lo correcto mientras el bug esté vivo.
+ */
+export async function installNetHook(page: EvalPage): Promise<{ hooked: boolean; detalle: string }> {
+  try {
+    const res = (await page.evaluate(installNetHookExpr)) as string;
+    return { hooked: res === "ok" || res === "ya", detalle: res };
+  } catch (err) {
+    return { hooked: false, detalle: `err:${(err as Error).message}` };
+  }
+}
+
+/** Marca de agua de red justo antes del click (guarda D′). */
+export async function readNetWatermark(
+  page: EvalPage,
+): Promise<{ hooked: boolean; maxId: number; pendientes: number[] }> {
+  try {
+    const raw = (await page.evaluate(netWatermarkExpr)) as string;
+    const snap = JSON.parse(raw) as { hooked: boolean; maxId: number; pendientes: number[] };
+    return { hooked: !!snap.hooked, maxId: snap.maxId ?? 0, pendientes: snap.pendientes ?? [] };
+  } catch {
+    return { hooked: false, maxId: 0, pendientes: [] };
+  }
+}
+
+/**
+ * GUARDA E — drenaje. Al salir de una búsqueda quedan en vuelo las peticiones
+ * que la app encadenó (las que repintan el input con el recibo que acabamos de
+ * leer). Esperarlas antes de pasar al siguiente tracking evita que aterricen ahí.
+ *
+ * Con D′ el recibo ya no sale del DOM, así que esto dejó de ser crítico: sirve
+ * para que la señal de respaldo del DOM no dispare falsas alarmas de
+ * `sospechoso`. Por eso va con tope corto y se corta apenas no queda nada en
+ * vuelo. `STEPHY_SEARCH_DRAIN_MS=0` lo apaga.
+ */
+export async function drainNet(
+  page: EvalPage,
+  sinceId: number,
+  capMs: number,
+  pollMs: number,
+): Promise<{ ms: number; pendientes: number }> {
+  if (capMs <= 0) return { ms: 0, pendientes: 0 };
+  const t0 = Date.now();
+  let pendientes = 0;
+  while (Date.now() - t0 < capMs) {
+    try {
+      pendientes = Number((await page.evaluate(netPendingExpr(sinceId))) as string) || 0;
+    } catch {
+      break; // la página se fue; el caller ya lo detectará por otra vía
+    }
+    if (pendientes === 0) break;
+    await sleep(Math.max(pollMs, 100));
+  }
+  return { ms: Date.now() - t0, pendientes };
+}
+
 // ==========================================================================
 //  Navegación a Search por el menú
 // ==========================================================================
@@ -313,14 +524,30 @@ export interface OneSearchResult {
   resultSnap?: string[];
   /** Calibración (Fase 1.1): TODAS las lecturas del poll, en orden. */
   reads?: PollRead[];
-  /** Calibración: por qué salió el poll. */
+  /** Por qué salió el poll (ahora también decide: ver `fuente`). */
   exitReason?: PollExit;
   /** Calibración 1.2-A: peticiones de red de ESTA búsqueda (+ las heredadas). */
   net?: NetEntry[];
-  /** Calibración 1.2-A: ¿estaba puesta la sonda? ('ok' = recién inyectada). */
+  /** ¿Quedó puesta la sonda? ('ok' = recién inyectada, 'ya' = ya estaba). */
   netHook?: string;
-  /** Calibración 1.2-A: ids que seguían en vuelo ANTES del click (herencia). */
+  /** Ids que seguían en vuelo ANTES del click (herencia de la búsqueda anterior). */
   netPendientesAntes?: number[];
+  // --- Guarda D′ (Fase 1.2-B) ---------------------------------------------
+  /** De dónde salió el receipt. `red` = correlacionado; `dom` = sin correlacionar. */
+  fuente?: "red" | "dom";
+  /** La respuesta de NUESTRA petición, tal como la vio la sonda. */
+  netOwn?: OwnResponse | null;
+  /** Lo que decía el input de Receipt (señal de respaldo, ya no decide). */
+  receiptDom?: string;
+  /** La búsqueda no recibió respuesta propia: no sabemos si hay receipt. */
+  sinRespuesta?: boolean;
+  /** La lectura no está correlacionada, o red y DOM discrepan. */
+  sospechoso?: boolean;
+  /** Por qué es sospechosa / por qué se descartó. */
+  motivoDescarte?: string;
+  /** Drenaje (guarda E): ms gastados y peticiones que quedaron en vuelo. */
+  netDrainMs?: number;
+  netPendientesDespues?: number;
 }
 
 /**
@@ -341,16 +568,34 @@ export interface PollRead {
   resultSnap?: string[];
 }
 
-/** Por qué terminó el poll (calibración). */
+/**
+ * Por qué terminó el poll. Los `net_*` son los de la guarda D′ (correlacionados);
+ * `receipt`/`not_found`/`max_wait`/`net_settled` son del camino de respaldo por
+ * DOM, que ya NO está correlacionado y por eso sale marcado como sospechoso.
+ */
 export type PollExit =
   | "receipt"
   | "sesion_expirada"
   | "not_found"
   | "max_wait"
-  | "net_settled";
+  | "net_settled"
+  | "net_result"
+  | "net_not_found"
+  | "sin_respuesta";
 
 /** Modo calibración: instrumenta el poll sin cambiar ninguna decisión. */
 export const calibrating = (): boolean => process.env.STEPHY_CALIBRATE === "1";
+
+/**
+ * ¿Exigimos correlación de red para aceptar un receipt? Por defecto SÍ.
+ *
+ * Sin la sonda, el lector vuelve a ser el que fabricaba los recibos cruzados: lo
+ * que lee del input no está atado a lo que buscó. Con esto en 1, una lectura sin
+ * correlacionar no se acepta — se reporta como `sin_respuesta` y se reintenta,
+ * que es infinitamente más barato que escribir el recibo de otro cliente.
+ * `STEPHY_REQUIRE_NET=0` restaura el comportamiento viejo (solo para emergencias).
+ */
+export const requireNet = (): boolean => process.env.STEPHY_REQUIRE_NET !== "0";
 
 /**
  * Tiempos del poll por tracking (#5 — recortar latencia). Todos con override por
@@ -362,6 +607,15 @@ export const calibrating = (): boolean => process.env.STEPHY_CALIBRATE === "1";
  *   - minWaitMs  : NO concluir "sin receipt" antes de esto (da tiempo a que el XHR
  *                  de búsqueda salga y responda → evita falsos negativos).
  *   - maxWaitMs  : presupuesto total de espera de un resultado (backstop duro).
+ *
+ * `minWaitMs`/`maxWaitMs`/`idleCapMs` ya SOLO gobiernan el camino de respaldo por
+ * DOM. Con la guarda D′ el presupuesto es POR PETICIÓN (`netMaxWaitMs`): se espera
+ * a que resuelva la nuestra, no a que el reloj llegue a un número. Ese era el
+ * origen de los pares corridos — la latencia real medida en 1.1 iba de 2,2 s a
+ * 6,9 s contra un `maxWaitMs` de 3500.
+ *
+ *   - netMaxWaitMs : tope de espera de NUESTRA respuesta (guarda F).
+ *   - drainMs      : tope del drenaje de lo que quedó en vuelo (guarda E, 0 = off).
  */
 export interface SearchTiming {
   settleMs: number;
@@ -369,6 +623,8 @@ export interface SearchTiming {
   idleCapMs: number;
   minWaitMs: number;
   maxWaitMs: number;
+  netMaxWaitMs: number;
+  drainMs: number;
 }
 
 const numEnv = (name: string, fallback: number): number => {
@@ -384,18 +640,36 @@ export function resolveSearchTiming(): SearchTiming {
     idleCapMs: numEnv("STEPHY_SEARCH_IDLE_CAP_MS", 1500),
     minWaitMs: numEnv("STEPHY_SEARCH_MIN_WAIT_MS", 500),
     maxWaitMs: numEnv("STEPHY_SEARCH_MAX_WAIT_MS", 3500),
+    // 10 s cubre con margen la peor latencia medida (9,1 s en la corrida 1.2-A).
+    netMaxWaitMs: numEnv("STEPHY_SEARCH_NET_MAX_WAIT_MS", 10_000),
+    drainMs: numEnv("STEPHY_SEARCH_DRAIN_MS", 1200),
   };
 }
 
 /**
- * Busca un tracking en la página Search y lee el receipt resultante.
+ * Busca un tracking en la página Search y devuelve el receipt de ESA búsqueda.
  * `verbose` loguea lo que ve (para calibrar en las primeras vueltas).
  *
- * Poll ADAPTATIVO con salida temprana (#5): en vez de sleeps fijos + un
- * `networkidle` sin tope (que colgaba hasta 30s por tracking en esta SPA), leemos
- * el resultado en intervalos cortos y salimos apenas aparece el receipt / la
- * alerta / la sesión expirada. El "no está" se concluye cuando la red se aquieta
- * (con tope) pasado `minWaitMs`, o al agotar `maxWaitMs`.
+ * GUARDA D′ (Fase 1.2-B) — el receipt sale de la RED, no del DOM. Se toma una
+ * marca de agua de peticiones justo antes del click y se espera la respuesta con
+ * forma `{'Result','Message'}` de una petición NACIDA DESPUÉS: esa es, por
+ * identidad, la respuesta a nuestro tracking. El input de la derecha pasa a ser
+ * señal de respaldo — si discrepa, gana la red y la lectura queda `sospechoso`.
+ *
+ * Esto cierra el bug de los recibos cruzados: antes se aceptaba lo que hubiera
+ * en el input con la sola condición de no estar vacío, así que la respuesta
+ * tardía de la búsqueda anterior (medida: hasta 9,1 s) se adjudicaba a la
+ * siguiente y toda la corrida quedaba corrida una posición.
+ *
+ * El presupuesto también cambia de naturaleza (guarda F): se espera a que
+ * NUESTRA petición resuelva, con tope `netMaxWaitMs`, en vez de a que el reloj
+ * llegue a `maxWaitMs`. Con eso se acaban además los falsos negativos, que era
+ * el daño colateral: un «No Results» ajeno cerraba la búsqueda de un tracking
+ * que sí tenía recibo y lo mandaba al backoff de 6/12/24 h.
+ *
+ * Si la sonda no está disponible se cae al camino de respaldo por DOM (el
+ * comportamiento viejo), pero marcado: con `STEPHY_REQUIRE_NET=1` (default) ese
+ * receipt NO se acepta, se reporta `sin_respuesta` y se reintenta.
  */
 export async function searchOneTracking(
   page: EvalPage,
@@ -403,20 +677,12 @@ export async function searchOneTracking(
   verbose = false,
   timing: SearchTiming = resolveSearchTiming(),
 ): Promise<OneSearchResult> {
-  // --- Sonda de red (1.2-A), solo en calibración ---------------------------
+  // --- Sonda de red: SIEMPRE, ya no es solo calibración --------------------
   // Se (re)inyecta en cada búsqueda: es idempotente y así sobrevive a un logout
-  // o a una recarga que la borrarían. Best-effort: si falla, la corrida sigue.
-  const calNet = calibrating();
-  let netHook = "";
-  let netWatermark = 0;
-  let netPendientesAntes: number[] = [];
-  if (calNet) {
-    try {
-      netHook = (await page.evaluate(installNetHookExpr)) as string;
-    } catch (err) {
-      netHook = `err:${(err as Error).message}`;
-    }
-  }
+  // o a una recarga que la borrarían.
+  const hook = await installNetHook(page);
+  let hooked = hook.hooked;
+  const netHook = hook.detalle;
 
   const fillRaw = (await page.evaluate(fillTrackingExpr(tracking))) as string;
   const fill = JSON.parse(fillRaw) as { res: string; count: number };
@@ -424,18 +690,18 @@ export async function searchOneTracking(
   await sleep(timing.settleMs);
 
   // Marca de agua JUSTO antes del click: todo lo que venga después es de esta
-  // búsqueda; lo que quede aquí sin `t1` es herencia de la anterior (pregunta 3).
-  if (calNet) {
-    try {
-      const raw = (await page.evaluate(readNetExpr(0))) as string;
-      const snap = JSON.parse(raw) as { hooked: boolean; maxId: number; entries: NetEntry[] };
-      netWatermark = snap.maxId;
-      netPendientesAntes = snap.entries.filter((e) => e.t1 == null).map((e) => e.id);
-      if (verbose && netPendientesAntes.length) {
-        console.log(`    · [red] ${netPendientesAntes.length} petición(es) heredada(s) en vuelo: ${netPendientesAntes.join(",")}`);
-      }
-    } catch (err) {
-      netHook += ` read-pre-err:${(err as Error).message}`;
+  // búsqueda; lo que quede aquí sin `t1` es herencia de la anterior.
+  let netWatermark = 0;
+  let netPendientesAntes: number[] = [];
+  if (hooked) {
+    const wm = await readNetWatermark(page);
+    hooked = wm.hooked;
+    netWatermark = wm.maxId;
+    netPendientesAntes = wm.pendientes;
+    if (verbose && netPendientesAntes.length) {
+      console.log(
+        `    · [red] ${netPendientesAntes.length} petición(es) heredada(s) en vuelo: ${netPendientesAntes.join(",")}`,
+      );
     }
   }
 
@@ -446,9 +712,9 @@ export async function searchOneTracking(
     await page.keyPress("Enter").catch(() => {});
   }
 
-  // Espera la quietud de red EN PARALELO al poll, con tope duro. En esta SPA el
-  // networkidle sin tope colgaba hasta 30s por tracking. Aquí solo lo usamos como
-  // señal de "el XHR de búsqueda ya terminó" para concluir el "no está" antes.
+  // Espera la quietud de red EN PARALELO al poll, con tope duro. Ya solo alimenta
+  // el camino de respaldo (y la traza de calibración): con D′ la señal de "mi
+  // búsqueda terminó" es que MI petición respondió, no que la red se aquietó.
   let netSettled = false;
   const idleWatch = page
     .waitForLoadState("networkidle", timing.idleCapMs)
@@ -457,14 +723,18 @@ export async function searchOneTracking(
     })
     .catch(() => {});
 
-  // Poll: leemos hasta que aparezca el receipt (input der), una alerta, o timeout.
   const start = Date.now();
   let last: OneSearchResult = { vals: [], alertText: "", sessionExpired: false, notFound: false };
   // Calibración (1.1): guardamos CADA lectura sin alterar ninguna decisión.
   const cal = calibrating();
   const reads: PollRead[] = [];
   let iter = 0;
-  let exitReason: PollExit = "max_wait";
+  let exitReason: PollExit = hooked ? "sin_respuesta" : "max_wait";
+  let own: OwnResponse | null = null;
+  let otrasResp: string[] = [];
+  // Con sonda esperamos NUESTRA respuesta; sin ella, el presupuesto viejo.
+  const budget = hooked ? timing.netMaxWaitMs : timing.maxWaitMs;
+
   while (true) {
     const raw = (await page.evaluate(readResultExpr)) as string;
     const r = JSON.parse(raw) as OneSearchResult;
@@ -486,42 +756,141 @@ export async function searchOneTracking(
       exitReason = "sesion_expirada";
       break;
     }
-    // El receipt aparece en el input de la DERECHA (vals[1]), distinto del tracking.
-    const receipt = (r.vals[1] || "").trim();
-    if (receipt && receipt.toUpperCase() !== tracking.toUpperCase()) {
-      last.receipt = receipt;
-      exitReason = "receipt";
-      break;
-    }
-    if (r.notFound) {
-      exitReason = "not_found";
-      break;
+
+    if (hooked) {
+      // --- Guarda D′: la respuesta de NUESTRA petición ---------------------
+      let tokenInvalido = false;
+      try {
+        const rawNet = (await page.evaluate(readOwnResponseExpr(netWatermark))) as string;
+        const snap = JSON.parse(rawNet) as OwnSnapshot;
+        if (!snap.hooked) {
+          hooked = false; // la SPA recargó y se llevó el hook
+        } else {
+          own = snap.own;
+          tokenInvalido = snap.tokenInvalido;
+          otrasResp = (snap.otras ?? []).map((o) => `#${o.id}(${o.status}) ${o.resp}`);
+        }
+      } catch {
+        // Lectura puntual fallida: reintentamos en el siguiente ciclo del poll.
+        // Si falla siempre, salimos por presupuesto como `sin_respuesta`.
+      }
+      if (own) {
+        exitReason = own.result ? "net_result" : "net_not_found";
+        break;
+      }
+      if (tokenInvalido) {
+        exitReason = "sesion_expirada";
+        break;
+      }
+      // Ojo: en este camino NO miramos `r.notFound`. Ese cartel puede ser de una
+      // búsqueda ajena — es el que fabricaba los falsos negativos.
+    } else {
+      // --- Camino de respaldo (sin sonda): el lector viejo, sin correlación --
+      const receipt = (r.vals[1] || "").trim();
+      if (receipt && receipt.toUpperCase() !== tracking.toUpperCase()) {
+        last.receipt = receipt;
+        exitReason = "receipt";
+        break;
+      }
+      if (r.notFound) {
+        exitReason = "not_found";
+        break;
+      }
     }
 
     const elapsed = Date.now() - start;
-    if (elapsed >= timing.maxWaitMs) {
-      exitReason = "max_wait";
+    if (elapsed >= budget) {
+      exitReason = hooked ? "sin_respuesta" : "max_wait";
       break;
     }
     // Red aquietada + ya pasó el guard mínimo → el receipt no está aquí; no
-    // gastamos el presupuesto completo esperando algo que no vendrá.
-    if (netSettled && elapsed >= timing.minWaitMs) {
+    // gastamos el presupuesto completo esperando algo que no vendrá. Solo aplica
+    // al camino de respaldo: con D′ el criterio es la respuesta propia.
+    if (!hooked && netSettled && elapsed >= timing.minWaitMs) {
       exitReason = "net_settled";
       break;
     }
     await sleep(timing.pollMs);
   }
   void idleWatch; // el .catch ya lo hace inofensivo; no bloqueamos por él.
-  if (cal) {
-    last.reads = reads;
-    last.exitReason = exitReason;
+  last.exitReason = exitReason;
+  last.netHook = netHook;
+  last.netPendientesAntes = netPendientesAntes;
+  last.netOwn = own;
+  if (cal) last.reads = reads;
+
+  // Lo que decía el input: ya no decide, pero delata cuándo el DOM estaba
+  // contaminado (y con eso se puede medir el bug en producción).
+  const domReceipt = (last.vals[1] || "").trim();
+  last.receiptDom =
+    domReceipt && domReceipt.toUpperCase() !== tracking.toUpperCase() ? domReceipt : undefined;
+
+  // --- Veredicto -----------------------------------------------------------
+  switch (exitReason) {
+    case "net_result": {
+      last.receipt = own?.result;
+      last.fuente = "red";
+      last.notFound = false;
+      if (last.receiptDom && last.receiptDom !== own?.result) {
+        last.sospechoso = true;
+        last.motivoDescarte = `el DOM mostraba «${last.receiptDom}» y la red «${own?.result}» (gana la red)`;
+      }
+      break;
+    }
+    case "net_not_found": {
+      last.receipt = undefined;
+      last.fuente = "red";
+      last.notFound = true;
+      if (last.receiptDom) {
+        last.sospechoso = true;
+        last.motivoDescarte =
+          `el DOM mostraba «${last.receiptDom}» pero nuestra propia respuesta dijo ` +
+          `«${own?.message || "sin recibo"}» (contaminación del input, descartada)`;
+      }
+      break;
+    }
+    case "sin_respuesta": {
+      last.receipt = undefined;
+      last.notFound = false;
+      last.sinRespuesta = true;
+      last.sospechoso = true;
+      last.motivoDescarte =
+        `la búsqueda no recibió respuesta propia en ${budget}ms` +
+        (otrasResp.length ? ` (respuestas nuevas sin forma de resultado: ${otrasResp.join(" | ")})` : "");
+      break;
+    }
+    case "sesion_expirada": {
+      last.sessionExpired = true;
+      last.receipt = undefined;
+      break;
+    }
+    default: {
+      // receipt / not_found / max_wait / net_settled → camino de respaldo.
+      last.fuente = "dom";
+      last.sospechoso = true;
+      last.motivoDescarte = `sin sonda de red (${netHook || "no instalada"}): lectura del DOM sin correlacionar`;
+      if (requireNet()) {
+        // Preferimos reintentar antes que escribir el recibo de otro cliente.
+        last.receipt = undefined;
+        last.sinRespuesta = true;
+        last.motivoDescarte += " — descartada por STEPHY_REQUIRE_NET";
+      }
+      break;
+    }
   }
 
-  // Lectura de la red al salir del poll: lo nuevo de esta búsqueda + el estado
-  // final de lo que se heredó en vuelo.
-  if (calNet) {
-    last.netHook = netHook;
-    last.netPendientesAntes = netPendientesAntes;
+  // --- Guarda E: drenar lo que esta búsqueda dejó en vuelo ------------------
+  if (hooked && timing.drainMs > 0) {
+    const d = await drainNet(page, netWatermark, timing.drainMs, timing.pollMs);
+    last.netDrainMs = d.ms;
+    last.netPendientesDespues = d.pendientes;
+    if (verbose && d.pendientes > 0) {
+      console.log(`    · [red] drenaje: quedaron ${d.pendientes} petición(es) en vuelo tras ${d.ms}ms`);
+    }
+  }
+
+  // Volcado completo de la red (con cuerpos) solo en calibración: es caro.
+  if (cal) {
     try {
       const raw = (await page.evaluate(readNetExpr(netWatermark, netPendientesAntes))) as string;
       const snap = JSON.parse(raw) as { hooked: boolean; maxId: number; entries: NetEntry[] };
@@ -532,6 +901,9 @@ export async function searchOneTracking(
   }
 
   if (verbose) {
+    console.log(
+      `    · [red] salida=${exitReason} own=${own ? `#${own.id} result="${own.result}" msg="${own.message}" (${own.ms}ms)` : "—"}`,
+    );
     console.log(`    · result vals=${JSON.stringify(last.vals)} alert="${last.alertText}" notFound=${last.notFound} sessionExpired=${last.sessionExpired}`);
     if (last.resultSnap?.length) console.log(`    · resultSnap=${JSON.stringify(last.resultSnap)}`);
     if (!last.receipt) console.log(`    · body: ${last.bodySlice ?? ""}`);
@@ -583,6 +955,10 @@ export async function searchAllTrackings(
   const encontrados: SearchMatch[] = [];
   const noEncontrados: SearchMatch[] = [];
   let sessionExpiredCount = 0;
+  // Guarda D′: contadores de salud del lector (van al resumen de la corrida).
+  let sinRespuestaCount = 0; // búsquedas sin respuesta propia → se reintentan
+  let sospechososCount = 0; // aceptados pero con el DOM discrepando
+  let rapidasCount = 0; // aceptados en <900 ms (la firma vieja del bug)
 
   // --- Lotes para persistencia incremental ---------------------------------
   // Umbral de flush: cada N trackings PROCESADOS entregamos el lote (así el
@@ -727,6 +1103,15 @@ export async function searchAllTrackings(
         exitReason: r.exitReason,
         receiptAceptado: r.receipt ?? null,
         receiptPrimeraLectura: firstReceipt || null,
+        // --- guarda D′ (1.2-B) ---
+        fuente: r.fuente ?? null,
+        netOwn: r.netOwn ?? null,
+        receiptDom: r.receiptDom ?? null,
+        sospechoso: r.sospechoso ?? false,
+        sinRespuesta: r.sinRespuesta ?? false,
+        motivoDescarte: r.motivoDescarte ?? null,
+        netDrainMs: r.netDrainMs ?? null,
+        netPendientesDespues: r.netPendientesDespues ?? null,
         trackingEnInput: r.vals?.[0] ?? null,
         inputConservaTracking:
           (r.vals?.[0] || "").trim().toUpperCase() === trimmed.toUpperCase(),
@@ -750,12 +1135,52 @@ export async function searchAllTrackings(
       sessionExpiredCount++;
       console.log(`⛔ Sesión Expirada (${ms}ms)`);
       addMissing({ ...base, resultado: "sesion_expirada", motivo: "sesión expirada", ms });
+    } else if (r.sinRespuesta) {
+      // Guarda D′: no sabemos si hay receipt. NO es "no encontrado" — se
+      // reintenta en la próxima corrida sin penalizar el backoff.
+      sinRespuestaCount++;
+      console.log(`⏳ sin respuesta propia (${ms}ms) — se reintenta`);
+      if (verbose || r.fuente === "dom") console.log(`      ${r.motivoDescarte ?? ""}`);
+      addMissing({
+        ...base,
+        resultado: "sin_respuesta",
+        motivo: r.motivoDescarte ?? "la búsqueda no recibió respuesta propia",
+        ms,
+        fuente: r.fuente,
+        sospechoso: true,
+      });
     } else if (r.receipt) {
-      console.log(`✓ receipt ${r.receipt} (${ms}ms)`);
-      addFound({ ...base, receipt: r.receipt, resultado: "encontrado", ms });
+      if (r.sospechoso) sospechososCount++;
+      // §1.4: la lectura rápida ya no decide nada (con D′ el criterio es la
+      // correlación), pero se sigue registrando porque es la señal con la que se
+      // detectaron los 82 grupos cruzados y sirve para vigilar la regresión.
+      if (ms < 900) rapidasCount++;
+      console.log(
+        `✓ receipt ${r.receipt} (${ms}ms, ${r.fuente ?? "?"})` +
+          (r.sospechoso ? " ⚠ sospechoso" : ""),
+      );
+      if (r.sospechoso) console.log(`      ⚠ ${r.motivoDescarte ?? ""}`);
+      addFound({
+        ...base,
+        receipt: r.receipt,
+        resultado: "encontrado",
+        ms,
+        fuente: r.fuente,
+        sospechoso: r.sospechoso,
+        motivo: r.sospechoso ? `sospechoso: ${r.motivoDescarte ?? ""}` : undefined,
+      });
     } else {
-      console.log(`∅ sin receipt (${ms}ms)`);
-      addMissing({ ...base, resultado: "no_encontrado", motivo: "no está en Search", ms });
+      // Con D′ este "no está" es de NUESTRA respuesta («Receipt Not Found»), no
+      // de un cartel ajeno: ahora sí merece avanzar el backoff.
+      console.log(`∅ sin receipt (${ms}ms, ${r.fuente ?? "?"})`);
+      addMissing({
+        ...base,
+        resultado: "no_encontrado",
+        motivo: "no está en Search",
+        ms,
+        fuente: r.fuente,
+        sospechoso: r.sospechoso,
+      });
     }
 
     // Flush por lote: cada `batchSize` trackings procesados (encontrados o no).
@@ -771,5 +1196,17 @@ export async function searchAllTrackings(
       `No encontrados: ${noEncontrados.length} · Sesión Expirada: ${sessionExpiredCount} · ` +
       `latencia ~${avg}ms/tracking (${Math.round(sumMs / 1000)}s total)`,
   );
+  // Salud de la guarda D′ (criterio de salida de la verificación 1.5 del plan).
+  console.log(
+    `  · [D′] correlación: ${sinRespuestaCount} sin respuesta propia (se reintentan) · ` +
+      `${sospechososCount} aceptado(s) con el DOM discrepando · ` +
+      `${rapidasCount} aceptado(s) en <900ms`,
+  );
+  if (sinRespuestaCount > 0) {
+    console.log(
+      `  ⚠ ${sinRespuestaCount} búsqueda(s) sin respuesta propia: NO son "no encontrado". ` +
+        `Quedan elegibles para la próxima corrida sin penalizar backoff.`,
+    );
+  }
   return { encontrados, noEncontrados, sessionExpiredCount };
 }

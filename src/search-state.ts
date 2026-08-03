@@ -39,7 +39,7 @@ export interface TrackingState {
   lastSearched: string; // ISO — última búsqueda real
   attempts: number; // nº de búsquedas que NO hallaron receipt (avanza backoff)
   nextEligible: string; // ISO — no volver a buscar antes de esta hora
-  lastResult: "no-receipt" | "session-expired";
+  lastResult: "no-receipt" | "session-expired" | "sin-respuesta";
 }
 
 export interface SearchState {
@@ -176,8 +176,14 @@ export function planIncrementalSearch(
 /**
  * Registra en el estado el resultado de la corrida. Los ENCONTRADOS se sacan del
  * estado (se persisten y n8n dejará de devolverlos). Los NO encontrados avanzan
- * su backoff, salvo los de "sesión expirada" (fallo de infra, no "aún sin
- * receipt"): esos quedan elegibles para la próxima corrida sin penalización.
+ * su backoff, salvo dos clases que NO son "aún sin receipt" y por eso quedan
+ * elegibles para la próxima corrida sin penalización:
+ *
+ *   - `sesion_expirada` — fallo de infra: no llegamos a preguntar.
+ *   - `sin_respuesta` (guarda D′) — preguntamos pero la respuesta de NUESTRA
+ *     petición nunca llegó. Antes esto se colaba como "no encontrado" y mandaba
+ *     al backoff de 6/12/24 h a trackings que SÍ tenían recibo (los falsos
+ *     negativos que destapó la calibración 1.1: 2 de 7).
  */
 export function recordResults(
   state: SearchState,
@@ -195,16 +201,18 @@ export function recordResults(
     const key = ne.tracking_proveedor?.trim();
     if (!key) continue; // "sin tracking_proveedor" no es buscable
     const prev = state.trackings[key];
-    const sessionExpired = ne.motivo === "sesión expirada";
+    const sessionExpired =
+      ne.resultado === "sesion_expirada" || ne.motivo === "sesión expirada";
+    const sinRespuesta = ne.resultado === "sin_respuesta";
 
-    if (sessionExpired) {
+    if (sessionExpired || sinRespuesta) {
       // No avanzamos backoff: no llegamos a saber si hay receipt. Elegible ya.
       state.trackings[key] = {
         firstSeen: prev?.firstSeen ?? nowIso,
         lastSearched: nowIso,
         attempts: prev?.attempts ?? 0,
         nextEligible: nowIso,
-        lastResult: "session-expired",
+        lastResult: sinRespuesta ? "sin-respuesta" : "session-expired",
       };
       continue;
     }

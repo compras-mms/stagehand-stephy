@@ -1,9 +1,10 @@
 # Plan de bugs — Stephy
 
-**Abierto:** 2026-07-31 · **Revisado:** 2026-08-01 (calibración 1.1 + sonda de red 1.2-A) ·
-**Estado:** Fase 0 ✅ · 1.1 ✅ (bug reproducido; guardas A/B/C muertas) · 1.2-A ✅ (la petición va
-cifrada, pero la respuesta trae el recibo en claro → **guarda D′ por identidad de petición,
-validada 7/7**) · **sigue 1.2-B: implementarla**
+**Abierto:** 2026-07-31 · **Revisado:** 2026-08-02 (D′ implementada y verificada en vivo) ·
+**Estado:** Fase 0 ✅ · 1.1 ✅ · 1.2-A ✅ · **1.2-B ✅ implementada + banco de pruebas** ·
+**1.5 ✅ verificada en vivo (13 búsquedas, 13/13 correctas, 0 `fuente=dom`)** ⇒ **Fase 1 CERRADA**.
+Sigue: **Fase 3 (limpieza)**; los 5 crons **siguen deshabilitados a propósito** — reactivarlos es
+1.5-bis y va después de la limpieza, con canario.
 
 > Sin nombres de clientes. El detalle con PII vive en `data/receipts-cruzados-20260731.md`
 > (gitignoreado por `data/receipts-*.md`).
@@ -15,7 +16,7 @@ validada 7/7**) · **sigue 1.2-B: implementarla**
 | Fase | Qué | Bloquea a | Estado |
 |---|---|---|---|
 | **0** | Parar la sangría — scraper **+ instructor** | Fase 1 | ✅ 2026-07-31 23:31 |
-| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | 🟡 1.1 ✅ · 1.2-A ✅ · **sigue 1.2-B (implementar D′)** |
+| **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | ✅ **CERRADA** 2026-08-02 (1.1 · 1.2-A · 1.2-B · 1.5 · 1.6) |
 | **2** | Casos puntuales abiertos (18559, 30510) | — | 🟡 parcial |
 | **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ⬜ |
 | **4** | Blindaje | — | ⬜ |
@@ -247,25 +248,65 @@ del día, que es exactamente por lo que hace falta un ancla que no dependa del r
 correlacionado a nuestra propia petición (#14). Es el número que faltaba en el caso 2 de la
 Fase 2 — confirmar con Jaime antes de escribirlo.
 
-### ▶️ 1.2-B EMPEZAR AQUÍ EN LA PRÓXIMA SESIÓN — implementar D′
+### 1.2-B Implementación de D′ — ✅ HECHA 2026-08-02
 
-Criterio de salida de 1.2-A cumplido (en su variante: P1 negativa, P2 positiva y suficiente).
-Lo que hay que escribir:
+Los 5 puntos, escritos y verificados sin navegador (§1.6). Ninguna corrida real todavía: los 5
+crons siguen deshabilitados y falta la verificación 1.5 en vivo.
 
-1. **`searchOneTracking` deja de creer en el DOM.** Marca de agua de red antes del click →
-   esperar a que aparezca **una respuesta con forma `Result`/`Message` creada después del
-   click** → el recibo es ese `Result` (vacío + `Receipt Not Found` = no encontrado de verdad).
-   El input pasa a ser señal de respaldo: si DOM y red discrepan, gana la red y se marca
-   `sospechoso`.
-2. **Presupuesto por petición, no por reloj (F).** Se espera a que NUESTRA petición resuelva,
-   con tope ~10 s. Se acaban los falsos negativos por «No Results» ajeno.
-3. **Drenaje (E)**: con la red visible ya se sabe qué quedó en vuelo — esperar/descartar antes
-   del siguiente tracking. Reset SIEMPRE por el menú ☰ (ver 1.3).
-4. **El gemelo `searchOneReceipt`** (§1.2-bis) va con la misma D′: su respuesta también debe
-   salir de la petición que lanzó su propio click.
-5. El hook deja de ser solo de calibración: pasa a instalarse siempre (es pasivo y barato).
+1. **`searchOneTracking` dejó de creer en el DOM.** Marca de agua (`netWatermarkExpr`) justo
+   antes del click → se espera la respuesta con forma `Result`/`Message` de una petición nacida
+   después (`readOwnResponseExpr`) → el recibo es ese `Result`; vacío + `Receipt Not Found` es
+   «no está» **de nuestra propia búsqueda**. El input pasa a `receiptDom`: si discrepa, gana la
+   red y la lectura sale `sospechoso` con el detalle en `motivoDescarte`.
+2. **Presupuesto por petición (F).** `netMaxWaitMs` = 10 s (`STEPHY_SEARCH_NET_MAX_WAIT_MS`),
+   holgado sobre la peor latencia medida (9.148 ms). `minWaitMs`/`maxWaitMs`/`idleCapMs` quedan
+   gobernando SOLO el camino de respaldo. En el camino con sonda **ya no se mira `notFound` del
+   DOM**: era el que fabricaba los falsos negativos.
+3. **Drenaje (E)** — `drainNet`, tope `STEPHY_SEARCH_DRAIN_MS` (1200 ms, 0 lo apaga). Solo
+   espera las peticiones que ESTA búsqueda dejó en vuelo y corta apenas no queda ninguna. Con D′
+   pasó a ser secundario (el recibo ya no sale del DOM): sirve para que la señal de respaldo no
+   dispare falsas alarmas. No hay reset de página, así que no se toca la sesión (§1.3).
+4. **El gemelo `searchOneReceipt`** va con la misma D′, atada por **contenido** en vez de por
+   forma: la respuesta a «busca el receipt R» menciona R y lo que puede contaminar es la de un
+   R′ anterior (`readOwnByContentExpr`). Encima, la guarda simétrica del DOM: no se acepta nada
+   si `vals[1] !== receipt`, y `tracking: vals[0]` solo se devuelve si esa guarda pasó — que era
+   justo el dato con el que la Fase 3 pensaba verificar al dueño de cada recibo.
+5. **El hook se instala siempre**, ya no solo con `STEPHY_CALIBRATE=1`.
 
-Luego, la verificación 1.5.
+**Clase nueva `sin_respuesta`** (resuelve el choque 1 de §1.4): una búsqueda sin respuesta propia
+no es «no encontrado» — no sabemos nada. `recordResults` la trata como la sesión expirada
+(elegible ya, sin avanzar `attempts`), así que **no** manda al backoff de 6/12/24 h a trackings
+que sí tienen recibo. El choque 2 (buffer aparte en `flushBatch`) **no hizo falta**: con D′ el
+recibo aceptado viene correlacionado, así que no hay «sospechoso a reencolar» — `sospechoso`
+quedó como marca de que el DOM discrepaba, no como motivo de descarte.
+
+**Sin sonda no se acepta nada.** `STEPHY_REQUIRE_NET=1` (default): si el hook no se pudo
+instalar, el lector cae al camino viejo pero su lectura se descarta y se reporta `sin_respuesta`.
+Reintentar es infinitamente más barato que escribir el recibo de otro cliente. `=0` restaura el
+lector viejo, solo como escape de emergencia.
+
+**Banco de pruebas — `npm run test:guarda-d`** (`src/test-guarda-d.ts`, §1.6). Página falsa que
+reproduce el mecanismo filmado en 1.2-A: la respuesta de cada búsqueda aterriza durante la
+siguiente y el input queda pintado con el recibo anterior. Los exprs de red se ejecutan **de
+verdad** (`vm.runInNewContext`) contra cuerpos copiados de la traza real, así que lo que se prueba
+son las regex de producción. 8 bloques, todos en verde:
+
+- sobre el mismo guion, **el lector por DOM falla 4/5** (1 cruce + 3 falsos negativos) y **D′
+  acierta 5/5** — si el viejo dejara de fallar, la prueba avisa: sin bug reproducido no prueba nada;
+- un «No Results» ajeno ya no cierra una búsqueda con recibo en camino;
+- petición propia que no responde → `sin_respuesta`, y **no** `no_encontrado`;
+- `Receipt Not Found` propio → «no está» de verdad (ese sí avanza backoff);
+- input contaminado + respuesta propia vacía → no se adjudica el recibo ajeno;
+- sin sonda, con y sin `STEPHY_REQUIRE_NET`;
+- las 4 formas de respuesta reales, clasificadas una por una.
+
+**Lo que NO se hizo aquí** (es §1.4, necesita migración + tocar el workflow de n8n): las columnas
+`sospechoso` / `motivo_descarte` / `receipt_primera_lectura` en `auditoria_tracking_stephy`. Por
+ahora el detalle viaja dentro de `motivo` (prefijo `sospechoso:`) y `resultado` estrena el valor
+`sin_respuesta` — la tabla no tiene CHECK sobre esa columna, así que entra sin migración. El
+resumen de corrida imprime los tres contadores de salud (sin respuesta / sospechosos / <900 ms).
+
+**Sigue: la verificación 1.5 en vivo.**
 
 ### 1.2-bis El lector gemelo tiene el mismo bug
 
@@ -321,24 +362,63 @@ cómo repinta el framework.
    entrar en `encontrados`** — necesita su propio buffer, fuera del lote, hasta que la segunda
    búsqueda lo confirme.
 
-### 1.5 Verificación (obligatoria antes de reactivar los crons)
+### 1.5 Verificación — ✅ CORRIDA 2026-08-02, criterios cumplidos
 
-- Corrida con límite sobre trackings **cuyo recibo real conocemos**: `449829` (venta 30510) y
-  `449781` (venta 19448).
-- Comprobar a mano en Stephy una muestra de los nuevos.
-- **Criterio de salida:** cero lecturas <900 ms aceptadas, y el set conocido sale correcto.
-- **Canario al reactivar:** habilitar **un solo** cron de scraper (`MamaSAN-Stephy-1000`), revisar
-  esa primera corrida entera (correo + `auditoria_tracking_stephy`) antes de habilitar el segundo.
-  `MamaSAN Instruir` va de último, y solo cuando la Fase 3 haya limpiado lo que quedó en
-  `Con recibo Almacen Miami`.
+Dos corridas de laboratorio (`STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 STEPHY_TELEMETRY=0
+STEPHY_EMAIL=0`, los 5 crons verificados deshabilitados antes de arrancar). El preview de n8n
+confirmó 0 escrituras.
 
-### 1.6 Pruebas
+| Corrida | Qué | Resultado |
+|---|---|---|
+| **A** — 7 trackings del set calibrado | orden original de la 1.1 | **7/7 correctos** · traza `data/calibracion-2026-08-02T18-16-36-536Z.jsonl` |
+| **B** — 6 trackings, los 4 CON recibo seguidos + 2 repetidos, `DRAIN_MS=0` | orden adverso: así llegan los de una misma venta, y así se produjeron los cruces | **6/6 correctos** · traza `…T18-19-44-402Z.jsonl` |
 
-Se está tocando el corazón del scraper y hoy el repo solo tiene `pnpm typecheck` — la
-verificación es 100% manual. Las guardas A/B/C y la clasificación de sospechosos son **lógica
-pura**: se pueden probar sin navegador pasándole a `searchOneTracking` una `EvalPage` falsa que
-devuelva secuencias de lecturas (residuo → valor bueno, par corrido, receipt tardío). Vale el
-costo de montar el runner mínimo antes de tocar el lector.
+Criterios de salida, los tres cumplidos en las dos corridas: **0 recibos con `fuente=dom`**,
+**0 lecturas <900 ms aceptadas**, **0 `sin_respuesta`**. Las 13 búsquedas salieron por
+`net_result` / `net_not_found`, es decir el recibo vino de la respuesta propia en todos los casos.
+El set conocido salió calcado: `SPX…6008`→449181, `SPX…9219`→450364, `TBA…6221`→449829,
+`SPX…0568`→**450514**, y los dos `YT…` inexistentes → ∅ (por «Receipt Not Found» **de su propia
+petición**, que es justo lo que en la 1.1 salía con recibo ajeno).
+
+**La herencia se filmó otra vez y ya no decide nada:** 4/7 búsquedas de A y 5 de la última de B
+recibieron respuestas de búsquedas anteriores, una tras **10.617 ms**. Ninguna tocó el resultado.
+
+⚠️ **Límite honesto de estas dos corridas: NO reprodujeron el bug.** La latencia de nuestra
+petición estuvo en **1.618–2.515 ms**, por debajo del presupuesto viejo de 3500 ms, así que el
+lector viejo habría acertado igual (se comprobó replicando su lógica sobre las lecturas grabadas:
+0 errores). El cruce exige latencia > presupuesto, y eso depende del día — es la misma limitación
+que tuvo la corrida 1.2-A, y exactamente la razón por la que hacía falta un ancla que no dependa
+del reloj. En el replay con el presupuesto por debajo de la latencia (1500 ms) el lector viejo
+falla 6/6 y D′ sigue en 0/6, pero eso es simulación, no corrida.
+
+⇒ **Lo que estas corridas demuestran: D′ correlaciona bien y no rompe nada en producción.** Lo que
+demuestra que *evita* el cruce bajo latencia adversa sigue siendo el banco de pruebas de §1.6,
+donde el lector viejo falla 4/5 sobre el mismo guion. Las dos evidencias juntas son el criterio de
+salida; ninguna sola alcanza.
+
+### 1.5-bis Reactivación de los crons — ⬜ PENDIENTE (decisión de Jaime)
+
+Los 5 siguen deshabilitados. **No los reactivé**: 1.5 despeja el lector, no la Fase 3, y
+`MamaSAN Instruir` sigue siendo el que convierte un recibo cruzado en guía física al cliente
+equivocado.
+
+- **Canario:** habilitar **un solo** cron de scraper (`MamaSAN-Stephy-1000`), revisar esa primera
+  corrida entera (correo + `auditoria_tracking_stephy`) antes de habilitar el segundo. En el
+  correo/log mirar la línea `[D′] correlación`: si aparecen `sin_respuesta` en cantidad, subir
+  `STEPHY_SEARCH_NET_MAX_WAIT_MS`; si aparece cualquier `fuente=dom` aceptado, parar.
+- Con ~145 trackings y latencia por petición (~2-4 s + drenaje), esperar corridas algo más largas
+  que antes: el presupuesto ya no corta a los 3,5 s.
+- `MamaSAN Instruir` va de **último**, y solo cuando la Fase 3 haya limpiado lo que quedó en
+  `Con recibo Almacen Miami` (al pausarlo había 64 grupos ahí, 16 marcados).
+- Queda pendiente comprobar a mano en Stephy una muestra de los recibos NUEVOS que traiga la
+  primera corrida con datos reales (el set de control ya está comprobado).
+
+### 1.6 Pruebas — ✅ HECHO (`npm run test:guarda-d`)
+
+Se está tocando el corazón del scraper y el repo solo tenía `pnpm typecheck`. La correlación es
+**lógica pura**, así que se probó sin navegador con una `EvalPage` falsa. Detalle del banco y de
+lo que cubre, en §1.2-B. Corre en segundos y no toca red ni Supabase: úsalo antes de cada cambio
+al lector.
 
 ---
 
