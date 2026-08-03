@@ -922,6 +922,21 @@ export interface SearchBatch {
 }
 
 /**
+ * Salud del lector según la guarda D′ (Fase 4.2). Se venía imprimiendo solo en el
+ * log; ahora sube al resumen y al correo, que es donde alguien lo va a ver. Es el
+ * detector en caliente del bug de recibos cruzados: si estas cifras se despiertan,
+ * la guarda está trabajando de más y hay que mirar la corrida.
+ */
+export interface GuardaDStats {
+  /** Búsquedas sin respuesta propia: NO son "no encontrado", se reintentan. */
+  sinRespuesta: number;
+  /** Receipts aceptados por red pero con el DOM discrepando. */
+  sospechosos: number;
+  /** Receipts aceptados en <900 ms — la firma vieja del bug (§1.4). */
+  rapidas: number;
+}
+
+/**
  * Recorre cada tracking_proveedor del JSON de n8n, lo busca en la página Search
  * y arma encontrados/noEncontrados. `limit` (env STEPHY_SEARCH_LIMIT) acota para
  * pruebas. Devuelve null en `sessionExpired` global para que el caller decida.
@@ -947,6 +962,7 @@ export async function searchAllTrackings(
   encontrados: SearchMatch[];
   noEncontrados: SearchMatch[];
   sessionExpiredCount: number;
+  guardaD: GuardaDStats;
 }> {
   const detalle = Array.isArray(nopsData.nops_detalle) ? nopsData.nops_detalle : [];
   const total = opts.limit ? Math.min(opts.limit, detalle.length) : detalle.length;
@@ -1208,5 +1224,14 @@ export async function searchAllTrackings(
         `Quedan elegibles para la próxima corrida sin penalizar backoff.`,
     );
   }
-  return { encontrados, noEncontrados, sessionExpiredCount };
+  return {
+    encontrados,
+    noEncontrados,
+    sessionExpiredCount,
+    guardaD: {
+      sinRespuesta: sinRespuestaCount,
+      sospechosos: sospechososCount,
+      rapidas: rapidasCount,
+    },
+  };
 }

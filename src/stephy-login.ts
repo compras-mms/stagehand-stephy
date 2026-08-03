@@ -8,6 +8,7 @@ import {
 import {
   gotoSearchViaMenu,
   searchAllTrackings,
+  type GuardaDStats,
   type SearchBatch,
   type SearchMatch,
 } from "./search-receipts.js";
@@ -59,6 +60,12 @@ interface RunStats {
   encontrados: number;
   noEncontrados: number;
   sessionExpired: number;
+  /**
+   * Fase 4.2 — salud de la guarda D′ de esta corrida. `null` si la corrida no
+   * llegó a buscar (login falló, corrida de consignatarios): ahí un 0 mentiría,
+   * porque no es que no hubo lecturas raras, es que no hubo lecturas.
+   */
+  guardaD: GuardaDStats | null;
   detalleActualizados: number | string | null;
   gruposActualizados: number | string | null;
   persistFailed: boolean;
@@ -89,6 +96,7 @@ const runStats: RunStats = {
   encontrados: 0,
   noEncontrados: 0,
   sessionExpired: 0,
+  guardaD: null,
   detalleActualizados: null,
   gruposActualizados: null,
   persistFailed: false,
@@ -907,11 +915,12 @@ async function runOnce() {
           }
         };
 
-        const { encontrados, noEncontrados, sessionExpiredCount } =
+        const { encontrados, noEncontrados, sessionExpiredCount, guardaD } =
           await searchAllTrackings(page, toSearch, { limit, onBatch: flushBatch });
         runStats.encontrados = encontrados.length;
         runStats.noEncontrados = noEncontrados.length;
         runStats.sessionExpired = sessionExpiredCount;
+        runStats.guardaD = guardaD;
         runStats.persistFailed = persistFailed;
 
         // Caso "todo sesión expirada" (0 hallados, nada persistido): sin archivo
@@ -1185,6 +1194,21 @@ function classifyRun(): { ok: boolean; reason: RunReason } {
 }
 
 /**
+ * Fase 4.2 — ¿hay que mirar esta corrida por el bug de recibos cruzados?
+ *
+ * Las tres señales son de VIGILANCIA, no de fallo: con la guarda D′ un receipt
+ * solo se acepta si correlaciona con su propia petición, así que ninguna de estas
+ * implica un dato malo escrito. Lo que implican es que el terreno donde vivía el
+ * bug se movió — lecturas demasiado rápidas, el DOM discrepando de la red, o
+ * búsquedas que se quedaron sin respuesta propia. Si esto se despierta, toca
+ * abrir el log antes de que vuelva a haber pares cruzados.
+ */
+function guardaDAlerta(g: GuardaDStats | null): boolean {
+  if (!g) return false;
+  return g.sinRespuesta > 0 || g.sospechosos > 0 || g.rapidas > 0;
+}
+
+/**
  * Arma asunto + cuerpo (resumen arriba + log completo) para el correo. Async
  * porque además registra la salud de la corrida (#11) y, si hay racha de fallos,
  * escala el asunto. Se llama EXACTAMENTE una vez por corrida (una sola de las
@@ -1247,6 +1271,16 @@ async function buildEmailContent(): Promise<{
       : null,
     `Receipts:      ${runStats.encontrados} encontrado(s), ${runStats.noEncontrados} no encontrado(s)`,
     `Sesión exp.:   ${runStats.sessionExpired}`,
+    // Fase 4.2 — salud del lector. Se muestra siempre que haya habido búsqueda:
+    // un "0 · 0 · 0" es la buena noticia, y verlo confirma que se midió.
+    runStats.guardaD
+      ? `Guarda D′:     ${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
+        `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
+        `${runStats.guardaD.rapidas} leído(s) en <900ms`
+      : null,
+    guardaDAlerta(runStats.guardaD)
+      ? `               ⚠ señales del bug de recibos cruzados — revisar el log`
+      : null,
     `Supabase:      ${
       runStats.detalleActualizados === null && runStats.gruposActualizados === null
         ? "sin write-back"
@@ -1321,6 +1355,14 @@ function buildEmailHtml(ctx: {
     ]);
   }
   rows.push(["Sesión expirada", String(runStats.sessionExpired)]);
+  if (runStats.guardaD) {
+    rows.push([
+      "Guarda D′",
+      `${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
+        `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
+        `${runStats.guardaD.rapidas} leído(s) en <900ms`,
+    ]);
+  }
   rows.push(["Supabase", supabase]);
   if (health && health.streak > 0) {
     rows.push([
@@ -1355,6 +1397,29 @@ function buildEmailHtml(ctx: {
       `<b>Error:</b> ${esc(runStats.error.split("\n")[0])}</div></td></tr>`
     : "";
 
+  // Fase 4.2 — caja ámbar con las señales del bug de recibos cruzados. Solo
+  // aparece si alguna se despertó: en una corrida sana el correo no cambia.
+  const g = runStats.guardaD;
+  const guardaDBox =
+    g && guardaDAlerta(g)
+      ? `<tr><td style="padding:8px 24px 0">` +
+        `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;color:#92400e;font-size:13px">` +
+        `<b>⚠ Guarda D′ — señales a vigilar</b>` +
+        `<ul style="margin:8px 0 0;padding-left:18px">` +
+        (g.sinRespuesta > 0
+          ? `<li><b>${esc(g.sinRespuesta)}</b> búsqueda(s) sin respuesta propia — no son «no encontrado»; se reintentan en la próxima corrida.</li>`
+          : "") +
+        (g.sospechosos > 0
+          ? `<li><b>${esc(g.sospechosos)}</b> receipt(s) aceptado(s) por red con el DOM discrepando.</li>`
+          : "") +
+        (g.rapidas > 0
+          ? `<li><b>${esc(g.rapidas)}</b> receipt(s) leído(s) en menos de 900 ms — la firma vieja del bug de recibos cruzados.</li>`
+          : "") +
+        `</ul>` +
+        `<div style="margin-top:8px;color:#78350f">Ninguna implica un dato malo escrito (D′ exige correlación), pero conviene abrir el log.</div>` +
+        `</div></td></tr>`
+      : "";
+
   const modoBadge = runStats.preview
     ? `<span style="background:#e0e7ff;color:#3730a3;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:8px">PREVIEW</span>`
     : "";
@@ -1377,6 +1442,7 @@ function buildEmailHtml(ctx: {
     </td></tr>
 
     ${errorBox}
+    ${guardaDBox}
 
     <tr><td style="padding:14px 24px 4px">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e8f0;border-radius:8px;border-collapse:separate;overflow:hidden;font-size:13px">

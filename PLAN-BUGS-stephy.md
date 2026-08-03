@@ -18,8 +18,8 @@ Sigue: **Fase 3 (limpieza)**; los 5 crons **siguen deshabilitados a propósito**
 | **0** | Parar la sangría — scraper **+ instructor** | Fase 1 | ✅ 2026-07-31 23:31 |
 | **1** | Arreglar los lectores (`search-receipts.ts` **y `search-consignee.ts`**) | Fases 3, 4, 5.3 | ✅ **CERRADA** 2026-08-02 (1.1 · 1.2-A · 1.2-B · 1.5 · 1.6) |
 | **2** | Casos puntuales abiertos (18559, 30510) | — | 🟡 parcial |
-| **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ⬜ |
-| **4** | Blindaje | — | ⬜ |
+| **3** | Limpieza de los grupos cruzados (82 + detector nuevo) | Fase 4 | ✅ **CERRADA** 2026-08-03 (121 verificados, 60/66 corregidos) |
+| **4** | Blindaje | — | 🟡 **4.2 en código**; 4.1 y 4.3 escritos en `sql/`, faltan de correr |
 | **5** | NOP por producto | — | ⬜ |
 | **6** | Higiene | — | ⬜ |
 
@@ -597,21 +597,68 @@ duplicados, y desactivarlo es justo lo contrario de lo que se quiere aquí.
 
 ## Fase 4 — Blindaje
 
-1. **Extender `guard_recibo_duplicado`.** Hoy el trigger (`trg_guard_recibo_duplicado` sobre
-   `shipping_groups`) solo actúa si el recibo cae en un grupo de **otro cliente**
-   (`v.user_id IS DISTINCT FROM v_user_new`). Los cruces dentro de un mismo cliente pasan
-   limpios — y son los más probables, porque los trackings de una venta se buscan seguidos.
-   **La medición lo confirma: 35 de los 39 recibos ambiguos en BD son del mismo cliente.**
-   Agregar: avisar cuando un recibo caiga en dos grupos del mismo cliente con `tracking_master`
-   distinto. Eso habría cazado el 449829.
-   *Al tocarlo, conservar el filtro `NEW.tracking_master_courier ~ '^[0-9]{5,7}$'` y el escape
-   por `app.bypass_recibo_guard`; y para el caso mismo-cliente **avisar, no revertir** (hoy el
-   trigger restaura el valor viejo en silencio).*
-2. **Alerta de lecturas rápidas en el correo de corrida** (`buildEmailHtml` ya existe; es agregarle
-   una sección).
-3. **Consulta programada semanal** que avise sola. Debe correr **el detector de BD** (recibo
-   ambiguo en `shipping_groups`), no solo los de bitácora: es el único que no depende de la
-   retención ni de la ventana de `auditoria_tracking_stephy`.
+Escrita el **2026-08-03**. Lo de código ya está en `main`; lo de BD quedó en dos scripts que
+corre Jaime en el SQL Editor (el clasificador me bloquea el DDL, igual que con `set_config`).
+
+**Ojo con el orden: 4.3 usa `norm_tracking_master`, que la crea 4.1.**
+
+### 4.1 — `guard_recibo_duplicado` extendido ⬜ *falta correr* → `sql/fase4-1-guard-recibo-mismo-cliente.sql`
+
+El trigger (`trg_guard_recibo_duplicado` sobre `shipping_groups`, BEFORE INSERT OR UPDATE OF
+`tracking_master_courier`) solo actuaba si el recibo caía en un grupo de **otro cliente**
+(`v.user_id IS DISTINCT FROM v_user_new`). Los cruces dentro de un mismo cliente pasaban
+limpios — y son los más probables, porque los trackings de una venta se buscan seguidos.
+Ese hueco dejó invisible el **449829**.
+
+Ahora son dos ramas:
+
+| | Caso | Qué hace |
+|---|---|---|
+| **(A)** | recibo ya usado por **otro cliente** | bloquea (revierte) + audita `accion='bloqueado'` — como siempre |
+| **(B)** | **mismo cliente**, `tracking_master` distinto | **solo avisa**: audita `accion='avisado'`, no toca el dato |
+
+(B) no revierte a propósito: un mismo cliente sí puede tener legítimamente el mismo recibo en dos
+grupos (los consolidados bajo MAMA SAN / JAIME MOLINA). Revertir ahí rompería datos buenos.
+
+Se conservan intactos el filtro `~ '^[0-9]{5,7}$'` y el escape `app.bypass_recibo_guard`.
+
+Trae de regalo `public.norm_tracking_master(text)` — mayúsculas, sin separadores, NULL si queda
+en menos de 8 caracteres. Sin eso, dos formas del **mismo** envío contarían como distintas y
+avisarían en falso: hay couriers que anteponen su prefijo al número (`517967985475` vs
+`9622001900005890833200517967985475`; `9361289677063201119748` vs `C1420331269361289677063...`).
+Esos dos casos son justo los que el detector descarta hoy.
+
+### 4.2 — Salud de la guarda D′ en el correo ✅ *hecho*
+
+`searchAllTrackings` ya contaba `sinRespuesta` / `sospechosos` / `rapidas` (<900 ms) pero se los
+guardaba para el log. Ahora los **devuelve** (`GuardaDStats`), viven en `runStats.guardaD` y salen
+en el correo de corrida: una fila fija en la tarjeta de métricas —un `0 · 0 · 0` es la buena
+noticia y verlo confirma que se midió— y, **solo si alguna se despierta**, una caja ámbar arriba.
+
+`runStats.guardaD` es `null`, no `0/0/0`, cuando la corrida no llegó a buscar (login falló,
+corrida de consignatarios): ahí un cero mentiría.
+
+Ninguna de las tres implica un dato malo escrito — con D′ el receipt solo se acepta si correlaciona
+con su propia petición. Lo que implican es que **el terreno donde vivía el bug se movió**.
+
+### 4.3 — Detector de BD semanal ⬜ *falta correr* → `sql/fase4-3-detector-semanal.sql`
+
+Vista `v_recibos_ambiguos_stephy` (`security_invoker`) + función
+`alerta_recibos_ambiguos_stephy()` + job `pg_cron` **`alerta-recibos-ambiguos-stephy`**, lunes
+`0 12 * * 1` = 8:00 de Caracas, misma convención que los `actualizar-binance-*`.
+
+Es el único de los tres detectores que **no depende de una ventana de tiempo**: mira el ESTADO de
+`shipping_groups`, no la bitácora. `auditoria_tracking_stephy` se purga y solo ve lo que pasó por
+el bot; el correo de corrida solo ve la corrida que acaba de terminar. Un recibo cruzado hace tres
+meses lo sigue viendo solo este.
+
+Manda correo **siempre**, por el mismo webhook `enviar-log-stephy` que usa el bot: una vez por
+semana el silencio no distingue «todo bien» de «el job murió». Con hallazgos el asunto va en 🚨.
+Incluye además lo que el guard cazó en 7 días (bloqueados **y** avisados de 4.1).
+
+**Línea base al 2026-08-03: 3 recibos ambiguos** — `325920` y `326092` con cruce entre clientes,
+`326250` dentro del mismo cliente. Los tres son de la era `3xxxxx`, anteriores a este bot. Si
+aparece un `4xxxxx` nuevo, eso sí es regresión.
 
 ---
 
