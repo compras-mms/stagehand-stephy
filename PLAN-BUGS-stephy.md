@@ -505,6 +505,70 @@ Orden de trabajo, de mayor a menor daño:
 
 Lista completa categorizada: `data/receipts-cruzados-20260731.md`.
 
+### ✅ 3.1 EJECUTADA 2026-08-02/03 — verificación contra Stephy y limpieza
+
+**El universo real era mayor que los 82.** Con los tres detectores: **93 recibos / 146 grupos**.
+
+**Verificación** (lo que la Fase 1 hizo posible): se corrió el lector arreglado en `STEPHY_PREVIEW=1`
+sobre **121 trackings** en cuatro lotes. **Todos por `fuente=red`, 0 sospechosas, 0 lecturas
+<900 ms.** Trazas en `data/calibracion-2026-08-03T03-41-54-494Z.jsonl` (40),
+`…T03-46-20-289Z` (74), más el anillo 2 (7) y un reintento (1). Detalle con nombres:
+`data/receipts-fase3-verificado-20260802.md` (gitignoreado).
+
+`NOT_FOUND` es confiable: trackings de mayo ya volados (`517967985475`→442482) sí devuelven recibo,
+así que el «no encontrado» no es que Stephy olvide lo viejo.
+
+**Resultado: 66 grupos tenían el recibo equivocado.**
+
+| | Grupos |
+|---|---|
+| A — recibo AJENO (el tracking no tiene recibo en Stephy) | 31 |
+| B — recibo CAMBIADO (Stephy da otro número) | 35 |
+| ✅ correctos | 77 |
+
+**Las cadenas quedaron filmadas** — la firma del XHR tardío, la corrida corrida una posición:
+Luisa `449955`→**449928** (lo tenía Marianny, cuyo real era **450088**) · Michell `449822`→**449819**
+(lo tenía Carlos Eduardo, real **449832**) · jeidy `449754`→**449890** (lo tenía zaida, `NOT_FOUND`).
+
+**Segundo anillo:** los tenedores actuales de los recibos reales **no los marcó ningún detector**
+(Andres/14807, Zuheidy/30608, Ana Karina/33572…). La limpieza es iterativa: cada anillo destapa el
+siguiente. Se cerró el anillo 2; **queda por barrer el anillo 3**.
+
+**La clase `sin_respuesta` se ganó el sueldo:** `TBA333174918351` agotó los 10 s sin su respuesta
+propia. Reintentado con `STEPHY_SEARCH_NET_MAX_WAIT_MS=20000` dio **450403**. Si D′ hubiera
+adivinado «not found», se habría borrado un recibo bueno.
+
+#### Cómo se ejecutó (tres pasadas, en ese orden)
+
+1. **Liberar** los 66 (`sg.tracking_master_courier := NULL` + `dpv.tracking_courier := NULL`) —
+   TODO antes de escribir nada, para que las cadenas no choquen con `guard_recibo_duplicado`.
+2. **Escribir** el recibo real donde lo hay.
+3. **Estatus** solo para los de rango ≤ 60: sin recibo → `Enviado Proveedor`; con recibo →
+   `Con recibo Almacen Miami` (para que `MamaSAN Instruir` los re-instruya con el número bueno).
+   **17 + 13 grupos.** Decisión de Jaime: los de rango ≥ 70 (Ccs / Por Entregar / Entregado)
+   llevan **solo el recibo**, sin tocar estatus — la mercancía ya se movió.
+
+**Resultado: 60 de 66 aplicadas. 0 grupos discrepantes, 0 artículos desalineados.**
+Detector de BD: de **31 recibos ambiguos a 5**, y ninguno es cruce (3 pre-bot ya triados el 30/07;
+`442482` y `442495` verificados como caja partida legítima).
+
+**6 bloqueadas por `guard_recibo_duplicado`** — el recibo real lo tiene un grupo de **otro
+cliente**: recibos consolidados (`444084`, `447362` bajo MAMA SAN / JAIME MOLINA) y casos del bug
+de NOP repetido en varias ventas (Fase 6). **No se forzaron** (`app.bypass_recibo_guard` quedó
+descartado el 30/07). Quedaron liberadas (recibo NULL) y marcadas en
+`fase3_correcciones_20260803.aplicado = false`. **Pendiente de decisión.**
+
+#### Artefactos en BD (todos con RLS activado)
+
+- `bkp_fix_fase3_20260803_sg` / `_dpv` — respaldo previo: **163 grupos, 263 artículos**
+- `fase3_verdad_stephy` — **121 pares tracking→recibo verificados por red**; es la fuente de verdad,
+  no el audit
+- `fase3_correcciones_20260803` — las 66 correcciones con viejo/nuevo/estatus y `aplicado`
+
+⚠️ **El clamp no era el obstáculo que el plan suponía.** `trg_clamp_regresion_shipping` solo actúa
+con `rank_old >= 70`. Con la política que eligió Jaime (rango ≥70 = solo el recibo), **no hizo falta
+ni un `set_config`**: toda la Fase 3 se ejecutó sin bloqueo del clasificador de permisos.
+
 ### Receta de corrección (y por qué no es un solo UPDATE)
 
 Quitarle un recibo malo a un grupo toca **dos tablas y dos triggers**:
