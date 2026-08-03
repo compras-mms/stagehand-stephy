@@ -443,9 +443,13 @@ cola son **82 filas** (138 artículos, 68 ventas):
 
   v27889 es uno de los sospechosos que §1-bis había marcado por `ms` bajo (144 ms) en la corrida
   del 24/07: el hallazgo del audit se confirmó solo.
-- **63 escritas antes de la guarda D′ y sin verificar** ⇐ la masa real de trabajo. Se pueden
-  validar en bloque con `STEPHY_PREVIEW=1` (no escribe) en vez de una por una.
+- **Las escritas antes de la guarda D′ y sin verificar** ⇐ la masa real de trabajo. Se validan en
+  bloque con `STEPHY_PREVIEW=1` (no escribe) en vez de una por una. ✅ **HECHO — ver §1.5-quater.**
 - 20 ya confirmadas contra `fase3_verdad_stephy`.
+
+⚠️ **El «82» y el «63» quedaron viejos el mismo día.** Al recontar tras el canario del 2026-08-03
+la cola son **88 filas** (74 ventas, 151 artículos): 4 malformadas + 22 ya en `fase3_verdad_stephy`
++ **10 escritas ese día ya con D′** (no hay que re-verificarlas) + **52 sin verificar**.
 
 Aparte, **31 grupos** están en `Con recibo Almacen Miami` **con el recibo en NULL** (consolidados
 liberados el 30/07: se les dejó el estatus y se les quitó el recibo). **Instruir NO los toca** — su
@@ -459,6 +463,9 @@ resuelve limpio a nivel de grupo (`TBA333038766404`→450016 y `TBA333074732133`
 correctos); lo que discrepa es **a nivel de artículo dentro de la misma venta** ⇒ no es cruce entre
 clientes, es el trigger `trigger_asignar_grupo_por_no_orden_prov` pisando los trackings del artículo
 con los del grupo — o sea, **evidencia a favor del prerrequisito 5.0**.
+📝 Matiz del 2026-08-03 (§1.5-quater): el diagnóstico de fondo se confirmó, pero «resuelve limpio a
+nivel de grupo» era **incompleto** — los dos grupos de `TBA333141198245` sí tenían el recibo
+equivocado (450113, real 450153) y se corrigieron.
 
 - **Canario:** habilitar **un solo** cron de scraper (`MamaSAN-Stephy-1000`), revisar esa primera
   corrida entera (correo + `auditoria_tracking_stephy`) antes de habilitar el segundo. En el
@@ -470,6 +477,79 @@ con los del grupo — o sea, **evidencia a favor del prerrequisito 5.0**.
   `Con recibo Almacen Miami` (al pausarlo había 64 grupos ahí, 16 marcados).
 - Queda pendiente comprobar a mano en Stephy una muestra de los recibos NUEVOS que traiga la
   primera corrida con datos reales (el set de control ya está comprobado).
+
+### 1.5-quater Verificación en bloque de la cola — ✅ HECHA Y APLICADA (2026-08-03)
+
+Dos corridas PREVIEW (no escriben), trazas `data/calibracion-2026-08-03T16-34-02-138Z.jsonl`
+(46 trackings) y `...T16-46-26-026Z.jsonl` (5 trackings). En ambas la lectura salió **limpia**:
+**0 `sin_respuesta`, 0 `fuente=dom`, 0 lecturas <900 ms, 0 sospechosos** ⇒ los veredictos valen.
+
+```bash
+STEPHY_SEARCH=1 STEPHY_CALIBRATE=1 STEPHY_PREVIEW=1 STEPHY_INCREMENTAL=0 \
+STEPHY_TELEMETRY=0 STEPHY_EMAIL=0 STEPHY_SEARCH_NET_MAX_WAIT_MS=20000 \
+STEPHY_SEARCH_TRACKINGS="trk1,trk2,…" npx tsx src/stephy-login.ts
+```
+`STEPHY_SEARCH_NET_MAX_WAIT_MS=20000` **no es opcional aquí**: hubo lecturas legítimas de 15-17 s
+que con el default de 10 000 habrían salido como `sin_respuesta`.
+
+**Resultado: 45 de 52 filas cuadran.** Lo que no:
+
+**(A) Cruces entre clientes distintos — 3.** Los tres recibos reales estaban **libres** ⇒ no hay
+anillo, se corrigen de una:
+
+| venta | cliente | tracking | recibo hoy | de quién era | recibo REAL |
+|---|---|---|---|---|---|
+| 33719 | Maryori Boniel | `SPXMIA013672607240007901` | 450178 | v33826 | **450607** |
+| 31448 | daniel tovar | `TBA333081364836` | 449928 | v31540 | **450348** |
+| 33337 | Yolneidy Hernandez | `SPXMIA013672607260005374` | 450422 | (desconocido) | **450611** |
+
+**(B) Contaminación intra-venta en 33826** — mismo cliente, es el prerrequisito **5.0**, no cruce.
+Una 2ª corrida cerró el nudo: `TBA333141198245` → **450153** (libre), no `450113`; y
+`TBA333031813047`→449951, `TBA333050598973`→450020, `TBA333064639368`→450127,
+`382754219696`→450323 cuadran todos.
+
+**(C) Dos que Stephy ya no encuentra** (`Receipt Not Found` de nuestra propia petición):
+`TBA333305719607` (v33826) y `YT2615701001596861` (v17751). **No prueba que el recibo esté mal** —
+puede haber salido del almacén. Harían falta buscados **por número de recibo**, no por tracking.
+
+#### ✅ Aplicado el 2026-08-03 por el MCP de Supabase
+
+Respaldo previo con RLS: `bkp_fase3b_20260803_sg` (26 grupos) y `bkp_fase3b_20260803_dpv`
+(37 artículos), ventas 33719/31448/33337/33826.
+
+Escrito: **5 grupos + 7 artículos**, sólo el recibo. Ninguno en rango ≥ 70 ⇒ **sin `set_config`**.
+
+| venta | grupo | `tracking_master` | recibo viejo | recibo nuevo |
+|---|---|---|---|---|
+| 33719 | `GSU18G22Q002TB6` | `SPXMIA013672607240007901` | NULL (art. 450178) | **450607** |
+| 31448 | `113-8430256-1449803` | `TBA333081364836` | NULL (art. 449928) | **450348** |
+| 33337 | `GSU18J22100U725` | `SPXMIA013672607260005374` | 450422 | **450611** |
+| 33826 | `113-2279121-0934668` | `TBA333141198245` | 450113 | **450153** |
+| 33826 | `113-5408167-1588263` | `TBA333141198245` | 450113 | **450153** |
+
+Verificación posterior: guard **sin eventos** (0 bloqueado / 0 avisado), detector de ambiguos
+**sigue en su línea base de 3** (sin regresión), cola de Instruir sin cambios (151 artículos),
+`fase3_verdad_stephy` **123 → 172** (49 pares nuevos volcados de las dos trazas).
+
+#### ⬜ NO aplicado — 6 artículos de v33826 que son Fase 5
+
+Sus trackings no son master de ningún grupo: viven dentro de grupos cuyo master es
+`TBA333074732133` (recibo 450339). Tocarlos les **borraría el `tracking_proveedor`** (ver §5.0).
+Hay que partirles el grupo primero.
+
+| artículo | tracking | recibo hoy | recibo REAL |
+|---|---|---|---|
+| B0948Z32YQ, B0C46KCCDV | `TBA333037258960` | 450339 | 450113 (ya libre) |
+| B08TR3TM7H, B0CZDDVCB2 | `TBA333038766404` | 450339 | 450016 |
+| B0GHY811WX | `TBA333070409941` | 450339 | 450178 |
+| B0C46HJBH5 | `TBA333305719607` | 450339 | ⚠ sin verificar |
+
+💣 **Mina:** `B0H44XZ9TJ` (artículo de `TBA333070409941`, recibo 450178 **correcto**) vive en el
+grupo `113-2279121-0934668`, cuyo master es `TBA333141198245`/450153. **Cualquier UPDATE sobre esa
+fila le pega 450153 y le cambia el tracking.** Por eso no se tocó.
+
+⚠️ La venta 33826 **ya tenía instrucción enviada** para el grupo `113-2279121-0934668` cuando su
+recibo era `450113`. Corregir el dato en la BD no deshace lo instruido en Stephy — revisar allá.
 
 ### 1.6 Pruebas — ✅ HECHO (`npm run test:guarda-d`)
 
@@ -789,6 +869,26 @@ convive con un trigger que resuelve el sentido contrario.
 **Esto se verifica ANTES de 5.1 y 5.2**, no después: define si el diseño es viable tal cual o
 hay que tocar el trigger. Prueba barata: actualizar cualquier campo de un `detalle_producto_venta`
 que esté en un grupo `Envio2` y ver si el trigger lo devuelve a su grupo original.
+
+#### ✅ CONFIRMADO EN CAMPO (2026-08-03, durante §1.5-quater)
+
+Ya no hace falta la prueba: se topó de frente al corregir recibos. Dos consecuencias operativas
+que valen para **cualquier** corrección futura sobre `detalle_producto_venta`:
+
+1. **Orden obligatorio:** primero `shipping_groups.tracking_master_courier`, y **recién después**
+   tocar el artículo — el trigger le pega el valor ya corregido. Al revés es imposible: el UPDATE
+   se revierte solo dentro de la misma sentencia.
+2. **Sólo es seguro tocar artículos cuyo `tracking_proveedor` sea IGUAL al `tracking_master` de su
+   grupo.** Si difieren, el UPDATE le destruye el `tracking_proveedor` al artículo.
+
+Y la trampa concreta que esto crea: existen grupos **`-SHIP -N`** (varios paquetes de una misma
+orden Amazon) cuyos artículos conservan el `no_orden_prov` **base**. Como el trigger resuelve el
+grupo por `nombre_grupo = no_orden_prov`, un UPDATE sobre esos artículos los **arrastra al grupo
+base** y les borra sus valores propios. Ejemplo real en v33826: `B0GQB68MXF` está en
+`113-5131312-3381860-SHIP -3` pero su `no_orden_prov` es `113-5131312-3381860`.
+
+⇒ El patrón «un mismo tracking con dos recibos distintos entre sus artículos» **no lo fabrica el
+lector: lo fabrica este trigger**. Es la evidencia que faltaba.
 
 Números al 2026-07-31:
 
