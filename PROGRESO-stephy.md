@@ -1,5 +1,18 @@
 # PROGRESO — proyecto `stagehand-stephy` (handoff entre sesiones)
 
+> ## ⚠️ ESTE ARCHIVO SE QUEDÓ EN JUNIO — no es el estado actual
+>
+> Describe cómo se construyó el pipeline (junio 2026) y sigue siendo buena referencia para eso.
+> Pero **el trabajo vivo desde julio es el bug de recibos cruzados**, y ese vive en
+> **[`PLAN-BUGS-stephy.md`](PLAN-BUGS-stephy.md)** — ahí está el índice de fases, qué está cerrado
+> y qué falta. Empezar por ahí, no por aquí.
+>
+> Al **2026-08-03**: Fases 0, 1 y 3 cerradas. **Fase 4 (blindaje) escrita** — 4.2 ya en código;
+> **4.1 y 4.3 esperan que Jaime corra `sql/fase4-1-guard-recibo-mismo-cliente.sql` y luego
+> `sql/fase4-3-detector-semanal.sql`** en el SQL Editor de Supabase (en ese orden: 4.3 usa una
+> función que crea 4.1). **Los 5 crons de Windows siguen deshabilitados**, así que lo que este
+> archivo llama «operación recurrente» NO está corriendo hoy.
+>
 > Estado y contexto para continuar en otra sesión. Última actualización: 2026-06-16 (parte 5).
 > Acompaña a [`CONTEXT-stagehand-amazon.md`](CONTEXT-stagehand-amazon.md) (base genérica
 > heredada de stagehand-amazon: stack, factory de Stagehand, estructura de la BD Supabase).
