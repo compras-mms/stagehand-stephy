@@ -30,5 +30,9 @@ data/receipts-contaminados.json
 # recibos de clientes, y se regenera en cada corrida de laboratorio.
 data/calibracion-*.jsonl
 
+# Scripts de corrección puntual (barrido de recibos cruzados): llevan ids de venta,
+# trackings y recibos de clientes. El DDL de blindaje sí se versiona, pero en sql/.
+data/*.sql
+
 # Claude Code personal/local settings (no versionar)
 .claude/settings.local.json

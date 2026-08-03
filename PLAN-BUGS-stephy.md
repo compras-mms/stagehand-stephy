@@ -534,6 +534,25 @@ Luisa `449955`→**449928** (lo tenía Marianny, cuyo real era **450088**) · Mi
 (Andres/14807, Zuheidy/30608, Ana Karina/33572…). La limpieza es iterativa: cada anillo destapa el
 siguiente. Se cerró el anillo 2; **queda por barrer el anillo 3**.
 
+**Tercer anillo — barrido el 2026-08-03: la cadena CIERRA.** El detector (grupos cuyo recibo la
+verdad asigna a otro tracking) dio 6 filas: 4 falsos positivos (v8519/`442482`, v10818/`442495` —
+los dos trackings de cada par son la forma corta y larga del mismo paquete), 1 residuo
+mismo-cliente sin `tracking_master` (v9664 `Envio Principal`) y **1 real, v31144**. Verificando por
+red salieron tres eslabones: v31200 ← **449967** · v31144 ← **449636** · v31131 ← **449660**, y a
+`449660` no lo tiene nadie ⇒ **no hay anillo 4**. Los tres en rango 70 ⇒ solo el recibo, **sin
+`set_config`**. Script listo en `data/anillo3-correccion-20260803.sql` (gitignoreado),
+**pendiente de aplicar**. Al correrlo, las bloqueadas por el guard bajan de 6 a 5.
+
+⚠️ **Ojo con `norm_tracking_master()` para recibos: NO sirve.** Exige ≥8 caracteres y los recibos
+son de 6 dígitos ⇒ devuelve `NULL` y cualquier `IN`/join sale vacío sin dar error. Para recibos:
+`regexp_replace(upper(x),'[^A-Z0-9]','','g')`.
+
+**Atajo para los anillos que falten:** `auditoria_tracking_stephy` trae `corrida_id`, el orden de
+búsqueda (`id`) y `ms`. En la corrida `2026-07-24T00-00-07-588Z` se lee la firma del bug directo —
+cada fila recibió el recibo real de la anterior (1224 v31250→449830 real 449977 · 1225 v31200→449977
+real 449967 · 1226 v31144→449967 real 449636). Partir de ahí (filas `persistido_db` con tracking no
+verificado, priorizando las de `ms` bajo) evita descubrir los anillos de a una corrida de navegador.
+
 **La clase `sin_respuesta` se ganó el sueldo:** `TBA333174918351` agotó los 10 s sin su respuesta
 propia. Reintentado con `STEPHY_SEARCH_NET_MAX_WAIT_MS=20000` dio **450403**. Si D′ hubiera
 adivinado «not found», se habría borrado un recibo bueno.
