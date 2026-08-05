@@ -19,6 +19,7 @@
 import vm from "node:vm";
 
 import {
+  clasificarResultado,
   netPendingExpr,
   netWatermarkExpr,
   readOwnResponseExpr,
@@ -415,6 +416,55 @@ async function main(): Promise<void> {
         detectada === c.esNuestra && (!detectada || snap.own?.result === c.result),
         `${c.que} → ${detectada ? `nuestra (Result="${snap.own?.result}")` : "encadenada, ignorada"}`,
       );
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // 9. Guarda F (2026-08-05): la respuesta llega, correlaciona… y es una
+  //    PRE-ALERTA (`PA:<tracking>`), no un recibo. Antes se escribía tal cual
+  //    y marcaba como recibido en Miami un paquete que no había llegado:
+  //    24 de 45 en la corrida 2026-08-05T14-38-53-637Z.
+  // ---------------------------------------------------------------------
+  console.log("\n9) Pre-alerta `PA:<tracking>` — llega correlacionada pero no es recibo");
+  {
+    const trk = "SPXMIA013672607280001233";
+    const pagina = new PaginaFalsa({ tracking: "x", receiptReal: `PA:${trk}`, latenciaMs: 100 });
+    const r = await searchOneTracking(pagina, trk, false, timingRapido());
+    ok(!r.receipt, `NO se acepta como recibo (${r.receipt ?? "∅"})`);
+    ok(r.preAlerta === true, "queda marcada como pre-alerta");
+    ok(r.resultadoCrudo === `PA:${trk}`, `se guarda el crudo (${r.resultadoCrudo ?? "∅"})`);
+    ok(r.fuente === "red", `la respuesta sí era la propia (${r.fuente})`);
+  }
+
+  // ---------------------------------------------------------------------
+  // 10. Forma desconocida: ni 6 dígitos ni `PA:`. No se escribe y se reintenta
+  //     sin penalizar backoff — no sabemos qué es.
+  // ---------------------------------------------------------------------
+  console.log("\n10) Respuesta con forma desconocida");
+  {
+    const pagina = new PaginaFalsa({ tracking: "x", receiptReal: "44167", latenciaMs: 100 });
+    const r = await searchOneTracking(pagina, "GFUS01048022862912", false, timingRapido());
+    ok(!r.receipt, `no se escribe (${r.receipt ?? "∅"})`);
+    ok(r.sinRespuesta === true, "se reintenta sin penalizar backoff");
+    ok(r.sospechoso === true, "queda marcada sospechosa");
+  }
+
+  console.log("\n11) Clasificación de la forma del Result");
+  {
+    const casos: [string, string][] = [
+      ["449967", "recibo"],
+      ["450611", "recibo"],
+      ["325920", "recibo"],
+      ["PA:SPXMIA013672607280001233", "pre_alerta"],
+      ["PA GFUS010630", "pre_alerta"],
+      ["44167", "otra"],
+      ["200014630057262", "otra"],
+      ["TBA333372158280", "otra"],
+      ["", "otra"],
+    ];
+    for (const [valor, esperado] of casos) {
+      const got = clasificarResultado(valor);
+      ok(got === esperado, `«${valor}» → ${got} (esperado ${esperado})`);
     }
   }
 

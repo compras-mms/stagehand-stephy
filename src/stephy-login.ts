@@ -1276,7 +1276,8 @@ async function buildEmailContent(): Promise<{
     runStats.guardaD
       ? `Guarda D′:     ${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
         `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
-        `${runStats.guardaD.rapidas} leído(s) en <900ms`
+        `${runStats.guardaD.rapidas} leído(s) en <900ms · ` +
+        `${runStats.guardaD.preAlertas} pre-alerta(s)`
       : null,
     guardaDAlerta(runStats.guardaD)
       ? `               ⚠ señales del bug de recibos cruzados — revisar el log`
@@ -1360,7 +1361,8 @@ function buildEmailHtml(ctx: {
       "Guarda D′",
       `${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
         `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
-        `${runStats.guardaD.rapidas} leído(s) en <900ms`,
+        `${runStats.guardaD.rapidas} leído(s) en <900ms · ` +
+        `${runStats.guardaD.preAlertas} pre-alerta(s)`,
     ]);
   }
   rows.push(["Supabase", supabase]);

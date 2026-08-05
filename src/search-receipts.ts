@@ -57,6 +57,7 @@ export interface SearchMatch {
     | "no_encontrado"
     | "sesion_expirada"
     | "sin_tracking"
+    | "pre_alerta"
     | "sin_respuesta";
   /** Telemetría: latencia de la búsqueda de este tracking (ms). */
   ms?: number;
@@ -541,6 +542,13 @@ export interface OneSearchResult {
   receiptDom?: string;
   /** La búsqueda no recibió respuesta propia: no sabemos si hay receipt. */
   sinRespuesta?: boolean;
+  /**
+   * La respuesta propia fue una PRE-ALERTA (`PA:<tracking>`): el paquete está
+   * anunciado pero NO recibido en almacén, así que todavía no hay recibo.
+   */
+  preAlerta?: boolean;
+  /** Lo que respondió la red tal cual, cuando no tenía forma de recibo. */
+  resultadoCrudo?: string;
   /** La lectura no está correlacionada, o red y DOM discrepan. */
   sospechoso?: boolean;
   /** Por qué es sospechosa / por qué se descartó. */
@@ -596,6 +604,43 @@ export const calibrating = (): boolean => process.env.STEPHY_CALIBRATE === "1";
  * `STEPHY_REQUIRE_NET=0` restaura el comportamiento viejo (solo para emergencias).
  */
 export const requireNet = (): boolean => process.env.STEPHY_REQUIRE_NET !== "0";
+
+// --------------------------------------------------------------------------
+//  Forma del `Result` de la respuesta propia (guarda F — 2026-08-05)
+// --------------------------------------------------------------------------
+
+/**
+ * Un número de recibo de Stephy son SEIS dígitos (`449967`, `450611`; los
+ * `3xxxxx` son de la era anterior al bot). Cualquier otra cosa no es un recibo.
+ */
+export const RECIBO_RE = /^\d{6}$/;
+
+/**
+ * PRE-ALERTA. Cuando el paquete está anunciado pero todavía NO recibido en el
+ * almacén, Stephy responde `PA:<el mismo tracking>` en vez de un recibo. Eso NO
+ * es un recibo: escribirlo marca como «Con recibo Almacen Miami» un paquete que
+ * no ha llegado, y `MamaSAN Instruir` intentaría instruccionarlo.
+ *
+ * Lo destapó la corrida `2026-08-05T14-38-53-637Z`: 24 de 45 «recibos» eran
+ * pre-alertas (51 artículos y 23 grupos escritos, revertidos ese mismo día).
+ * También explica los dos `PAGFUS010630` del 24 y 25/07 (ventas 27889 y 27891).
+ */
+export const PRE_ALERTA_RE = /^PA[\s:_-]/i;
+
+/** Qué es lo que devolvió la red: un recibo, una pre-alerta, o algo que no cuadra. */
+export type FormaResultado = "recibo" | "pre_alerta" | "otra";
+
+/**
+ * Clasifica el `Result` de NUESTRA respuesta. Solo `recibo` se acepta y se
+ * persiste; `pre_alerta` es un «todavía no» legítimo y `otra` es una forma
+ * desconocida que no se escribe (se reintenta) para no repetir el estropicio.
+ */
+export function clasificarResultado(result: string | undefined | null): FormaResultado {
+  const v = (result ?? "").trim();
+  if (RECIBO_RE.test(v)) return "recibo";
+  if (PRE_ALERTA_RE.test(v)) return "pre_alerta";
+  return "otra";
+}
 
 /**
  * Tiempos del poll por tracking (#5 — recortar latencia). Todos con override por
@@ -828,9 +873,32 @@ export async function searchOneTracking(
   // --- Veredicto -----------------------------------------------------------
   switch (exitReason) {
     case "net_result": {
-      last.receipt = own?.result;
       last.fuente = "red";
       last.notFound = false;
+      // Guarda F: la respuesta llegó y está correlacionada, pero eso no la hace
+      // un recibo. Solo la forma de recibo se acepta.
+      const forma = clasificarResultado(own?.result);
+      if (forma !== "recibo") last.resultadoCrudo = own?.result;
+      if (forma === "pre_alerta") {
+        last.receipt = undefined;
+        last.preAlerta = true;
+        last.motivoDescarte =
+          `Stephy respondió «${own?.result}»: PRE-ALERTA (paquete anunciado, ` +
+          `no recibido en almacén) — todavía no hay recibo`;
+        break;
+      }
+      if (forma === "otra") {
+        // Ni recibo ni pre-alerta: forma desconocida. No se escribe y se
+        // reintenta sin penalizar backoff, porque no sabemos qué es.
+        last.receipt = undefined;
+        last.sinRespuesta = true;
+        last.sospechoso = true;
+        last.motivoDescarte =
+          `Stephy respondió «${own?.result}», que no tiene forma de recibo ` +
+          `(6 dígitos) ni de pre-alerta — descartada`;
+        break;
+      }
+      last.receipt = own?.result;
       if (last.receiptDom && last.receiptDom !== own?.result) {
         last.sospechoso = true;
         last.motivoDescarte = `el DOM mostraba «${last.receiptDom}» y la red «${own?.result}» (gana la red)`;
@@ -874,6 +942,13 @@ export async function searchOneTracking(
         last.receipt = undefined;
         last.sinRespuesta = true;
         last.motivoDescarte += " — descartada por STEPHY_REQUIRE_NET";
+      } else if (clasificarResultado(last.receipt) !== "recibo") {
+        // Guarda F también en el camino viejo: sin sonda, el input puede traer
+        // una pre-alerta igual que la red.
+        last.resultadoCrudo = last.receipt;
+        last.preAlerta = clasificarResultado(last.receipt) === "pre_alerta";
+        last.receipt = undefined;
+        last.motivoDescarte += ` — «${last.resultadoCrudo}» no tiene forma de recibo`;
       }
       break;
     }
@@ -934,6 +1009,8 @@ export interface GuardaDStats {
   sospechosos: number;
   /** Receipts aceptados en <900 ms — la firma vieja del bug (§1.4). */
   rapidas: number;
+  /** Guarda F: respuestas `PA:<tracking>` (pre-alerta) que NO se escribieron. */
+  preAlertas: number;
 }
 
 /**
@@ -975,6 +1052,7 @@ export async function searchAllTrackings(
   let sinRespuestaCount = 0; // búsquedas sin respuesta propia → se reintentan
   let sospechososCount = 0; // aceptados pero con el DOM discrepando
   let rapidasCount = 0; // aceptados en <900 ms (la firma vieja del bug)
+  let preAlertaCount = 0; // guarda F: pre-alertas descartadas (no son recibos)
 
   // --- Lotes para persistencia incremental ---------------------------------
   // Umbral de flush: cada N trackings PROCESADOS entregamos el lote (así el
@@ -1165,6 +1243,19 @@ export async function searchAllTrackings(
         fuente: r.fuente,
         sospechoso: true,
       });
+    } else if (r.preAlerta) {
+      // Guarda F: hay respuesta y es correlacionada, pero dice «pre-alerta».
+      // El paquete no está en almacén ⇒ no hay recibo que escribir. Avanza el
+      // backoff como cualquier "todavía no", que es exactamente lo que es.
+      preAlertaCount++;
+      console.log(`📦 pre-alerta «${r.resultadoCrudo ?? ""}» (${ms}ms) — anunciado, aún sin recibo`);
+      addMissing({
+        ...base,
+        resultado: "pre_alerta",
+        motivo: r.motivoDescarte ?? "pre-alerta: el paquete aún no está en almacén",
+        ms,
+        fuente: r.fuente,
+      });
     } else if (r.receipt) {
       if (r.sospechoso) sospechososCount++;
       // §1.4: la lectura rápida ya no decide nada (con D′ el criterio es la
@@ -1216,7 +1307,8 @@ export async function searchAllTrackings(
   console.log(
     `  · [D′] correlación: ${sinRespuestaCount} sin respuesta propia (se reintentan) · ` +
       `${sospechososCount} aceptado(s) con el DOM discrepando · ` +
-      `${rapidasCount} aceptado(s) en <900ms`,
+      `${rapidasCount} aceptado(s) en <900ms · ` +
+      `${preAlertaCount} pre-alerta(s) descartada(s)`,
   );
   if (sinRespuestaCount > 0) {
     console.log(
@@ -1232,6 +1324,7 @@ export async function searchAllTrackings(
       sinRespuesta: sinRespuestaCount,
       sospechosos: sospechososCount,
       rapidas: rapidasCount,
+      preAlertas: preAlertaCount,
     },
   };
 }
