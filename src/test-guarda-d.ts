@@ -420,20 +420,42 @@ async function main(): Promise<void> {
   }
 
   // ---------------------------------------------------------------------
-  // 9. Guarda F (2026-08-05): la respuesta llega, correlaciona… y es una
-  //    PRE-ALERTA (`PA:<tracking>`), no un recibo. Antes se escribía tal cual
-  //    y marcaba como recibido en Miami un paquete que no había llegado:
-  //    24 de 45 en la corrida 2026-08-05T14-38-53-637Z.
+  // 9. PRE-ALERTA del propio tracking (`PA:<el mismo tracking>`). Desde el
+  //    2026-08-24 significa RECIBIDO en el almacén de Miami, pero sin número de
+  //    recibo: se marca el estatus y `tracking_courier` queda NULL. Lo que la
+  //    ata a nuestra búsqueda es que el sufijo sea el tracking que se buscó.
   // ---------------------------------------------------------------------
-  console.log("\n9) Pre-alerta `PA:<tracking>` — llega correlacionada pero no es recibo");
+  console.log("\n9) Pre-alerta `PA:<mismo tracking>` — recibido en Miami, sin número de recibo");
   {
     const trk = "SPXMIA013672607280001233";
     const pagina = new PaginaFalsa({ tracking: "x", receiptReal: `PA:${trk}`, latenciaMs: 100 });
     const r = await searchOneTracking(pagina, trk, false, timingRapido());
-    ok(!r.receipt, `NO se acepta como recibo (${r.receipt ?? "∅"})`);
-    ok(r.preAlerta === true, "queda marcada como pre-alerta");
+    ok(!r.receipt, `no se inventa un recibo (${r.receipt ?? "∅"})`);
+    ok(r.preAlerta === true, "queda marcada como pre-alerta (recibido sin recibo)");
+    ok(r.preAlertaAjena !== true, "no se confunde con una pre-alerta ajena");
+    ok(r.sinRespuesta !== true, "NO se reintenta como si no hubiera respuesta");
     ok(r.resultadoCrudo === `PA:${trk}`, `se guarda el crudo (${r.resultadoCrudo ?? "∅"})`);
     ok(r.fuente === "red", `la respuesta sí era la propia (${r.fuente})`);
+  }
+
+  // ---------------------------------------------------------------------
+  // 9-bis. Pre-alerta de OTRO tracking: la respuesta no es de esta búsqueda.
+  //        Se descarta y se reintenta — es la comprobación que pidió Jaime
+  //        para poder fiarse de la forma `PA`.
+  // ---------------------------------------------------------------------
+  console.log("\n9-bis) Pre-alerta de OTRO tracking — se descarta");
+  {
+    const pagina = new PaginaFalsa({
+      tracking: "x",
+      receiptReal: "PA:SPXMIA013672607280001233",
+      latenciaMs: 100,
+    });
+    const r = await searchOneTracking(pagina, "GFUS01048022862912", false, timingRapido());
+    ok(!r.receipt, `no se escribe (${r.receipt ?? "∅"})`);
+    ok(r.preAlerta !== true, "NO cuenta como recibida");
+    ok(r.preAlertaAjena === true, "queda marcada como pre-alerta ajena");
+    ok(r.sinRespuesta === true, "se reintenta sin penalizar backoff");
+    ok(r.sospechoso === true, "queda marcada sospechosa");
   }
 
   // ---------------------------------------------------------------------
@@ -451,20 +473,32 @@ async function main(): Promise<void> {
 
   console.log("\n11) Clasificación de la forma del Result");
   {
-    const casos: [string, string][] = [
-      ["449967", "recibo"],
-      ["450611", "recibo"],
-      ["325920", "recibo"],
-      ["PA:SPXMIA013672607280001233", "pre_alerta"],
-      ["PA GFUS010630", "pre_alerta"],
-      ["44167", "otra"],
-      ["200014630057262", "otra"],
-      ["TBA333372158280", "otra"],
-      ["", "otra"],
+    const TRK = "SPXMIA013672607280001233";
+    const casos: [string, string, string][] = [
+      ["449967", TRK, "recibo"],
+      ["450611", TRK, "recibo"],
+      ["325920", TRK, "recibo"],
+      // Pre-alerta válida: el sufijo es EXACTAMENTE el tracking buscado, con
+      // separador (`:`), con espacio o pegado (el caso `PAGFUS010630`).
+      [`PA:${TRK}`, TRK, "pre_alerta"],
+      ["PA GFUS010630", "GFUS010630", "pre_alerta"],
+      ["PAGFUS010630", "GFUS010630", "pre_alerta"],
+      ["PA-GFUS010630", "GFUS010630", "pre_alerta"],
+      // Pre-alerta de otro tracking: es de otra búsqueda, no se escribe.
+      [`PA:${TRK}`, "GFUS01048022862912", "pre_alerta_ajena"],
+      ["PAGFUS010630", TRK, "pre_alerta_ajena"],
+      ["PA:", TRK, "otra"],
+      ["44167", TRK, "otra"],
+      ["200014630057262", TRK, "otra"],
+      ["TBA333372158280", TRK, "otra"],
+      // Eco del propio input: no es un resultado, ni siquiera si empieza por PA.
+      [TRK, TRK, "otra"],
+      ["PAGFUS010630", "PAGFUS010630", "otra"],
+      ["", TRK, "otra"],
     ];
-    for (const [valor, esperado] of casos) {
-      const got = clasificarResultado(valor);
-      ok(got === esperado, `«${valor}» → ${got} (esperado ${esperado})`);
+    for (const [valor, trk, esperado] of casos) {
+      const got = clasificarResultado(valor, trk);
+      ok(got === esperado, `«${valor}» vs «${trk}» → ${got} (esperado ${esperado})`);
     }
   }
 

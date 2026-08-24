@@ -1277,7 +1277,8 @@ async function buildEmailContent(): Promise<{
       ? `Guarda D′:     ${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
         `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
         `${runStats.guardaD.rapidas} leído(s) en <900ms · ` +
-        `${runStats.guardaD.preAlertas} pre-alerta(s)`
+        `${runStats.guardaD.preAlertas} pre-alerta(s) sin recibo (solo estatus) · ` +
+        `${runStats.guardaD.preAlertasAjenas} pre-alerta(s) de otro tracking`
       : null,
     guardaDAlerta(runStats.guardaD)
       ? `               ⚠ señales del bug de recibos cruzados — revisar el log`
@@ -1362,7 +1363,8 @@ function buildEmailHtml(ctx: {
       `${runStats.guardaD.sinRespuesta} sin respuesta propia · ` +
         `${runStats.guardaD.sospechosos} con el DOM discrepando · ` +
         `${runStats.guardaD.rapidas} leído(s) en <900ms · ` +
-        `${runStats.guardaD.preAlertas} pre-alerta(s)`,
+        `${runStats.guardaD.preAlertas} pre-alerta(s) sin recibo (solo estatus) · ` +
+        `${runStats.guardaD.preAlertasAjenas} pre-alerta(s) de otro tracking`,
     ]);
   }
   rows.push(["Supabase", supabase]);

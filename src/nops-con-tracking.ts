@@ -71,6 +71,8 @@ interface MatchResult {
   id_venta: number | number[] | null;
   tracking_proveedor: string;
   receipt?: string;
+  /** Hallado por pre-alerta: está en Miami sin recibo ⇒ solo se mueve el estatus. */
+  sin_recibo?: boolean;
   fecha?: string;
   shipper?: string;
   consignee?: string;
@@ -147,6 +149,15 @@ export async function runNopsConTracking(): Promise<NopsResponse | null> {
  * Miami'. Best-effort: cualquier fallo se loguea y devuelve null sin lanzar.
  * Devuelve la respuesta del webhook (para archivarla en el history).
  *
+ * Dos clases de match (2026-08-24):
+ *   - con recibo  → `{tracking_proveedor, receipt}`: escribe tracking_courier
+ *     / tracking_master_courier + estatus.
+ *   - pre-alerta  → `{tracking_proveedor, receipt: null, pre_alerta: true}`:
+ *     el paquete está en Miami pero sin número de recibo, así que el webhook
+ *     mueve SOLO el estatus y deja tracking_courier en NULL.
+ * En ambos casos el guard forward-only del webhook impide retroceder un estatus
+ * que ya vaya más adelante en el pipeline.
+ *
  * Punto D — modo preview (dry-run): con `{ preview: true }` el webhook hace
  * SELECT en vez de UPDATE y devuelve qué filas CAMBIARÍAN (valor actual vs
  * nuevo) SIN escribir nada. Útil para auditar antes de persistir.
@@ -158,19 +169,30 @@ export async function persistMatches(
   const preview = !!opts.preview;
   const tag = preview ? "PREVIEW/dry-run, no escribe" : "escritura";
   const payload = encontrados
-    .filter((e) => e.tracking_proveedor?.trim() && e.receipt?.trim())
-    .map((e) => ({
-      tracking_proveedor: e.tracking_proveedor.trim(),
-      receipt: String(e.receipt).trim(),
-    }));
+    .filter((e) => e.tracking_proveedor?.trim() && (e.receipt?.trim() || e.sin_recibo))
+    .map((e) =>
+      e.receipt?.trim()
+        ? {
+            tracking_proveedor: e.tracking_proveedor.trim(),
+            receipt: String(e.receipt).trim(),
+          }
+        : {
+            // Pre-alerta: está en Miami pero sin recibo ⇒ solo estatus.
+            tracking_proveedor: e.tracking_proveedor.trim(),
+            receipt: null,
+            pre_alerta: true,
+          },
+    );
+  const conRecibo = payload.filter((p) => p.receipt !== null).length;
 
   console.log(
     `\n→ [n8n] ${preview ? "Previsualizando" : "Persistiendo"} ${payload.length} ` +
-      `match(es) en Supabase (actualizar-receipts · ${tag})…`,
+      `match(es) en Supabase (${conRecibo} con recibo, ${payload.length - conRecibo} ` +
+      `pre-alerta solo-estatus · actualizar-receipts · ${tag})…`,
   );
 
   if (payload.length === 0) {
-    console.log("  ⓘ No hay matches con receipt; nada que procesar.");
+    console.log("  ⓘ No hay matches que persistir; nada que procesar.");
     return preview
       ? { preview: true, detalle_a_actualizar: 0, grupos_a_actualizar: 0, detalle: [], grupos: [] }
       : { detalle_actualizados: 0, grupos_actualizados: 0, detalle: [], grupos: [] };
