@@ -39,7 +39,7 @@ export interface TrackingState {
   lastSearched: string; // ISO — última búsqueda real
   attempts: number; // nº de búsquedas que NO hallaron receipt (avanza backoff)
   nextEligible: string; // ISO — no volver a buscar antes de esta hora
-  lastResult: "no-receipt" | "session-expired" | "sin-respuesta";
+  lastResult: "no-receipt" | "session-expired" | "sin-respuesta" | "pre-alerta";
 }
 
 export interface SearchState {
@@ -184,6 +184,13 @@ export function planIncrementalSearch(
  *     petición nunca llegó. Antes esto se colaba como "no encontrado" y mandaba
  *     al backoff de 6/12/24 h a trackings que SÍ tenían recibo (los falsos
  *     negativos que destapó la calibración 1.1: 2 de 7).
+ *
+ * Excepción entre los ENCONTRADOS: los hallados por PRE-ALERTA (`sin_recibo`)
+ * son un hallazgo a medias — el paquete está en Miami, pero su número de recibo
+ * aún no existe, y `nops-con-tracking` los sigue devolviendo mientras
+ * `tracking_courier` esté NULL. Si se borraran del estado como los demás
+ * quedarían elegibles en TODAS las corridas siguientes, re-buscando lo mismo sin
+ * parar. Se registran con backoff, como cualquier «vuelve a mirarlo más tarde».
  */
 export function recordResults(
   state: SearchState,
@@ -194,7 +201,21 @@ export function recordResults(
 
   for (const e of results.encontrados) {
     const key = e.tracking_proveedor?.trim();
-    if (key) delete state.trackings[key];
+    if (!key) continue;
+    if (e.sin_recibo) {
+      // Pre-alerta: hay que volver, pero no en la corrida siguiente.
+      const prev = state.trackings[key];
+      const attempts = (prev?.attempts ?? 0) + 1;
+      state.trackings[key] = {
+        firstSeen: prev?.firstSeen ?? nowIso,
+        lastSearched: nowIso,
+        attempts,
+        nextEligible: new Date(nowMs + backoffMs(attempts)).toISOString(),
+        lastResult: "pre-alerta",
+      };
+      continue;
+    }
+    delete state.trackings[key];
   }
 
   for (const ne of results.noEncontrados) {
